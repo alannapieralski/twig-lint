@@ -35,6 +35,10 @@ Each check is a question. The reference holds the requirement.
 - **Structure** (`rule-anatomy.md`): Is the rule a folder? Does `index.ts` hold only `meta` and
   `create`, and does `create` only wire? Are options, messages and logic separate, and does logic
   return data without importing `eslint`?
+- **HTML and Twig apart** (`rule-anatomy.md` "Rules with HTML and Twig"): Does a rule that handles
+  both keep markup logic in `html/` and Twig logic in `twig/`? Does one list name each case it
+  handles? Do `html/` and `twig/` ever import each other, or does a file mix both without saying so
+  in its name?
 - **Duplicates** (`shared-code.md`): For each function, type and constant the change adds, does the
   plugin, the parser's public API or the other plugin already have it, even loosely? Was a helper
   copied rather than moved on its second use?

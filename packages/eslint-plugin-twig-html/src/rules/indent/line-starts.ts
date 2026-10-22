@@ -2,7 +2,7 @@ import type { LineStart } from './types.js';
 
 const leadingIndentation = /^[ \t]*/;
 
-function isBlankFrom(text: string, contentStart: number): boolean {
+export function isBlankFrom(text: string, contentStart: number): boolean {
   const firstCharacter = text[contentStart];
   return firstCharacter === undefined || firstCharacter === '\n' || firstCharacter === '\r';
 }

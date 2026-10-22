@@ -22,3 +22,12 @@
 {% if url %}<a href="{{ url }}">{% endif %}
       <span>{{ label }}</span>
 {% if url %}</a>{% endif %}
+{% include 'card.twig' with {
+  title: title,
+} only %}
+{{ attrs([
+  'a',
+]) }}
+{% set attrs = attrs
+  .addClass(classes)
+%}

@@ -36,7 +36,7 @@ Status line: severity in configs.recommended, fixable or not.
 
 - **Overview:** two to four sentences saying what the rule does in plain terms, then the examples
   in `twig` fences: "Examples of **incorrect** code" and "Examples of **correct** code".
-- **Categories:** order them from the most general behaviour to the most specific. Name each after
+- **Categories:** when a rule has HTML and Twig cases (see `rule-folders.md`), name each category after the case it describes. Order them from the most general behaviour to the most specific. Name each after
   the question a reader would ask ("What counts as one attribute", "Which elements are fixed").
 - **Bullets:** one behaviour per bullet, starting with a bold lead-in, saying what the rule does
   and why in one or two sentences. About six to eight bullets per category: split a longer one.

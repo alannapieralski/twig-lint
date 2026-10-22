@@ -20,7 +20,7 @@ do the work. Add one only where the logic is truly complex and cannot be simplif
   commit scope (`fix(twig-html): ...`). The parser's scope is `parser`.
 - **Rule id**: the kebab-case name, such as `attrs-newline`.
 
-## The shape in nine rules
+## The shape in ten rules
 
 1. **A rule is a folder.** `src/rules/<rule-id>/index.ts` holds `meta` and `create` and nothing
    else. Options, messages and logic sit beside it in their own files.
@@ -44,6 +44,9 @@ do the work. Add one only where the logic is truly complex and cannot be simplif
 9. **Search before writing.** Look in the plugin's shared code, then the parser's public API
    (`packages/twig-eslint-parser/src/index.ts`), before adding a helper or type. See
    `references/shared-code.md`.
+10. **HTML and Twig stay apart.** A rule that handles both keeps its markup logic in `html/` and its
+    Twig logic in `twig/`, and names each case it handles in one list. Only the files where the two
+    meet import from both. See `references/rule-anatomy.md`.
 
 ## Workflow for a new rule
 

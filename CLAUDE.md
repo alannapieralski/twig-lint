@@ -13,3 +13,9 @@ commands and the corpus run.
 - No changelog, upgrade notes or run statistics in any README or docs page.
 - Run every example on a rule page through the rule before finishing.
 - The headings of rule pages and READMEs are defined in `.claude/rules/docs.md`.
+
+## Rule folders separate HTML from Twig
+
+- A rule that handles both keeps its markup logic in `html/` and its Twig logic in `twig/`, and
+  names each case it handles in one list. `.claude/rules/rule-folders.md` has the rules and the
+  `eslint-create` skill has the layout.

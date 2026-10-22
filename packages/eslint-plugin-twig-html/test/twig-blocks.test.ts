@@ -7,6 +7,7 @@ const block = (tagName: string, start: number, depthChange: TwigBlockSummary['de
   tagName,
   range: [start, start + 5],
   depthChange,
+  bracketPairs: [],
 });
 
 const ifBlock = block('if', 0, 1);

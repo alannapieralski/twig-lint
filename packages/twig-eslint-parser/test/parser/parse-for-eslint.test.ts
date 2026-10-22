@@ -400,6 +400,14 @@ describe('block structure services', () => {
   });
 });
 
+describe('block bracket pairs', () => {
+  it('lists the offsets of each bracket pair, ignoring brackets inside strings', () => {
+    const code = "{{ f({ a: [1], b: '(' }) }}";
+    const { services } = parse(code);
+    expect(services.blocks[0]?.bracketPairs.map(([open, close]) => code.slice(open, close + 1))).toEqual(["({ a: [1], b: '(' })", "{ a: [1], b: '(' }", '[1]']);
+  });
+});
+
 describe('large templates', () => {
   it('groups 50,000 Twig blocks in linear time', () => {
     const code = '<p>{{ a }}{% if b %}c{% endif %}{# d #}</p>\n'.repeat(12_500);

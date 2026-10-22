@@ -1,27 +1,5 @@
 import type { Range } from '../../shared/range.js';
-import type { Token } from '../../shared/tag-node.js';
-
-export type MarkupNode = {
-  readonly type: string;
-  readonly range: Range;
-  readonly name?: string;
-  readonly openStart?: Token;
-  readonly openEnd?: Token;
-  readonly close?: Token | null;
-  readonly children?: readonly MarkupNode[];
-  readonly attributes?: readonly { readonly range: Range }[];
-};
-
-export type TwigSegment = { readonly range: Range; readonly extent: Range; readonly frameStart: number; readonly frameName: string };
-
-export type OpenTag = {
-  readonly start: number;
-  readonly attributesStart: number;
-  readonly closeBracketStart: number;
-  readonly isSelfClosing: boolean;
-  readonly firstAttributeColumn: number | undefined;
-  readonly lineIndentationAsWritten: string | undefined;
-};
+import type { OpenTag } from './html/types.js';
 
 export type IndentLayout = {
   readonly nestings: readonly Range[];
@@ -32,3 +10,5 @@ export type IndentLayout = {
 };
 
 export type LineStart = { readonly lineStart: number; readonly contentStart: number };
+
+export type ExpressionLine = LineStart & { readonly indentation: string };

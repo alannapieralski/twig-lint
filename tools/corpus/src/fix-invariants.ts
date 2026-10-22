@@ -65,14 +65,36 @@ function withoutIndentationOutsideTwig(text: string): string {
   return result + text.slice(markupStart).replace(indentationAfterLineBreak, '$1');
 }
 
+function withoutIndentationOutsideStrings(span: string): string {
+  let result = '';
+  let openQuote: string | undefined;
+  for (let index = 0; index < span.length; index += 1) {
+    const character = span[index] as string;
+    result += character;
+    if (openQuote) {
+      if (character === '\\') result += span[++index] ?? '';
+      else if (character === openQuote) openQuote = undefined;
+    } else if (character === '"' || character === "'") {
+      openQuote = character;
+    } else if (character === '\n') {
+      while (span[index + 1] === ' ' || span[index + 1] === '\t') index += 1;
+    }
+  }
+  return result;
+}
+
+function withoutIndentationInTwigExpressions(text: string): string {
+  return text.replace(twigSpan, (span) => (span.startsWith('{#') ? span : withoutIndentationOutsideStrings(span)));
+}
+
 function isLayoutText(leaf: Leaf): boolean {
   return layoutTextTypes.has(leaf.type) && !leaf.isPreformatted;
 }
 
 function layoutTextOf(leaf: Leaf, text: string): string {
-  if (isLayoutText(leaf)) return withoutIndentationOutsideTwig(text.trim());
-  if (leavesWithLooseEdges.has(leaf.type)) return text.trim();
-  return text;
+  if (isLayoutText(leaf)) return withoutIndentationInTwigExpressions(withoutIndentationOutsideTwig(text.trim()));
+  if (leavesWithLooseEdges.has(leaf.type)) return withoutIndentationInTwigExpressions(text.trim());
+  return withoutIndentationInTwigExpressions(text);
 }
 
 function layoutTokens(code: string, result: TwigParseResult): Token[] {

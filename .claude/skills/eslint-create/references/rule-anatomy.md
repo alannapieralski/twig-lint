@@ -14,8 +14,46 @@ packages/<plugin>/src/rules/<rule-name>/
   constant is the camelCase form (`multilineHtmlElementContentNewline`).
 - A rule with no options has no `options.ts` and uses `schema: []`.
 - A type shared by two files of the rule goes in `types.ts` in the folder.
+- A rule that handles both HTML and Twig, or several distinct cases, uses the layout under
+  "Rules with HTML and Twig".
 - Tests do not live in `src`. They sit in `<package>/test/`, and a plugin may group suites that
   lint whole configs in `test/integration/`.
+
+## Rules with HTML and Twig
+
+A rule that reads the markup tree and Twig separates them, so a reader sees which concern a file
+belongs to, and which cases the rule handles. `indent` is the model:
+
+```
+packages/<plugin>/src/rules/indent/
+  index.ts                       meta and create only
+  find-indent-problems.ts        runs the cases below and concatenates their problems
+  layout.ts                      the only place HTML regions and Twig regions are merged
+  seams.ts                       HTML and Twig that cross (an element opened in one Twig branch)
+  nesting-problems.ts            case: one step per element and Twig block
+  html/                          the markup tree: elements, attributes, close tags, raw content
+  twig/
+    twig-frames.ts               Twig block nesting
+    twig-regions.ts              what Twig contributes to the layout
+    expressions/                 case: the lines inside a multi-line {{ }} or {% %}
+      expression-lines.ts        walks the lines and applies the line rules in order
+      bracket-rule.ts            line rule: lines inside { }, [ ] and ( )
+      chain-rule.ts              line rule: .method() chains
+```
+
+- `html/` never imports from `twig/`, and `twig/` never imports from `html/`. Files that need both
+  sit beside them (`layout.ts`, `seams.ts`) and say so in their name.
+- Each case is one named function that returns problems. The orchestrator lists the cases in one
+  place, so adding a case is adding one line and one folder.
+- A case with several ways of deciding a line (brackets, chains) writes each as a small named rule
+  in its own file, and one array lists them in the order they apply. A rule returns the expected
+  value, or `undefined` when it does not apply.
+- Types used by one side live in that side's `types.ts`. Types used by both live in the rule's
+  `types.ts`.
+- A rule that only touches one side, or whose HTML and Twig code is a single small file each, does
+  not need the folders. Split when the rule has more than a few modules for either side.
+- The rule's docs page follows the same split: its categories under "Rule details" name the HTML
+  case or Twig case they describe.
 
 ## index.ts
 
