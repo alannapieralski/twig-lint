@@ -67,10 +67,12 @@ describe('twig-html/attrs-newline', () => {
   });
 
   it.each([
-    ["<nav{{ attributes|without('role') }} role=\"navigation\" aria-labelledby=\"a\">x</nav>", "<nav\n  {{ attributes|without('role') }}\n  role=\"navigation\"\n  aria-labelledby=\"a\"\n>x</nav>"],
-    ['<legend{{ legend.attributes }} class="a" id="b">x</legend>', '<legend\n  {{ legend.attributes }}\n  class="a"\n  id="b"\n>x</legend>'],
-    ["<div{{ create_attribute({'id': 'a'}) }} class=\"b\" role=\"c\">x</div>", "<div\n  {{ create_attribute({'id': 'a'}) }}\n  class=\"b\"\n  role=\"c\"\n>x</div>"],
-  ])('counts Drupal attributes printed straight after the tag name as an attribute, and moves them to their own line: %s', async (code, expected) => {
+    ["<nav{{ attributes|without('role') }} role=\"navigation\" aria-labelledby=\"a\">x</nav>", "<nav{{ attributes|without('role') }}\n  role=\"navigation\"\n  aria-labelledby=\"a\"\n>x</nav>"],
+    ['<h{{ heading }} class="a" id="b">x</h1>', '<h{{ heading }}\n  class="a"\n  id="b"\n>x</h1>'],
+    ['<div{% if id %} id="{{ id }}"{% endif %} class="a" role="b">x</div>', '<div{% if id %}\n    id="{{ id }}"{% endif %}\n  class="a"\n  role="b"\n>x</div>'],
+    ['<legend{{ legend.attributes }} class="a" id="b">x</legend>', '<legend{{ legend.attributes }}\n  class="a"\n  id="b"\n>x</legend>'],
+    ["<div{{ create_attribute({'id': 'a'}) }} class=\"b\" role=\"c\">x</div>", "<div{{ create_attribute({'id': 'a'}) }}\n  class=\"b\"\n  role=\"c\"\n>x</div>"],
+  ])('keeps Twig printed straight after the tag name on the tag line, without counting it: %s', async (code, expected) => {
     expect(await fixed(code)).toBe(expected);
   });
 

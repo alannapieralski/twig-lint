@@ -1,8 +1,10 @@
 Description: Pair close tags by a name key that ignores whitespace
  A close tag closed the current element only when its name was
  byte-identical, so "</{{element}}>" did not close "<{{ element }}>". The
- close tag token now carries its parts when the name holds a template, and
- names are compared by a key with whitespace and a trailing "/" removed
+ close tag token now carries its parts when the name holds a template. A
+ close tag name ends where a template starts, as an open tag name does
+ (EHP-04), so "</h{{ level }}>" closes "<h{{ level }}>". Names are compared
+ by a key with whitespace and a trailing "/" removed
  and letters lower-cased, as a browser ignores "/" in "</div/>". Only a
  Tag can be closed this way: the Document has no name, and its empty key
  must not match the empty close tag "</>".
@@ -10,7 +12,7 @@ Author: Numiko
 Origin: vendor
 Forwarded: no
 Test: test/parser/parse-for-eslint.test.ts ("Twig as part of the markup structure"); "drops an empty close tag at the top of the document"
-Last-Update: 2026-10-19
+Last-Update: 2026-10-22
 ---
 diff --git a/src/tokenizer/handlers/close-tag.ts b/src/tokenizer/handlers/close-tag.ts
 index f4650f3..dd9c3bf 100644
@@ -76,7 +78,7 @@ index c753d8a..127b5bf 100644
  
      return state;
 diff --git a/src/utils/tag-name.ts b/src/utils/tag-name.ts
-index 6fbec3b..73db072 100644
+index c27bc00..e5dd4d9 100644
 --- a/src/utils/tag-name.ts
 +++ b/src/utils/tag-name.ts
 @@ -1,5 +1,6 @@
@@ -86,22 +88,16 @@ index 6fbec3b..73db072 100644
  import { parseOpenTagName } from "./parse-open-tag-name.js";
  
  type NamedToken = {
-@@ -29,3 +30,20 @@ export function tagNameOf(token: NamedToken): string {
-     .join("")
-     .replace(/^</, "");
+@@ -40,3 +41,14 @@ export function tagNameOf(token: NamedToken): string {
+   }
+   return nameBeforeGluedTemplate(namePartsOf(token), /^</);
  }
 +
 +export function closeTagNameOf(token: NamedToken): string {
 +  if (!token.parts || token.parts.length === 0) {
 +    return parseCloseTagName(token.value);
 +  }
-+  return token.parts
-+    .map((part) =>
-+      part.type === TokenTypes.Template ? part.value : part.value.toLowerCase()
-+    )
-+    .join("")
-+    .replace(/^<\//, "")
-+    .trim();
++  return nameBeforeGluedTemplate(namePartsOf(token), /^<\//);
 +}
 +
 +export function tagNameKey(name: string): string {

@@ -27,6 +27,12 @@ export const twoWordTests: Readonly<Record<string, string>> = { same: 'as', divi
 
 export const expressionTags: ReadonlySet<string> = new Set(['if', 'elseif', 'do', 'macro', 'with']);
 
+export const blockTags: ReadonlySet<string> = new Set([
+  'apply', 'autoescape', 'block', 'cache', 'embed', 'for', 'guard', 'if', 'macro', 'sandbox', 'set', 'trans', 'verbatim', 'with',
+]);
+
+export const middleTags: ReadonlySet<string> = new Set(['else', 'elseif', 'plural']);
+
 export const includeTags: ReadonlySet<string> = new Set(['include', 'embed']);
 
 export const includeKeywordsToBlank: ReadonlySet<string> = new Set(['only', 'ignore', 'missing']);

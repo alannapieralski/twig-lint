@@ -1,15 +1,13 @@
 Description: Let a template range say what kind of template block it is
  A TemplateInfo object may now carry the block's kind (print, tag or
- comment) and a role ("attributes" for a print that outputs a whole
- attribute list). The
- tokenizer already keeps the info object on each template character, so the
- handlers can read it through templateKindOf, isAttributesTemplate and
- isStructuralTemplate. Templates without these fields behave as before.
+ comment). The tokenizer already keeps the info object on each template
+ character, so the handlers can read it through templateKindOf and
+ isStructuralTemplate. Templates without a kind behave as before.
 Author: Numiko
 Origin: vendor
 Forwarded: no
 Test: npm run test:upstream; used by EHP-04 and EHP-05
-Last-Update: 2026-10-14
+Last-Update: 2026-10-22
 ---
 diff --git a/src/tokenizer/chars.ts b/src/tokenizer/chars.ts
 index 2f21185..8b71165 100644
@@ -34,10 +32,10 @@ index 2f21185..8b71165 100644
      this.isTemplate = type !== CharsType.HTML;
    }
 diff --git a/src/types/template.ts b/src/types/template.ts
-index a1c4375..11a28b6 100644
+index a1c4375..d78cd45 100644
 --- a/src/types/template.ts
 +++ b/src/types/template.ts
-@@ -1,8 +1,12 @@
+@@ -1,8 +1,11 @@
  import { Range } from "./range.js";
  
 -export type TemplateInfo =
@@ -52,15 +50,14 @@ index a1c4375..11a28b6 100644
 +  open: Range;
 +  close: Range;
 +  kind?: TemplateKind;
-+  role?: "attributes";
 +};
 +
 +export type TemplateInfo = Range | TemplateWrapper;
 diff --git a/src/utils/templates.ts b/src/utils/templates.ts
-index db0b247..878e327 100644
+index db0b247..83f0a9d 100644
 --- a/src/utils/templates.ts
 +++ b/src/utils/templates.ts
-@@ -1,7 +1,23 @@
+@@ -1,7 +1,19 @@
 -import { TemplateInfo, Token } from "../types/index.js";
 +import { TemplateInfo, TemplateKind, Token } from "../types/index.js";
  import { TokenTypes } from "../constants/index.js";
@@ -75,13 +72,9 @@ index db0b247..878e327 100644
 +  return chars.wrapper?.kind ?? "print";
 +}
 +
-+export function isAttributesTemplate(chars: Chars | undefined): boolean {
-+  return chars?.isTemplate === true && chars.wrapper?.role === "attributes";
-+}
-+
 +export function isStructuralTemplate(chars: Chars | undefined): boolean {
 +  const kind = templateKindOf(chars);
-+  return kind === "tag" || kind === "comment" || isAttributesTemplate(chars);
++  return kind === "tag" || kind === "comment";
 +}
  
  export const getRange = (info: TemplateInfo) => {

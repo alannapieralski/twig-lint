@@ -6,9 +6,10 @@ import { parseMarkup } from './html/parse-markup.js';
 import { parseTwigParserOptions } from './options.js';
 import { createOffsetLocator, type SourcePosition } from './source-text.js';
 import { groupTwigBlocks, summariseTwigBlocks, type TwigBlock, type TwigBlockKind, type TwigBlockSummary } from './twig/blocks.js';
+import { findUnpairedTwigTag } from './twig/pairing.js';
 import { toSameLengthJavaScript } from './twig/javascript.js';
 import { summariseTwigStrings, type TwigStringSummary } from './twig/strings.js';
-import { tokenizeTwig } from './twig/tokens.js';
+import { TwigSyntaxError, tokenizeTwig } from './twig/tokens.js';
 
 export type ParserOptions = { readonly ignoreInterpolatedAttributes?: readonly string[]; readonly rawContentTags?: readonly string[] } & Record<string, unknown>;
 
@@ -76,6 +77,13 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   const { ignoreInterpolatedAttributes, rawContentTags } = parseTwigParserOptions(options);
   const tokens = tokenizeTwig(code);
   const blocks = groupTwigBlocks(tokens);
+  const blockSummaries = summariseTwigBlocks(blocks);
+  const unpairedTag = findUnpairedTwigTag(blockSummaries);
+  if (unpairedTag) {
+    const { line, column } = createOffsetLocator(code)(unpairedTag.block.range[0]);
+    throw new TwigSyntaxError(unpairedTag.message, line, column + 1);
+  }
+
   const markup = parseMarkupWithinStack(code, blocks, rawContentTags);
   const omittedAttributes = omitInterpolatedAttributes(markup.ast, ignoreInterpolatedAttributes);
   const { statements, ...twigServices } = convertTwigBlocks(blocks, createOffsetLocator(code));
@@ -85,6 +93,6 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   return {
     ast,
     visitorKeys: { ...visitorKeys, Program: [...(visitorKeys['Program'] ?? []), 'twigBody'] },
-    services: { twig: { ...twigServices, omittedAttributes, blocks: summariseTwigBlocks(blocks), strings: summariseTwigStrings(tokens) } },
+    services: { twig: { ...twigServices, omittedAttributes, blocks: blockSummaries, strings: summariseTwigStrings(tokens) } },
   };
 }

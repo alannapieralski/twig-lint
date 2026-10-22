@@ -191,19 +191,11 @@ describe('compareWithHtmlOracle', () => {
     ]);
   });
 
-  it('reads an attributes print glued to an attribute name as its own attribute list', () => {
+  it('reads a print glued to an attribute name as part of the name', () => {
     const source = '<div data-panes{{ attributes }}>t</div>';
     const tokens: CompactToken[] = [['text', 0, '<div data-panes'], ['print', 15], ['endPrint', 29], ['text', 31, '>t</div>'], ['end', 39]];
 
     expect(oracleIssues(source, tokens)).toEqual([]);
-  });
-
-  it('reports a Twig method call read as part of the tag name', () => {
-    const source = "<div{{ x.addClass('y') }}>t</div>";
-    const tokens: CompactToken[] = [['text', 0, '<div'], ['print', 4], ['endPrint', 23], ['text', 25, '>t</div>'], ['end', 33]];
-
-    expect(oracleIssues(source, tokens)).toEqual([]);
-    expect(checksOf(issuesForTreeWithoutTwigKinds(source, tokens))).toEqual(['html-oracle: end tags', 'html-oracle: tag names']);
   });
 
   it('compares attribute names and value ranges by offset', () => {

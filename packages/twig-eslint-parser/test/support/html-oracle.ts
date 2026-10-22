@@ -63,13 +63,6 @@ const specialElements = new Set(`address applet area article aside base basefont
 const endTagChecks: Record<EndTagKind, string> = { 'closes-current': 'end tags', 'closes-after-implied-ends': 'implied end tags', 'unmatched': 'unmatched end tags' };
 export const branchPairedEndTagCheck = 'html-oracle: element opened and closed in different Twig branches';
 const foreignRoots = new Set(['svg', 'math']);
-const knownElements = new Set(`a abbr address area article aside audio b base bdi bdo blockquote body br button canvas caption cite code col colgroup
-  data datalist dd del details dfn dialog div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hgroup hr
-  html i iframe img input ins kbd label legend li link main map mark menu meta meter nav noscript object ol optgroup option output p picture
-  pre progress q rp rt ruby s samp script search section select slot small source span strong style sub summary sup table tbody td template
-  textarea tfoot th thead time title tr track u ul var video wbr svg path g use symbol circle rect line polyline polygon defs`.split(/\s+/));
-const customElementName = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/;
-const attributesObjectPrint = /^\{\{[-~]?\s*(?:[\w.]*attributes\b|create_attribute\s*\()|\.(?:add|remove)Class\s*\(|\.(?:set|remove)Attribute\s*\(/;
 const htmlWhitespace = /[\t\n\f\r ]/;
 const maxIssuesPerTemplate = 20;
 const maxExcerptLength = 60;
@@ -202,18 +195,6 @@ function blankTwigRanges(source: string, twigRanges: readonly TwigRange[]): stri
   return characters.join('');
 }
 
-function isKnownElementName(name: string): boolean {
-  return knownElements.has(name) || customElementName.test(name);
-}
-
-function isAttributesPrint(printText: string): boolean {
-  return attributesObjectPrint.test(printText);
-}
-
-function isAttributesAfterTagName(state: ScanState, printText: string): boolean {
-  return !state.isEndTag && (isKnownElementName(state.tagName) || attributesObjectPrint.test(printText));
-}
-
 function startsAttributeName(character: string | undefined): boolean {
   return character !== undefined && !htmlWhitespace.test(character) && character !== '/' && character !== '>' && character !== '{';
 }
@@ -222,7 +203,6 @@ function fillerFor(state: ScanState, range: TwigRange, source: string): Filler {
   if (range.kind !== 'print') return 'blank';
   switch (state.mode) {
     case 'attribute-name':
-      return isAttributesPrint(source.slice(range.start, range.end)) ? 'blank' : 'name';
     case 'tag-open':
     case 'end-tag-open':
     case 'before-attribute-value':
@@ -230,13 +210,11 @@ function fillerFor(state: ScanState, range: TwigRange, source: string): Filler {
     case 'attribute-value-single':
     case 'attribute-value-unquoted':
       return 'name';
-    case 'tag-name':
-      return isAttributesAfterTagName(state, source.slice(range.start, range.end)) ? 'blank' : 'name';
     case 'before-attribute-name':
     case 'after-attribute-name':
     case 'after-attribute-value':
     case 'self-closing':
-      return startsAttributeName(source[range.end]) && !isAttributesPrint(source.slice(range.start, range.end)) ? 'name' : 'blank';
+      return startsAttributeName(source[range.end]) ? 'name' : 'blank';
     default:
       return 'blank';
   }
@@ -394,6 +372,16 @@ function valueRangeAfterName(masked: string, nameEnd: number): Range | undefined
 
 function tagNameEnd(masked: string, nameStart: number): number {
   return nameStart + (/^[^\t\n\f\r />]*/.exec(masked.slice(nameStart))?.[0].length ?? 0);
+}
+
+function openTagStartEnd(source: string, nameEnd: number, twigRanges: readonly TwigRange[]): number {
+  let end = nameEnd;
+  for (;;) {
+    const gluedTwig = twigRanges.find((range) => range.start === end);
+    if (gluedTwig) end = gluedTwig.end;
+    else if (end > nameEnd && /[^\s/>]/.test(source[end] ?? '>')) end += 1;
+    else return end;
+  }
 }
 
 function pairingNameOf(source: string, nameStart: number, nameEnd: number): string {
@@ -643,8 +631,9 @@ export function compareWithHtmlOracle(source: string, twigRanges: readonly TwigR
       report('start tags', oracleTag.range, `missing start tag <${oracleTag.name}>`);
       continue;
     }
-    if (ourTag.openStart[1] !== oracleTag.nameEnd) {
-      report('tag names', oracleTag.range, `tag name ends at ${ourTag.openStart[1]}, oracle ${oracleTag.nameEnd}`);
+    const oracleOpenStartEnd = openTagStartEnd(source, oracleTag.nameEnd, twigRanges);
+    if (ourTag.openStart[1] !== oracleOpenStartEnd) {
+      report('tag names', oracleTag.range, `tag name ends at ${ourTag.openStart[1]}, oracle ${oracleOpenStartEnd}`);
       continue;
     }
     if (ourTag.openEnd[1] !== oracleTag.range[1]) report('start tags', oracleTag.range, `start tag ends at ${ourTag.openEnd[1]}, oracle ${oracleTag.range[1]}`);

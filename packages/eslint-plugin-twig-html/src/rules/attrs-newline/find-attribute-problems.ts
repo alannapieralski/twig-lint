@@ -31,7 +31,7 @@ function findReportedEnd(separator: AttributeSeparator, tag: TagNode, groups: re
 export function findAttributeProblems(tag: TagNode, source: TagSource, options: Required<Options>): Problem[] {
   const { text, lineBreak, blocks, attributesOf, isIgnored } = source;
   const attributes = attributesOf(tag);
-  const groups = groupAttributes(attributes, blocks);
+  const groups = groupAttributes(tag, attributes, blocks);
   if (groups.length <= options.ifAttrsMoreThan || isIgnored(tag)) return [];
 
   const separators = describeSeparators(tag, groups, text, lineBreak, options.closeStyle);

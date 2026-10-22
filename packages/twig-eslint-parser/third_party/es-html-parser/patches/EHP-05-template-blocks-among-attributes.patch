@@ -2,15 +2,15 @@ Description: Read template tags among attributes as attributes of their own
  Template characters never ended an attribute name, so in
  "<span {% if x %}class="a"{% endif %}>" the key was "{% if x %}class" and
  in "{{ a }}{% if b %} id="c"" the two templates merged into one key. Now a
- tag template, or a print marked with the "attributes" role, is an attribute
- key of its own and ends any key it follows; a comment template between
+ tag template is an attribute key of its own and ends any key it follows; a
+ comment template between
  attributes is skipped like whitespace. A print still continues a key, as in
  "data-{{ name }}".
 Author: Numiko
 Origin: vendor
 Forwarded: no
 Test: test/parser/parse-for-eslint.test.ts ("Twig as part of the markup structure")
-Last-Update: 2026-10-14
+Last-Update: 2026-10-22
 ---
 diff --git a/src/tokenizer/handlers/attribute-key.ts b/src/tokenizer/handlers/attribute-key.ts
 index 7aecd54..820a432 100644

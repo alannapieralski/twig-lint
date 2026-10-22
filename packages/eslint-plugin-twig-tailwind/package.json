@@ -13,7 +13,7 @@
   "homepage": "https://github.com/alannapieralski/twig-lint/tree/main/packages/eslint-plugin-twig-tailwind#readme",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": "^20.19.0 || ^22.12.0 || >=23"
   },
   "exports": {
     ".": {
@@ -45,7 +45,7 @@
     "twig-eslint-parser": "0.0.0"
   },
   "peerDependencies": {
-    "eslint": "^9.0.0 || ^10.0.0",
+    "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0",
     "eslint-plugin-better-tailwindcss": "4.8.0"
   },
   "devDependencies": {

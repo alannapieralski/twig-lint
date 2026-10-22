@@ -72,7 +72,8 @@ Examples of **correct** code:
 
 - **Attributes on their own line:** one step in from the tag (the `attribute` option).
 - **First attribute on the tag's line:** the other attributes line up with it. With
-  `alignAttributesVertically: false` they are indented `attribute` steps from the tag instead.
+  `alignAttributesVertically: false` they are indented `attribute` steps from the tag instead. Twig
+  touching the tag name, as in `<div{{ attributes }}`, is part of the tag, not a first attribute.
 - **A `>` or `/>` on its own line:** in line with the tag (the `closeBracket` option).
 
 ### Working with other rules
@@ -118,11 +119,6 @@ These lines keep whatever indentation the author wrote:
 - **The content of an element that is never closed**, meaning an element with no closing tag that holds
   other nodes. In `<ul><li>a<li>b</ul>` the second `li` becomes a child of the first, so its content
   is skipped. The parser cannot tell where these elements end.
-- **A file whose Twig tags do not pair up**, such as an `{% endif %}` with no `{% if %}`, an
-  `{% endfor %}` closing an `{% if %}`, or a bare `{% end %}`. A closing tag must be `end` plus the name
-  of the tag it closes. The rule cannot know the nesting, and guessing would move every later line, so
-  nothing in the file is reported, and nothing says it was skipped. Twig rejects such templates when it
-  renders them.
 
 Where the depth is unknown, the rule cannot say how many levels deep a line is, so it skips the
 content. It can still lay out a tag's own attribute lines and closing `>`, because they are measured

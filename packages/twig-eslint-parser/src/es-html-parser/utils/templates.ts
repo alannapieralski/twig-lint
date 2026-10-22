@@ -10,13 +10,9 @@ export function templateKindOf(chars: Chars | undefined): TemplateKind | undefin
   return chars.wrapper?.kind ?? "print";
 }
 
-export function isAttributesTemplate(chars: Chars | undefined): boolean {
-  return chars?.isTemplate === true && chars.wrapper?.role === "attributes";
-}
-
 export function isStructuralTemplate(chars: Chars | undefined): boolean {
   const kind = templateKindOf(chars);
-  return kind === "tag" || kind === "comment" || isAttributesTemplate(chars);
+  return kind === "tag" || kind === "comment";
 }
 
 export const getRange = (info: TemplateInfo) => {

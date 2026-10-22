@@ -109,14 +109,15 @@ that is never closed, moved content stays at the tag's indentation.
   render as a space. Inline SVG is skipped this way, so taking `svg` out of `ignores` lays it out.
 - **`pre` and `textarea`, and everything inside them**, even when `ignores` leaves them out, since
   their whitespace is content.
-- **Tags whose name is Twig**, such as `<{{ element }}>` or `<h{{ level }}>`, since Twig may render
-  them as an inline element.
+- **Tags whose name is Twig**, such as `<{{ element }}>`, since Twig may render them as an inline
+  element.
 - **Tags with no closing tag**, such as `<img>`.
 
 ### Reported but not fixed
 
 - **Elements not known to ignore edge whitespace**, such as custom elements and unknown tags. A line
-  break inside an inline element can render as a space.
+  break inside an inline element can render as a space. A tag name ends where Twig starts, so
+  `<h{{ level }}>` is checked as the unknown tag `h`.
 
 ### Not checked at all
 

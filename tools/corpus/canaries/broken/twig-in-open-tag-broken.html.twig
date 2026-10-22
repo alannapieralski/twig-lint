@@ -1,7 +1,7 @@
 <header class="top" id="head" data-js="nav">
   <ul class="list" id="main" data-a="1">
     {% for item in items %}
-      <li {% if x class="item" %} data-x="y" id="z">{{ item.title }}</li>
+      <li {% if x class="item" %}{% endif %} data-x="y" id="z">{{ item.title }}</li>
     {% endfor %}
   </ul>
 </header>

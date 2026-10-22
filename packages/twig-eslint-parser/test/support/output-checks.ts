@@ -340,7 +340,8 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
       const token = tag[part] as Token | undefined;
       if (token && code.slice(...token.range) !== token.value) report('html: tag parts match source', `${part} ${JSON.stringify(token.value).slice(0, 40)}`, token.range);
     }
-    if (tag.name.toLowerCase() !== code.slice(tag.openStart.range[0] + 1, tag.openStart.range[1]).toLowerCase()) report('html: tag name matches source', `${tag.name} vs ${code.slice(...tag.openStart.range)}`, tag.openStart.range);
+    const openStartAfterName = code.slice(tag.openStart.range[0] + 1, tag.openStart.range[1]).toLowerCase().slice(tag.name.length);
+    if (!code.slice(tag.openStart.range[0] + 1).toLowerCase().startsWith(tag.name.toLowerCase()) || !/^(\{|$)/.test(openStartAfterName)) report('html: tag name matches source', `${tag.name} vs ${code.slice(...tag.openStart.range)}`, tag.openStart.range);
     if (isTwigGluedToName(tag.name)) report('html: Twig block glued to a name', `<${tag.name.slice(0, 60)}`, tag.openStart.range);
     for (const attribute of tag.attributes ?? []) {
       if (code.slice(...attribute.key.range) !== attribute.key.value) report('html: attribute name matches source', JSON.stringify(attribute.key.value).slice(0, 40), attribute.key.range);

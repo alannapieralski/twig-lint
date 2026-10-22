@@ -1,37 +1,36 @@
-Description: End or continue a tag name according to the template that follows
- A template character used to be appended to whatever tag name was being
- read, so "<div{{ attributes }}>" had the tag name "div{{" and "<{{ tag }}>"
- was not a tag at all. Now:
+Description: Keep templates glued to a tag name in the open tag start
+ A template character was appended to the tag name, so "<div{{ attributes }}>"
+ had the tag name "div{{" and "<{{ tag }}>" was not a tag at all. Now:
  - "<" followed by a print template opens a tag whose name is that print;
- - a tag or comment template, or a print marked with the "attributes" role,
-   ends the tag name and is read again as the start of the attribute list;
- - any other print continues a compound name such as "h{{ level }}".
- The open tag start token carries its parts when the name holds a template,
- and the tree constructor takes the element name from those parts, keeping
- template text verbatim and lower-casing only the HTML around it.
+ - a template glued to the name stays in the open tag start token, and the
+   element name ends where it starts, so "<h{{ level }}>" and
+   "<div{{ attributes }}>" are named "h" and "div" whatever the print
+   outputs. Only whitespace, ">" or "/" ends the open tag start.
+ The open tag start token carries its parts when it holds a template, and
+ the name is taken from those parts, keeping template text verbatim and
+ lower-casing only the HTML around it.
 Author: Numiko
 Origin: vendor
 Forwarded: no
 Test: test/parser/parse-for-eslint.test.ts ("Twig as part of the markup structure")
-Last-Update: 2026-10-14
+Last-Update: 2026-10-22
 ---
 diff --git a/src/tokenizer/handlers/data.ts b/src/tokenizer/handlers/data.ts
-index 92333ba..0881b5f 100644
+index 92333ba..2504597 100644
 --- a/src/tokenizer/handlers/data.ts
 +++ b/src/tokenizer/handlers/data.ts
-@@ -1,5 +1,10 @@
+@@ -1,5 +1,9 @@
  import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
 -import { calculateTokenPosition, createParts } from "../../utils/index.js";
 +import {
 +  calculateTokenPosition,
 +  createParts,
-+  isAttributesTemplate,
 +  templateKindOf,
 +} from "../../utils/index.js";
  import { Range, AnyToken, TokenizerState } from "../../types/index.js";
  import { CharsBuffer } from "../chars-buffer.js";
  
-@@ -8,7 +13,7 @@ const OPEN_TAG_START_PATTERN = /^<\w/;
+@@ -8,7 +12,7 @@ const OPEN_TAG_START_PATTERN = /^<\w/;
  
  export function parse(chars: CharsBuffer, state: TokenizerState) {
    const value = chars.value();
@@ -40,7 +39,7 @@ index 92333ba..0881b5f 100644
      return parseOpeningCornerBraceWithText(state);
    }
  
-@@ -38,6 +43,17 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -38,6 +42,16 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
    state.sourceCode.next();
  }
  
@@ -50,8 +49,7 @@ index 92333ba..0881b5f 100644
 +    rest.length === 0 &&
 +    first?.isTemplate === false &&
 +    first.value === "<" &&
-+    templateKindOf(second) === "print" &&
-+    !isAttributesTemplate(second)
++    templateKindOf(second) === "print"
 +  );
 +}
 +
@@ -59,31 +57,21 @@ index 92333ba..0881b5f 100644
    const textContent =
      state.accumulatedContent.value() + state.decisionBuffer.value();
 diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
-index 5aafa61..dcd7a7a 100644
+index 5aafa61..3f6b266 100644
 --- a/src/tokenizer/handlers/open-tag-start.ts
 +++ b/src/tokenizer/handlers/open-tag-start.ts
-@@ -1,8 +1,10 @@
+@@ -1,8 +1,9 @@
  import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
  import {
    calculateTokenPosition,
 +  createParts,
-+  isStructuralTemplate,
    isWhitespace,
 -  parseOpenTagName,
 +  openTagNameOf,
  } from "../../utils/index.js";
  import type { TokenizerState } from "../../types/index.js";
  import { CharsBuffer } from "../chars-buffer.js";
-@@ -22,21 +24,41 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
-     return parseWhitespace(state);
-   }
- 
-+  if (isStructuralTemplate(chars.last())) {
-+    return parseNameEndBeforeTemplate(state);
-+  }
-+
-   state.accumulatedContent.concatBuffer(state.decisionBuffer);
-   state.decisionBuffer.clear();
+@@ -27,16 +28,23 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
    state.sourceCode.next();
  }
  
@@ -104,21 +92,12 @@ index 5aafa61..dcd7a7a 100644
 +  return tagName;
 +}
 +
-+function parseNameEndBeforeTemplate(state: TokenizerState) {
-+  const tagName = pushOpenTagStart(state);
-+
-+  state.accumulatedContent.clear();
-+  state.decisionBuffer.clear();
-+  state.currentContext = TokenizerContextTypes.Attributes;
-+  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
-+}
-+
 +function parseWhitespace(state: TokenizerState) {
 +  const tagName = pushOpenTagStart(state);
  
    state.accumulatedContent.clear();
    state.decisionBuffer.clear();
-@@ -46,15 +68,7 @@ function parseWhitespace(state: TokenizerState) {
+@@ -46,15 +54,7 @@ function parseWhitespace(state: TokenizerState) {
  }
  
  function parseTagEnd(state: TokenizerState) {
@@ -166,10 +145,10 @@ index 0d30281..f48b2e3 100644
 +export * from "./tag-name.js";
 diff --git a/src/utils/tag-name.ts b/src/utils/tag-name.ts
 new file mode 100644
-index 0000000..6fbec3b
+index 0000000..c27bc00
 --- /dev/null
 +++ b/src/utils/tag-name.ts
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,42 @@
 +import { TokenTypes } from "../constants/index.js";
 +import { CharsBuffer } from "../tokenizer/chars-buffer.js";
 +import { parseOpenTagName } from "./parse-open-tag-name.js";
@@ -179,25 +158,36 @@ index 0000000..6fbec3b
 +  parts?: { type: TokenTypes; value: string }[];
 +};
 +
++type NamePart = { isTemplate: boolean; value: string };
++
++function nameBeforeGluedTemplate(parts: NamePart[], opening: RegExp): string {
++  let name = "";
++  for (const part of parts) {
++    if (part.isTemplate && name.trim() !== "") {
++      break;
++    }
++    name += part.isTemplate ? part.value : part.value.replace(opening, "").toLowerCase();
++  }
++  return name.trim();
++}
++
++function namePartsOf(token: NamedToken): NamePart[] {
++  return (token.parts ?? []).map((part) => ({
++    isTemplate: part.type === TokenTypes.Template,
++    value: part.value,
++  }));
++}
++
 +export function openTagNameOf(buffer: CharsBuffer): string {
 +  if (!buffer.hasTemplate()) {
 +    return parseOpenTagName(buffer.value());
 +  }
-+  return buffer
-+    .getParts()
-+    .map((chars) => (chars.isTemplate ? chars.value : chars.value.toLowerCase()))
-+    .join("")
-+    .replace(/^</, "");
++  return nameBeforeGluedTemplate(buffer.getParts(), /^</);
 +}
 +
 +export function tagNameOf(token: NamedToken): string {
 +  if (!token.parts || token.parts.length === 0) {
 +    return parseOpenTagName(token.value);
 +  }
-+  return token.parts
-+    .map((part) =>
-+      part.type === TokenTypes.Template ? part.value : part.value.toLowerCase()
-+    )
-+    .join("")
-+    .replace(/^</, "");
++  return nameBeforeGluedTemplate(namePartsOf(token), /^</);
 +}

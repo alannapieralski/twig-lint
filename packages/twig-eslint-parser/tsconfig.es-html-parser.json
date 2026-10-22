@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023"],
     "composite": true,
     "strict": true,
     "rootDir": "src/es-html-parser",

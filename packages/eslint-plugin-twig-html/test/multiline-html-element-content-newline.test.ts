@@ -143,7 +143,7 @@ describe('twig-html/multiline-html-element-content-newline', () => {
     expect((await lint(code)).messages).toEqual([]);
   });
 
-  it.each(['my-element', 'unknown'])('reports <%s>, which is not ignored by default, but does not fix it, since a line break inside it may render as a space', async (name) => {
+  it.each(['my-element', 'unknown', 'h{{ level }}'])('reports <%s>, which is not ignored by default, but does not fix it, since a line break inside it may render as a space', async (name) => {
     const code = `<${name}\n  class="a"\n>new</${name}>`;
     const result = await lint(code);
     expect(result.output).toBe(code);
@@ -175,7 +175,7 @@ describe('twig-html/multiline-html-element-content-newline', () => {
     expect(await fixedAlone(code)).toBe(code.replace(/^<(h1|p)>/, '<$1>\n'));
   });
 
-  it.each(['{{ element }}', 'h{{ level }}'])('never touches <%s>, whose name Twig may render as an inline element', async (name) => {
+  it.each(['{{ element }}'])('never touches <%s>, whose name Twig may render as an inline element', async (name) => {
     const code = `<${name}\n  class="a"\n  id="b"\n>this</${name}>`;
     expect((await lint(code)).messages).toEqual([]);
   });

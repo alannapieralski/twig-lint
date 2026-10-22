@@ -18,7 +18,7 @@ and understand Twig blocks, so their fixes keep Twig nesting and Twig inside tag
 npm install --save-dev eslint-plugin-twig-html eslint
 ```
 
-Requires Node.js 24 or later and ESLint 9 or 10. The package is ESM only. `twig-eslint-parser` is
+Requires Node.js 20.19 or later and ESLint 8.57 or later, using flat config. The package is ESM only. `twig-eslint-parser` is
 installed with it.
 
 ## Usage
@@ -48,12 +48,6 @@ still counts them, checks their quotes and leaves their values alone.
 ## Known limitations
 
 Gaps in a single rule are listed on its page. These cut across rules:
-
-- **A print that builds a tag name is read as an attribute** when no close tag in the file spells it, so
-  `<h{{ heading }} class="a" id="b">x</h1>` is split as `<h`, `{{ heading }}`, ... and breaks the tag.
-  See [`attrs-newline`](docs/rules/attrs-newline.md#known-gaps).
-- **`indent` skips a whole file, silently, when its Twig end tags do not pair up**, such as a bare
-  `{% end %}`. See [`indent`](docs/rules/indent.md#not-checked-at-all).
 
 - **Elements opened or closed in different Twig branches** are never fixed across a branch, by any rule.
 - **Open tags missing their `>`** are a parsing error, except when an unquoted value runs into the next tag

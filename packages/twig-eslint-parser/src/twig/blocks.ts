@@ -1,3 +1,4 @@
+import { blockTags } from './syntax.js';
 import { isSignificant, type TwigToken, type TwigTokenType } from './tokens.js';
 
 export type TwigBlockKind = 'print' | 'tag' | 'comment';
@@ -38,7 +39,7 @@ export function isShortFormTag(block: TwigBlock): boolean {
 }
 
 function opensNesting(block: TwigBlock, closedTagNames: ReadonlySet<string>): boolean {
-  if (block.tagName === undefined || !closedTagNames.has(block.tagName)) return false;
+  if (block.tagName === undefined || !(blockTags.has(block.tagName) || closedTagNames.has(block.tagName))) return false;
   return !isShortFormTag(block);
 }
 

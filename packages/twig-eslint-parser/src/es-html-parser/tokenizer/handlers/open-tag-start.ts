@@ -2,7 +2,6 @@ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
 import {
   calculateTokenPosition,
   createParts,
-  isStructuralTemplate,
   isWhitespace,
   openTagNameOf,
 } from "../../utils/index.js";
@@ -24,10 +23,6 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
     return parseWhitespace(state);
   }
 
-  if (isStructuralTemplate(chars.last())) {
-    return parseNameEndBeforeTemplate(state);
-  }
-
   state.accumulatedContent.concatBuffer(state.decisionBuffer);
   state.decisionBuffer.clear();
   state.sourceCode.next();
@@ -46,15 +41,6 @@ function pushOpenTagStart(state: TokenizerState): string {
     ...(parts.length > 0 && { parts }),
   });
   return tagName;
-}
-
-function parseNameEndBeforeTemplate(state: TokenizerState) {
-  const tagName = pushOpenTagStart(state);
-
-  state.accumulatedContent.clear();
-  state.decisionBuffer.clear();
-  state.currentContext = TokenizerContextTypes.Attributes;
-  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
 }
 
 function parseWhitespace(state: TokenizerState) {

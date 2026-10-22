@@ -17,7 +17,7 @@ function isPositionedSyntaxError(error: unknown): error is SyntaxError & { pos: 
 export function parseMarkup(source: string, blocks: readonly TwigBlock[], rawContentTags: ReadonlySet<string>): HtmlParseResult {
   const verbatim = maskVerbatimDelimiters(source, blocks);
   const parseOptions = {
-    templateInfos: templateInfosOf(source, blocks),
+    templateInfos: templateInfosOf(blocks),
     rawContentTags: [...new Set([...rawTextElements, ...rawContentTags])],
     voidElements: drupalVoidElements,
   };

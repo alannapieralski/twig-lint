@@ -36,22 +36,21 @@ Examples of **correct** code:
 
 ### What counts as one attribute
 
-The parser decides what is an attribute and what builds the tag name, because Twig output cannot be
-known in advance. The rule counts whatever the parser gives it:
+The rule counts the attributes the parser gives it:
 
 - **HTML attributes:** every one, including those whose value contains Twig (`id="item-{{ id }}"`).
 - **A print separated from the previous token by whitespace**, such as `<div {{ attributes }} class="a">`.
   It counts as one attribute and moves to its own line. This renders the same HTML.
-- **A print touching the end of the tag name**, such as `<div{{ attributes }}>` or `<input{{ attrs }}>`.
-  It is read as attributes, whatever the expression is called, unless a close tag anywhere in the file
-  spells the same Twig into the name (`<h{{ level }}>...</h{{ level }}>`). Then it is part of the name.
+- **Twig touching the end of the tag name**, such as `<div{{ attributes }}` or `<h{{ level }}`, is part
+  of the tag, not an attribute, so it is not counted and stays on the tag's line. Twig output cannot be
+  known in advance, and a line break there could split a name the Twig builds. Put a space before it to
+  have it counted and moved.
 - **A print straight after `<`**, such as `<{{ html_element }}>`, is always the name.
-- **Conditional attributes:** `<div{% if id %} id="{{ id }}"{% endif %}>` counts as one.
+- **Conditional attributes:** `<div {% if id %}id="{{ id }}"{% endif %}>` counts as one.
 - **Twig blocks spanning attributes:** `{% if checked %}checked disabled{% endif %}` counts as one and
   stays together on one line, so the block is never split.
 
-Parts of the tag name are never counted and stay on the tag's line. See Known gaps for the case where
-the parser cannot tell.
+Parts of the tag name are never counted and stay on the tag's line.
 
 ### Which tags are checked
 
@@ -96,14 +95,6 @@ at the tag's own indentation.
 
 - **A tag where a Twig block opens or branches without closing inside the tag.** The tag has a
   different shape on each branch.
-
-### Known gaps
-
-- **A print that builds the tag name is read as an attribute when no close tag in the file spells it.**
-  In `<h{{ heading }} class="a" id="b">x</h1>` the fix puts `{{ heading }}` on its own line, which
-  renders as `<h`, a line break, then `1`, and breaks the tag. The same happens to an open tag with no
-  close tag at all. The reverse also happens: one matching close tag anywhere in the file makes every
-  open tag with the same print read it as part of the name.
 
 ## Options
 
@@ -167,7 +158,7 @@ Checked against `@html-eslint/eslint-plugin` 0.67 running on Twig through `twig-
 
 ## Testing
 
-- `test/attrs-newline.test.ts` covers the layout, the options, prints touching the tag name, Twig blocks that span
+- `test/attrs-newline.test.ts` covers the layout, the options, Twig touching the tag name, Twig blocks that span
   attributes, Twig in tag names, multi-line values, inline SVG, Windows line endings, text in
   `textarea`, the unfixable Twig-comment case and open tags missing their `>`.
 - `test/fix-safety.test.ts` fixes every parser fixture and checks the result changes only whitespace

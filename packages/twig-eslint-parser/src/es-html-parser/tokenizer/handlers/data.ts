@@ -2,7 +2,6 @@ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
 import {
   calculateTokenPosition,
   createParts,
-  isAttributesTemplate,
   templateKindOf,
 } from "../../utils/index.js";
 import { Range, AnyToken, TokenizerState } from "../../types/index.js";
@@ -49,8 +48,7 @@ function startsTemplateTagName(chars: CharsBuffer): boolean {
     rest.length === 0 &&
     first?.isTemplate === false &&
     first.value === "<" &&
-    templateKindOf(second) === "print" &&
-    !isAttributesTemplate(second)
+    templateKindOf(second) === "print"
   );
 }
 

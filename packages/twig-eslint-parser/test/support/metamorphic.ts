@@ -77,8 +77,12 @@ function findBlocksInsideStartTags(source: string, blocks: readonly TwigBlock[])
   return insideTags;
 }
 
+function isGluedToTagName(source: string, block: TwigBlock): boolean {
+  return /^<[A-Za-z][^\s>]*$/.test(source.slice(source.lastIndexOf('<', block.start), block.start));
+}
+
 function separateTwigTagsFromAttributeNames(source: string, blocks: readonly TwigBlock[]): string {
-  const edits = findBlocksInsideStartTags(source, blocks).filter((block) => block.kind !== 'print').flatMap((block): Edit[] => [
+  const edits = findBlocksInsideStartTags(source, blocks).filter((block) => block.kind !== 'print' && !isGluedToTagName(source, block)).flatMap((block): Edit[] => [
     ...(attributeNameCharacter.test(source[block.start - 1] ?? '') ? [{ at: block.start, remove: 0, insert: ' ' }] : []),
     ...(attributeNameCharacter.test(source[block.end] ?? '') ? [{ at: block.end, remove: 0, insert: ' ' }] : []),
   ]);

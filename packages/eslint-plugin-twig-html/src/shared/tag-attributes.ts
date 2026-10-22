@@ -10,7 +10,10 @@ function byStart(first: RangedAttribute, second: RangedAttribute): number {
 }
 
 export function createAttributesOf(omittedAttributes: readonly OmittedAttribute[]): AttributesOf {
-  const omittedByOwner: ReadonlyMap<object, readonly OmittedAttribute[]> = Map.groupBy(omittedAttributes, (omitted) => omitted.owner);
+  const omittedByOwner = new Map<object, OmittedAttribute[]>();
+  for (const omitted of omittedAttributes) {
+    omittedByOwner.set(omitted.owner, [...(omittedByOwner.get(omitted.owner) ?? []), omitted]);
+  }
 
   return (tag) => {
     const attributesInTree = tag.attributes ?? [];
