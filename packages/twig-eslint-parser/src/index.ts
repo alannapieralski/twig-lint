@@ -13,7 +13,7 @@ export type { ParserOptions, TwigParseResult, TwigParserServices, UnconvertedTwi
 export { containsTwig, isAttributeNode } from './attributes.js';
 export type { AttributeNode, AttributeOwner, OmittedAttribute } from './attributes.js';
 export type { TwigBlockSummary } from './twig/blocks.js';
-export { drupalClassMethods } from './drupal.js';
+export { middleTags } from './twig/syntax.js';
 export { HtmlSyntaxError } from './html/syntax-error.js';
 export { TwigSyntaxError } from './twig/tokens.js';
 

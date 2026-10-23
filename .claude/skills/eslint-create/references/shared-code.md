@@ -7,7 +7,7 @@ Before adding a function, type or constant, look for it in this order and use wh
 1. The rule's own folder.
 2. The plugin's `src/shared/`.
 3. The parser's public API: `packages/twig-eslint-parser/src/index.ts` (for example
-   `readTwigServices`, `containsTwig`, `isAttributeNode`, `drupalClassMethods`).
+   `readTwigServices`, `containsTwig`, `isAttributeNode`).
 4. The other plugin's `src/shared/`.
 
 Useful searches:

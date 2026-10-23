@@ -1,9 +1,7 @@
-import type { TwigBlockSummary } from 'twig-eslint-parser';
+import { middleTags, type TwigBlockSummary } from 'twig-eslint-parser';
 import type { TwigSegment } from './types.js';
 
 type OpenFrame = { readonly name: string; readonly frameStart: number; readonly segmentStart: number; readonly boundaryStart: number };
-
-const middleTagNames: ReadonlySet<string> = new Set(['else', 'elseif', 'plural']);
 
 export function twigBlockEnd(block: TwigBlockSummary, text: string): number {
   return text.lastIndexOf('}', block.range[1] - 1) + 1;
@@ -18,7 +16,7 @@ function isCloser(block: TwigBlockSummary): boolean {
 }
 
 function isMiddle(block: TwigBlockSummary): boolean {
-  return block.kind === 'tag' && middleTagNames.has(block.tagName ?? '');
+  return block.kind === 'tag' && middleTags.has(block.tagName ?? '');
 }
 
 function closesFrame(block: TwigBlockSummary, frame: OpenFrame): boolean {
