@@ -46,10 +46,10 @@
   },
   "peerDependencies": {
     "eslint": "^9.0.0 || ^10.0.0",
-    "eslint-plugin-better-tailwindcss": "4.8.0"
+    "eslint-plugin-better-tailwindcss": "4.9.1"
   },
   "devDependencies": {
-    "eslint-plugin-better-tailwindcss": "4.8.0",
+    "eslint-plugin-better-tailwindcss": "4.9.1",
     "tailwindcss": "4.3.3"
   }
 }
