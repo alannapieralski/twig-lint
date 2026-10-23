@@ -10,6 +10,7 @@ export type TagWithAttributes = Omit<ParsedTag, 'attributes'> & { readonly attri
 export type QuoteSource = {
   readonly text: string;
   readonly blocks: readonly TwigBlockSummary[];
+  readonly unsoundTagStarts: ReadonlySet<number>;
   readonly htmlQuote: TwigQuote;
   readonly twigQuote: TwigQuote;
 };

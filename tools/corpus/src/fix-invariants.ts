@@ -271,8 +271,8 @@ export function reviewFix(source: string, fixed: string, fixKeeps: FixKeeps, app
   if ('error' in before) return { problems: [], notes: [] };
 
   const problems: FixProblem[] = [...describeAddedLineBreaks(source, fixed), ...describeUnderIndentedTagLines(source, before.result, fixed, after.result)];
-  if (after.result.services.twig.unconvertedBlocks.length !== before.result.services.twig.unconvertedBlocks.length) {
-    problems.push({ message: 'the fix changes how many Twig blocks the parser can read' });
+  if (after.result.services.twig.diagnostics.length !== before.result.services.twig.diagnostics.length) {
+    problems.push({ message: 'the fix changes how many parse problems the parser reports' });
   }
   const blockChange = describeFirstDifference(twigBlockShapes(before.result), twigBlockShapes(after.result));
   if (blockChange) problems.push({ ...blockChange, message: `the fix changes the Twig blocks: ${blockChange.message}` });

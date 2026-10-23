@@ -1,6 +1,6 @@
-import type { TwigBlockSummary } from 'twig-eslint-parser';
+import type { TwigBlockSummary } from '../../src/twig/blocks.js';
 import { describe, expect, it } from 'vitest';
-import { depthChangeWithin, isTwigBalancedWithin } from '../src/shared/twig-blocks.js';
+import { depthChangeWithin, isTwigBalancedWithin } from '../../src/twig/balance.js';
 
 const block = (tagName: string, start: number, depthChange: TwigBlockSummary['depthChange']): TwigBlockSummary => ({
   kind: 'tag',

@@ -123,7 +123,9 @@ that is never closed, moved content stays at the tag's indentation.
   wrapper opened in `{% if wrap %}<div>{% endif %}` and closed in `{% if wrap %}</div>{% endif %}`.
   Moving the edges would move the Twig tags with them. Twig blocks that open and close inside the
   content are fine.
-- **An open tag that is missing its `>`**, where the parser reads the markup after it as attributes.
+- **An open tag the parser could not read cleanly**: no `>` before the end of the file, or a quote or
+  `<` left in an attribute name or an unquoted value. The parser reads the markup after it as
+  attributes. [`no-parse-errors`](no-parse-errors.md) reports the tag itself.
 
 ## Options
 

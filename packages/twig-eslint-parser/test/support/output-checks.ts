@@ -281,9 +281,10 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
   const allBlocks = groupTwigBlocks(tokenizeTwig(code));
   const expressionBlocks = allBlocks.filter((block) => block.kind !== 'comment');
   const services = result.services.twig;
-  for (const block of services.unconvertedBlocks) report('converts every Twig block', `${code.slice(...block.range)} (${block.reason})`, [block.range[0], block.range[1]]);
+  const unparsedBlocks = services.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig');
+  for (const block of unparsedBlocks) report('converts every Twig block', `${code.slice(...block.range)} (${block.message})`, [block.range[0], block.range[1]]);
   const convertedRanges: Range[] = expressionBlocks
-    .filter((block) => toSameLengthJavaScript(block) !== undefined && !services.unconvertedBlocks.some((unconverted) => unconverted.range[0] === block.start))
+    .filter((block) => toSameLengthJavaScript(block) !== undefined && !unparsedBlocks.some((unparsed) => unparsed.range[0] === block.start))
     .map((block) => [block.start, block.end]);
 
   const stringCountByStart = new Map<number, number>();

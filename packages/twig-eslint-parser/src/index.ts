@@ -9,11 +9,14 @@ export { parseForESLint };
 export { readTwigServices } from './services.js';
 export { findInterpolatedStrings } from './twig/strings.js';
 export type { TwigQuote, TwigStringSummary } from './twig/strings.js';
-export type { ParserOptions, TwigParseResult, TwigParserServices, UnconvertedTwigBlock } from './parse-for-eslint.js';
+export type { ParserOptions, TwigParseResult, TwigParserServices } from './parse-for-eslint.js';
+export { diagnosticCodes } from './diagnostics.js';
+export type { DiagnosticCode, TwigDiagnostic } from './diagnostics.js';
 export { containsTwig, isAttributeNode } from './attributes.js';
 export type { AttributeNode, AttributeOwner, OmittedAttribute } from './attributes.js';
 export type { TwigBlockSummary } from './twig/blocks.js';
 export { middleTags } from './twig/syntax.js';
+export { depthChangeWithin, isTwigBalancedWithin } from './twig/balance.js';
 export { HtmlSyntaxError } from './html/syntax-error.js';
 export { TwigSyntaxError } from './twig/tokens.js';
 

@@ -1,6 +1,5 @@
-import { containsTwig, type AttributeNode } from 'twig-eslint-parser';
+import { containsTwig, depthChangeWithin, type AttributeNode } from 'twig-eslint-parser';
 import type { Problem } from '../../shared/problem.js';
-import { depthChangeWithin } from '../../shared/twig-blocks.js';
 import { htmlTextOf, printsTwigOutput } from './attribute-value.js';
 import { describeQuote } from './quote-style.js';
 import type { AttributeValue, AttributeWrapper, QuoteSource } from './types.js';

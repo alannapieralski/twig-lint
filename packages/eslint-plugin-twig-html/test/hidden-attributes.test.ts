@@ -8,6 +8,7 @@ const everyRuleOff: Linter.RulesRecord = {
   'twig-html/attrs-newline': 'off',
   'twig-html/indent': 'off',
   'twig-html/multiline-html-element-content-newline': 'off',
+  'twig-html/no-parse-errors': 'off',
   'twig-html/quotes': 'off',
 };
 

@@ -240,15 +240,7 @@ describe('twig-tailwind/no-twig-interpolation', () => {
   });
 });
 
-describe('twig-tailwind/no-unparsed-twig', () => {
-  it('reports a Twig block the parser could not read at its position', async () => {
-    const code = '<p>\n  {{ a b c }}\n</p>';
-    const result = await lint(code);
-    expect(describeMessages(result.messages)).toEqual([
-      '2:3 twig-tailwind/no-unparsed-twig This Twig block could not be parsed (Unexpected token b), so nothing inside it is linted. Check the expression is valid Twig.',
-    ]);
-  });
-
+describe('valid Twig', () => {
   it('stays quiet about valid Twig that mixes ?? with and', async () => {
     const result = await lint("{% set classes = [modifier ?? 'w-full' and active ? 'flex'] %}");
     expect(result.messages).toEqual([]);

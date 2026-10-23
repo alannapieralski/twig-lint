@@ -5,7 +5,7 @@ import twigHtml from '../src/index.js';
 type LintSettings = { fix?: boolean; extraConfig?: Linter.Config[] };
 
 async function lint(code: string, ruleOptions?: Record<string, unknown>, { fix = true, extraConfig = [] }: LintSettings = {}) {
-  const rules: Linter.RulesRecord = { 'twig-html/attrs-newline': 'off', 'twig-html/multiline-html-element-content-newline': 'off', ...(ruleOptions && { 'twig-html/quotes': ['warn', ruleOptions] }) };
+  const rules: Linter.RulesRecord = { 'twig-html/attrs-newline': 'off', 'twig-html/multiline-html-element-content-newline': 'off', 'twig-html/no-parse-errors': 'off', ...(ruleOptions && { 'twig-html/quotes': ['warn', ruleOptions] }) };
   const eslint = new ESLint({ overrideConfigFile: true, fix, overrideConfig: [twigHtml.configs.recommended, ...extraConfig, { files: ['**/*.twig'], rules }] });
   const [result] = await eslint.lintText(code, { filePath: 'template.html.twig' });
   if (!result) throw new Error('ESLint returned no result.');

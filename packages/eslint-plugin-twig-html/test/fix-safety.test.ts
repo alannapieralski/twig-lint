@@ -53,7 +53,7 @@ describe.each(layoutRuleIds)('%s --fix', (ruleId) => {
     const { code, output } = await fixWithOnly(ruleId, fixtureName);
     expect(withoutHtmlWhitespace(output)).toBe(withoutHtmlWhitespace(code));
     expect(() => parseForESLint(output)).not.toThrow();
-    expect(parseForESLint(output).services.twig.unconvertedBlocks.length).toBe(parseForESLint(code).services.twig.unconvertedBlocks.length);
+    expect(parseForESLint(output).services.twig.diagnostics.length).toBe(parseForESLint(code).services.twig.diagnostics.length);
   });
 });
 
@@ -62,7 +62,7 @@ describe.each([{}, { html: 'single', twig: 'double' }])('twig-html/quotes %j --f
     const { code, output } = await fixWithOnly('twig-html/quotes', fixtureName, options);
     expect(withoutQuoting(output)).toBe(withoutQuoting(code));
     expect(() => parseForESLint(output)).not.toThrow();
-    expect(parseForESLint(output).services.twig.unconvertedBlocks.length).toBe(parseForESLint(code).services.twig.unconvertedBlocks.length);
+    expect(parseForESLint(output).services.twig.diagnostics.length).toBe(parseForESLint(code).services.twig.diagnostics.length);
     expect(describeStrings(output)).toEqual(describeStrings(code));
   });
 });

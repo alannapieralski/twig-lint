@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { evenlySpaced, type Check, type CheckOutcome, type Finding, type PackageCorpus, type Template, type TemplateCoverage } from '../../../tools/corpus/src/index.js';
-import { parseForESLint, type UnconvertedTwigBlock } from '../src/index.js';
+import { parseForESLint, type TwigDiagnostic } from '../src/index.js';
 import { createOffsetLocator } from '../src/source-text.js';
 import { findParityMismatches, type Golden } from './lexer/parity.js';
 import { branchPairedEndTagCheck, compareWithHtmlOracle, twigRangesFromOracle } from './support/html-oracle.js';
@@ -17,9 +17,9 @@ const oracleDirectory = resolve(import.meta.dirname, '../tools/twig-oracle');
 const oracleScript = resolve(oracleDirectory, 'tokenize.php');
 const oracleChunkSize = 500;
 
-function unconvertedBlocksOf(source: string): readonly UnconvertedTwigBlock[] | undefined {
+function unparsedTwigOf(source: string): readonly TwigDiagnostic[] | undefined {
   try {
-    return parseForESLint(source).services.twig.unconvertedBlocks;
+    return parseForESLint(source).services.twig.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig');
   } catch {
     return undefined;
   }
@@ -101,14 +101,14 @@ const convertsEveryBlock: Check = {
     let notParsed = 0;
     for (const [index, template] of templates.entries()) {
       context.progress(index, { failures: findings.length });
-      const blocks = unconvertedBlocksOf(template.source);
+      const blocks = unparsedTwigOf(template.source);
       if (blocks === undefined) {
         notParsed += 1;
         continue;
       }
       const locate = createOffsetLocator(template.source);
       for (const block of blocks) {
-        findings.push({ check: 'parser/converts-every-block', severity: 'failure', template, message: `${template.source.slice(...block.range)} (${block.reason})`, line: locate(block.range[0]).line });
+        findings.push({ check: 'parser/converts-every-block', severity: 'failure', template, message: `${template.source.slice(...block.range)} (${block.message})`, line: locate(block.range[0]).line });
       }
     }
     return { findings, stats: { templates: templates.length, notParsed } };

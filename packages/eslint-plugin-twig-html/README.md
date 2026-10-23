@@ -31,7 +31,7 @@ export default [twigHtml.configs.recommended];
 ```
 
 `configs.recommended` applies to `**/*.twig` except `**/*.svg.twig`, sets `twig-eslint-parser` as the parser and turns on
-`twig-html/attrs-newline`, `twig-html/indent`, `twig-html/multiline-html-element-content-newline` and `twig-html/quotes` as warnings. It works next to `eslint-plugin-twig-tailwind`'s recommended
+`twig-html/attrs-newline`, `twig-html/indent`, `twig-html/multiline-html-element-content-newline`, `twig-html/no-parse-errors` and `twig-html/quotes` as warnings. It works next to `eslint-plugin-twig-tailwind`'s recommended
 config, which uses the same parser. That config leaves `class` attributes containing Twig out of the tree; every `twig-html` rule
 still counts them, checks their quotes and leaves their values alone.
 
@@ -42,6 +42,7 @@ still counts them, checks their quotes and leaves their values alone.
 | [`attrs-newline`](docs/rules/attrs-newline.md) | Put each attribute of a tag with many attributes on its own line | warn | yes |
 | [`indent`](docs/rules/indent.md) | Indent HTML and Twig blocks one step per level of nesting | warn | yes |
 | [`multiline-html-element-content-newline`](docs/rules/multiline-html-element-content-newline.md) | Require a line break before and after the content of a multi-line element | warn | yes |
+| [`no-parse-errors`](docs/rules/no-parse-errors.md) | Report markup and Twig the parser read past but that a browser or Twig would treat as an error | warn | no |
 | [`quotes`](docs/rules/quotes.md) | Use double quotes around HTML attribute values and single quotes around Twig strings, each configurable | warn | yes |
 
 
@@ -50,8 +51,9 @@ still counts them, checks their quotes and leaves their values alone.
 Gaps in a single rule are listed on its page. These cut across rules:
 
 - **Elements opened or closed in different Twig branches** are never fixed across a branch, by any rule.
-- **Open tags missing their `>`** are a parsing error, except when an unquoted value runs into the next tag
-  (`<li id=b<span>`), where the parser swallows the markup after it. The rules never fix those.
+- **Open tags the parser could not read cleanly**, such as one missing its `>` at the end of the file or
+  with an unquoted value that runs into the next tag (`<li id=b<span>`), are never fixed. See
+  [`no-parse-errors`](docs/rules/no-parse-errors.md).
 - Other limits come from the parser: see
   [its known limitations](https://github.com/alannapieralski/twig-lint/tree/main/packages/twig-eslint-parser#known-limitations).
 

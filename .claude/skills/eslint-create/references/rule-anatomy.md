@@ -186,7 +186,7 @@ export const messages = {
 
 - Take parser data from `readTwigServices(context.sourceCode, context.id)`, once in `create`. It
   throws a clear error when another parser parsed the file.
-- Iterate service lists (`blocks`, `strings`, `omittedAttributes`, `unconvertedBlocks`) from a
+- Iterate service lists (`blocks`, `strings`, `omittedAttributes`, `diagnostics`) from a
   `Program` listener.
 - Listen to node types for tags (`Tag`, `ScriptTag`, `StyleTag`) through the shared listener
   helper, so the list of tag types is written once.

@@ -16,17 +16,18 @@ export type IndentSource = {
   readonly attributesOf: AttributesOf;
   readonly rawContentTags: readonly string[];
   readonly strings: readonly TwigStringSummary[];
+  readonly unsoundTagStarts: ReadonlySet<number>;
 };
 
 export function findIndentProblems(program: MarkupProgram, source: IndentSource, options: ResolvedOptions): Problem[] {
-  const { text, blocks, attributesOf, rawContentTags, strings } = source;
+  const { text, blocks, attributesOf, rawContentTags, strings, unsoundTagStarts } = source;
   const [document] = program.body;
   if (!document) return [];
 
   const segments = findTwigSegments(blocks, text);
   if (!segments) return [];
 
-  const layout = buildIndentLayout(document, segments, { text, blocks, attributesOf, ignores: options.ignores, rawContentTags });
+  const layout = buildIndentLayout(document, segments, { text, blocks, attributesOf, ignores: options.ignores, rawContentTags, unsoundTagStarts });
 
   return [...findNestingProblems(layout, text, options), ...findExpressionProblems(blocks, layout, text, options, strings)];
 }

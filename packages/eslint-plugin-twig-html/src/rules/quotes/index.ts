@@ -4,6 +4,7 @@ import { docsUrlFor } from '../../shared/docs-url.js';
 import { skippedElements } from '../../shared/html-elements.js';
 import { createIgnoredInsideCheck } from '../../shared/ignored-inside.js';
 import { reportProblems } from '../../shared/report-problems.js';
+import { findUnsoundTagStarts } from '../../shared/unsound-open-tags.js';
 import { createAttributesOf } from '../../shared/tag-attributes.js';
 import { tagListeners } from '../../shared/tag-listeners.js';
 import { tagNodeTypes } from '../../shared/tag-node.js';
@@ -29,8 +30,8 @@ export const quotes: Rule.RuleModule = {
   create(context) {
     const options = resolveOptions(context.options[0]);
     const { sourceCode } = context;
-    const { blocks, strings, omittedAttributes } = readTwigServices(sourceCode, context.id);
-    const source = { text: sourceCode.text, blocks, ...quotesFor(options) };
+    const { blocks, strings, omittedAttributes, diagnostics } = readTwigServices(sourceCode, context.id);
+    const source = { text: sourceCode.text, blocks, unsoundTagStarts: findUnsoundTagStarts(diagnostics), ...quotesFor(options) };
     const attributesOf = createAttributesOf(omittedAttributes);
     const isSkipped = createIgnoredInsideCheck(sourceCode, skippedElements);
 

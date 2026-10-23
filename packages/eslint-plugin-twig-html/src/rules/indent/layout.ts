@@ -14,6 +14,7 @@ type LayoutSource = {
   readonly attributesOf: AttributesOf;
   readonly ignores: readonly string[];
   readonly rawContentTags: readonly string[];
+  readonly unsoundTagStarts: ReadonlySet<number>;
 };
 
 export function buildIndentLayout(document: MarkupNode, segments: readonly TwigSegment[], source: LayoutSource): IndentLayout {

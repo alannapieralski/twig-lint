@@ -70,8 +70,7 @@ The config applies to `**/*.twig` and sets:
   attributes such as `class=""`. Wrapping a string inside a Twig array or call splits it over
   lines within its quotes, which reads badly, so a long list of classes there is better split
   into more array items by hand;
-- [`twig-tailwind/no-twig-interpolation`](docs/rules/no-twig-interpolation.md) and
-  [`twig-tailwind/no-unparsed-twig`](docs/rules/no-unparsed-twig.md) as errors.
+- [`twig-tailwind/no-twig-interpolation`](docs/rules/no-twig-interpolation.md) as an error.
 
 ESLint merges `settings`, so your `entryPoint` sits next to the selectors instead of replacing
 them. Override any rule in your own config object as usual.
@@ -127,7 +126,6 @@ anyone who still wants to build the whole list by hand.
 | Rule | Description | Recommended |
 |---|---|---|
 | [`no-twig-interpolation`](docs/rules/no-twig-interpolation.md) | Disallow Twig interpolation in attributes and strings | error |
-| [`no-unparsed-twig`](docs/rules/no-unparsed-twig.md) | Report Twig blocks the parser could not read | error |
 
 ## Interpolated strings
 
@@ -161,6 +159,9 @@ are not checked.
   the fixed fragments are separate strings, and the recommended config reports them with
   `better-tailwindcss/no-concatenated-classes`.
 - **Classes computed in PHP** (preprocess functions) are not in the template and cannot be seen.
+- **Twig blocks the parser could not read** are left out of the tree, so the classes inside them are
+  skipped. [`twig-html/no-parse-errors`](../eslint-plugin-twig-html/docs/rules/no-parse-errors.md)
+  reports them.
 - **Oxlint** cannot run these rules on Twig: it does not support custom HTML parsers yet.
 
 ## Licence

@@ -29,8 +29,8 @@ function fixWith(rules: Linter.RulesRecord) {
   });
 }
 
-function unconvertedBlockCount(code: string): number {
-  return parseForESLint(code).services.twig.unconvertedBlocks.length;
+function diagnosticCount(code: string): number {
+  return parseForESLint(code).services.twig.diagnostics.length;
 }
 
 describe.each([
@@ -43,7 +43,7 @@ describe.each([
     const output = result?.output ?? code;
     expect(result?.messages.filter((message) => message.fatal)).toEqual([]);
     expect(() => parseForESLint(output)).not.toThrow();
-    expect(unconvertedBlockCount(output)).toBe(unconvertedBlockCount(code));
+    expect(diagnosticCount(output)).toBe(diagnosticCount(code));
     expect(output.split('`').length).toBe(code.split('`').length);
   });
 

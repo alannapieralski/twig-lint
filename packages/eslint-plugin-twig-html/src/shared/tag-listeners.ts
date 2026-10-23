@@ -1,7 +1,6 @@
 import type { Rule } from 'eslint';
-import type { TwigBlockSummary } from 'twig-eslint-parser';
+import { isTwigBalancedWithin, type TwigBlockSummary } from 'twig-eslint-parser';
 import type { ParsedTag, TagNode } from './tag-node.js';
-import { isTwigBalancedWithin } from './twig-blocks.js';
 
 export function tagListeners<Tag>(check: (tag: Tag) => void, nodeTypes: readonly string[]): Rule.RuleListener {
   const listeners = Object.fromEntries(nodeTypes.map((nodeType) => [nodeType, check]));

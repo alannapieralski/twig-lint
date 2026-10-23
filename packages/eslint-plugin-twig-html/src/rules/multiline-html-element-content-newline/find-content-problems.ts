@@ -1,10 +1,10 @@
+import { isTwigBalancedWithin } from 'twig-eslint-parser';
 import { elementsWithUnrenderedEdgeWhitespace } from '../../shared/html-elements.js';
 import { lineIndentationAt } from '../../shared/line-indentation.js';
 import type { Problem } from '../../shared/problem.js';
 import type { Range } from '../../shared/range.js';
-import { isOpenTagSwallowingMarkup } from '../../shared/swallowed-markup.js';
+import { isOpenTagUnsound } from '../../shared/unsound-open-tags.js';
 import type { TagNode } from '../../shared/tag-node.js';
-import { isTwigBalancedWithin } from '../../shared/twig-blocks.js';
 import { findContentEdges } from './find-content-edges.js';
 import { countLineBreaks, indentationAfterLastLineBreak } from './line-breaks.js';
 import type { Options } from './options.js';
@@ -36,7 +36,7 @@ export function findContentProblems(tag: TagNode, source: TagSource, options: Re
   const { close, name } = tag;
   if (!close || name === undefined || !plainElementName.test(name)) return [];
 
-  const { text, blocks, attributesOf, isIgnored } = source;
+  const { text, blocks, isIgnored, unsoundTagStarts } = source;
   const contentRange: Range = [tag.openEnd.range[1], close.range[0]];
   const isSingleLine = text.lastIndexOf('\n', close.range[0] - 1) < tag.openStart.range[0];
   if (isSingleLine) return [];
@@ -44,7 +44,7 @@ export function findContentProblems(tag: TagNode, source: TagSource, options: Re
   const isEmpty = contentRange[0] === contentRange[1];
   if (options.ignoreWhenEmpty && isEmpty) return [];
 
-  const isUnsafeToCheck = isOpenTagSwallowingMarkup({ openEnd: tag.openEnd, attributes: attributesOf(tag) }, text) || !isTwigBalancedWithin(contentRange, blocks) || isIgnored(tag);
+  const isUnsafeToCheck = isOpenTagUnsound(tag, unsoundTagStarts) || !isTwigBalancedWithin(contentRange, blocks) || isIgnored(tag);
   if (isUnsafeToCheck) return [];
 
   const isFixable = elementsWithUnrenderedEdgeWhitespace.has(name.toLowerCase());

@@ -18,7 +18,7 @@
   ],
   "twig-tailwind.html.twig": [
     { "check": "twig-tailwind/no-twig-interpolation", "reports": [1, 2] },
-    { "check": "twig-tailwind/no-unparsed-twig", "reports": [3] },
+    { "check": "twig-html/no-parse-errors", "reports": [3] },
     { "check": "parser/converts-every-block", "failures": [3] },
     { "check": "parser/line-coverage", "reports": [3], "clean": [1, 2] }
   ],
@@ -28,7 +28,7 @@
     { "check": "parser/output-matches-source", "clean": "all" },
     { "check": "parser/metamorphic", "clean": "all" },
     { "check": "parser/html-oracle", "clean": "all" },
-    { "check": "twig-tailwind/no-unparsed-twig", "clean": "all" },
+    { "check": "twig-html/no-parse-errors", "clean": "all" },
     { "check": "parser/line-coverage", "clean": "all" }
   ],
   "html-seams.html.twig": [
@@ -69,6 +69,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/control.html.twig": [
+    { "check": "twig-html/no-parse-errors", "clean": "all" },
     { "check": "twig-html/attrs-newline", "reports": [1, 2, 4, 8] },
     { "check": "twig-html/multiline-html-element-content-newline", "clean": "all" },
     { "check": "parser/lexer-parity", "clean": "all" },
@@ -77,24 +78,28 @@
     { "check": "parser/metamorphic", "clean": "all" },
     { "check": "parser/html-oracle", "clean": "all" },
     { "check": "parser/line-coverage", "clean": "all" },
-    { "check": "twig-tailwind/no-unparsed-twig", "clean": "all" }
+    { "check": "twig-html/no-parse-errors", "clean": "all" }
   ],
   "broken/html-attribute-quote-mismatched.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-attribute-quote-unterminated.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-attribute-unquoted.html.twig": [
+    { "check": "twig-html/no-parse-errors", "clean": "all" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-close-tag-missing-gt.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [1, 2, 6] },
     { "check": "parser/output-matches-source", "noFailures": [6, 7], "pending": "a close tag without > swallows the close tag after it" },
     { "check": "parser/html-oracle", "failures": [6, 8] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
@@ -102,6 +107,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-comment-unterminated.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [1] },
     { "check": "parser/output-matches-source", "noFailures": [2, 8], "pending": "the markup after an unterminated <!-- is dropped instead of read as comment text to the end of the file" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -115,18 +121,21 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-mis-nested.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [2] },
     { "check": "parser/output-matches-source", "noFailures": [2], "pending": "</b> closes the open <i> with it, so the later </i> is left unread; HTML's adoption agency step is not modelled" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-missing-close-item.html.twig": [
+    { "check": "twig-html/no-parse-errors", "clean": "all" },
     { "check": "parser/html-oracle", "failures": [8] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-missing-close-list.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [2] },
     { "check": "parser/html-oracle", "failures": [8] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -139,12 +148,14 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-misspelt-close-list.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [2, 6] },
     { "check": "parser/html-oracle", "failures": [8] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-open-tag-missing-gt-after-unquoted-value.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [3] },
     { "check": "twig-html/attrs-newline", "reports": [3] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -161,6 +172,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-open-tag-missing-gt-end-of-file.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [1, 2, 3] },
     { "check": "parser/html-oracle", "failures": "all" },
     { "check": "twig-html/attrs-newline", "reports": [1, 2] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
@@ -178,6 +190,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-open-tag-missing-gt-self-closing-slash-only.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "parser/html-oracle", "failures": [4] },
     { "check": "twig-html/attrs-newline", "reports": [3] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
@@ -185,6 +198,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-open-tag-missing-gt.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "parser/html-oracle", "failures": [4, 8] },
     { "check": "twig-html/attrs-newline", "reports": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
@@ -192,6 +206,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-script-unterminated.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [1, 2] },
     { "check": "parser/line-coverage", "noFailures": "all" },
     { "check": "parser/output-matches-source", "reports": [2] },
     { "check": "parser/output-matches-source", "noFailures": [2, 8], "pending": "the markup after an unterminated <script> is dropped instead of read as script text to the end of the file" },
@@ -200,6 +215,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-stray-close.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [7] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
@@ -219,6 +235,12 @@
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
+  "broken/twig-elseif-after-else.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [7], "clean": [3, 4, 5, 6, 8] },
+    { "check": "twig-html/attrs-newline", "noFailures": "all" },
+    { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
+    { "check": "twig-html/quotes", "noFailures": "all" }
+  ],
   "broken/twig-for-extra-end.html.twig": [
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -230,6 +252,8 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-for-missing-in.html.twig": [
+    { "check": "parser/converts-every-block", "failures": [3] },
+    { "check": "twig-html/no-parse-errors", "reports": [3] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
@@ -240,6 +264,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-if-empty-condition.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [2] },
     { "check": "parser/converts-every-block", "failures": [2] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -256,6 +281,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-in-open-tag-broken.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "parser/converts-every-block", "failures": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -272,6 +298,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-print-invalid-expression.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "parser/converts-every-block", "failures": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -283,11 +310,13 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-print-misspelt-filter.html.twig": [
+    { "check": "twig-html/no-parse-errors", "clean": "all" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-print-two-names.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [4] },
     { "check": "parser/converts-every-block", "failures": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -299,6 +328,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/twig-set-broken.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [2] },
     { "check": "parser/converts-every-block", "failures": [2] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },

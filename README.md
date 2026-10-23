@@ -5,8 +5,8 @@ ESLint for Twig templates, with Tailwind CSS and HTML linting for Drupal themes.
 | Package | What it is |
 |---|---|
 | [`twig-eslint-parser`](packages/twig-eslint-parser) | The parser: HTML markup plus Twig expressions as one ESLint AST with exact source ranges. No rules. |
-| [`eslint-plugin-twig-tailwind`](packages/eslint-plugin-twig-tailwind) | Needs [`eslint-plugin-better-tailwindcss`](https://github.com/schoero/eslint-plugin-better-tailwindcss) as a peer dependency. Teaches it where classes live in Twig, with a Drupal opt-in and room for your own selectors, and adds a processor for interpolated strings and the `no-twig-interpolation` and `no-unparsed-twig` rules. |
-| [`eslint-plugin-twig-html`](packages/eslint-plugin-twig-html) | Rules for the HTML layout and quoting in Twig templates that understand Twig blocks: `attrs-newline`, `indent`, `multiline-html-element-content-newline` and `quotes`. |
+| [`eslint-plugin-twig-tailwind`](packages/eslint-plugin-twig-tailwind) | Needs [`eslint-plugin-better-tailwindcss`](https://github.com/schoero/eslint-plugin-better-tailwindcss) as a peer dependency. Teaches it where classes live in Twig, with a Drupal opt-in and room for your own selectors, and adds a processor for interpolated strings and the `no-twig-interpolation` rule. |
+| [`eslint-plugin-twig-html`](packages/eslint-plugin-twig-html) | Rules for the HTML layout and quoting in Twig templates that understand Twig blocks: `attrs-newline`, `indent`, `multiline-html-element-content-newline`, `no-parse-errors` and `quotes`. |
 
 All packages share one version and are released together.
 

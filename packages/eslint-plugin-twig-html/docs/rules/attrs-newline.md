@@ -86,9 +86,10 @@ at the tag's own indentation.
 
 - **A tag with anything other than whitespace between two attributes**, such as a Twig comment. A fix
   would have to move or drop it.
-- **An open tag that is missing its `>`**, where the parser reads the markup after it as attributes
-  (including when it ends up inside an unquoted value). Splitting those "attributes" onto separate
-  lines would break the next tag.
+- **An open tag the parser could not read cleanly**: no `>` before the end of the file, or a quote or
+  `<` left in an attribute name or an unquoted value (`<li id=b<span>`). The parser reads the markup
+  after it as attributes, and splitting those "attributes" onto separate lines would break the next
+  tag. [`no-parse-errors`](no-parse-errors.md) reports the tag itself.
 
 ### Not checked at all
 

@@ -82,14 +82,18 @@ silently.
 |---|---|
 | `convertedBlockCount` | Twig blocks turned into JavaScript nodes. |
 | `ignoredBlockCount` | Blocks with no expression worth parsing, such as `{% endif %}` or `{% extends %}`. |
-| `unconvertedBlocks` | Blocks that could not be converted, with their range and the reason. |
+| `diagnostics` | Every problem the parser read past instead of throwing on, in source order: each has a `code`, a `message` and a `range`. The codes are `diagnosticCodes`, and [`twig-html/no-parse-errors`](../eslint-plugin-twig-html/docs/rules/no-parse-errors.md) lists what each one means and when it stays quiet. |
 | `blocks` | Every Twig block (`print`, `tag` or `comment`) with its range, tag name and `depthChange`: `1` for a tag that opens a nested block such as `{% if %}`, `-1` for one that closes it, `0` otherwise, including the short forms `{% set x = 1 %}`, `{% block title page_title %}` and Drupal's `{% trans 'Hello' %}`, which have no body. `bracketPairs` lists the offsets of each `{`, `[` or `(` and its closing bracket, read from the lexer, so strings and `#{ }` are never mistaken for brackets. The `twig-html` rules use it, for example to keep attributes wrapped in a Twig block together and to indent the lines inside brackets. |
 | `omittedAttributes` | Attributes left out by `ignoreInterpolatedAttributes`, with their name, range, the `Attribute` node itself and its `owner`, the `Tag`, `ScriptTag` or `StyleTag` node it was taken from. `twig-tailwind/no-twig-interpolation` reports them, and every `twig-html` rule puts them back in their place among the owner's attributes. |
 | `strings` | Every Twig string literal, read from the lexer, with its range (quotes included), its `quote` (`'` or `"`) and whether it interpolates `#{ }`. It covers tags that never become JavaScript nodes, such as `{% extends %}` and `{% trans %}`, and blocks that fail to convert. `twig-html/quotes` uses it. |
 
-Invalid Twig, such as an unclosed `{{`, and broken markup, such as a tag whose `>` is missing before the next tag, are reported by ESLint as a
-parsing error with its position. The exception is an unquoted attribute value that runs into the next tag
-(`<li id=b<span>`), which is read as one attribute value.
+A problem is thrown only when the parser cannot build a tree with correct ranges: invalid Twig, such as an
+unclosed `{{`, Twig tags that do not pair up, and broken markup, such as a tag whose `>` is missing before the
+next tag. ESLint reports it as a parsing error with its position, and no rule runs. Every other problem, such as
+a stray closing tag, an element that is never closed or a block that is not valid Twig, is listed in `diagnostics`
+and the tree is built as usual. An unquoted attribute value that runs into the next tag (`<li id=b<span>`) is read
+as one attribute value and noted the same way. Unknown Twig tags, filters and functions are not checked: they
+depend on the extensions a site loads.
 
 ## Markup
 
@@ -147,7 +151,9 @@ the lexer. `eslint-plugin-twig-tailwind`'s processor uses it.
 - **Elements opened or closed in different Twig branches**, such as
   `{% if url %}<a href="{{ url }}">{% else %}<span>{% endif %}`, cannot be paired: the markup is read
   as one document, so the element appears unclosed. Rules can tell such elements apart with the
-  `blocks` service, whose `depthChange` shows where each Twig block opens and closes.
+  `blocks` service, whose `depthChange` shows where each Twig block opens and closes. The problems
+  it hides are listed under Known gaps on the
+  [`no-parse-errors`](../eslint-plugin-twig-html/docs/rules/no-parse-errors.md) page.
 - **Very deep nesting.** ESLint itself overflows the call stack at roughly 4,000 nested elements (for example
   thousands of `<li>` without their close tags), and the run fails with "Maximum call stack size exceeded". Above
   roughly 7,000 levels the parser stops first with a "nested too deeply" error, which ESLint reports as a

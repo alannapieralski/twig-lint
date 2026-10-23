@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { findInterpolatedStrings, parseForESLint, readTwigServices, type ParserOptions } from '../../src/index.js';
+import { findInterpolatedStrings, parseForESLint, readTwigServices, type ParserOptions, type TwigParserServices } from '../../src/index.js';
 import { checkParserOutput } from '../support/output-checks.js';
 
 type Node = { type: string; range: [number, number]; loc: { start: { line: number; column: number } }; [key: string]: unknown };
@@ -10,6 +10,10 @@ const fixturesDirectory = new URL('../fixtures/twig/', import.meta.url);
 function parse(code: string, options: ParserOptions = {}) {
   const result = parseForESLint(code, options);
   return { result, statements: result.ast.twigBody as unknown as Node[], services: result.services.twig };
+}
+
+function unparsedTwig(services: TwigParserServices) {
+  return services.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig');
 }
 
 function collectNodes(value: unknown, predicate: (node: Node) => boolean, found: Node[] = []): Node[] {
@@ -33,7 +37,7 @@ function sourceOf(code: string, node: Node): string {
 
 function onlyStatement(code: string): Node {
   const { statements, services } = parse(code);
-  expect(services.unconvertedBlocks).toEqual([]);
+  expect(unparsedTwig(services)).toEqual([]);
   expect(statements).toHaveLength(1);
   return statements[0] as Node;
 }
@@ -55,7 +59,7 @@ describe('fixtures', () => {
   it.each(fixtureNames)('%s converts every block Twig accepts and keeps every literal at its real source position', (fixtureName) => {
     const code = readFileSync(new URL(fixtureName, fixturesDirectory), 'utf8');
     const { statements, services } = parse(code);
-    const unconvertedSources = services.unconvertedBlocks.map((block) => code.slice(...block.range));
+    const unconvertedSources = unparsedTwig(services).map((block) => code.slice(...block.range));
     expect(unconvertedSources).toEqual(blocksTwigItselfRejectsByFixture[fixtureName] ?? []);
 
     const literals = collectNodes(statements, (node) => node.type === 'Literal');
@@ -314,7 +318,8 @@ describe('tags', () => {
   ])('leaves %s out without reporting it as a failure', (code, ignoredBlockCount) => {
     const { statements, services } = parse(code);
     expect(statements).toEqual([]);
-    expect(services).toMatchObject({ ignoredBlockCount, unconvertedBlocks: [] });
+    expect(services).toMatchObject({ ignoredBlockCount });
+    expect(unparsedTwig(services)).toEqual([]);
   });
 
   it.each([
@@ -382,7 +387,7 @@ describe('markup and options', () => {
 
   it('reports blocks it cannot convert instead of dropping them silently', () => {
     const { services } = parse('<p>{{ foo.is not }}</p>');
-    expect(services.unconvertedBlocks).toMatchObject([{ kind: 'print', tagName: undefined, range: [3, 19] }]);
+    expect(unparsedTwig(services)).toMatchObject([{ range: [3, 19] }]);
   });
 });
 
@@ -460,7 +465,7 @@ describe('block form tags in block structure services', () => {
 
   it('treats the short block the same way when it is converted to JavaScript', () => {
     const { services } = parse('{% block body # the page body\n%}x{% endblock %}{% block title page_title %}');
-    expect(services.unconvertedBlocks).toEqual([]);
+    expect(unparsedTwig(services)).toEqual([]);
     expect(services.convertedBlockCount).toBe(1);
   });
 });
@@ -558,7 +563,7 @@ describe('Twig delimiters inside Twig strings', () => {
     ['{{ "a #{ \'{{\' } b" }}', '{{'],
   ])('parses %s, keeping the string value and the markup after it', (twig, stringValue) => {
     const { result, services } = parse(`${twig}<p>x</p>`);
-    expect(services.unconvertedBlocks).toEqual([]);
+    expect(unparsedTwig(services)).toEqual([]);
     const strings = collectNodes(result.ast.twigBody, (node) => node.type === 'TemplateLiteral' || node.type === 'Literal');
     const values = strings.flatMap((node) => (node.type === 'Literal' ? [node['value']] : (node['quasis'] as Node[]).map((quasi) => (quasi['value'] as { cooked: string }).cooked)));
     expect(values).toContain(stringValue);

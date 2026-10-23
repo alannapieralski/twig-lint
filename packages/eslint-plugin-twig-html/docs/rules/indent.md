@@ -152,9 +152,10 @@ These lines keep whatever indentation the author wrote:
   tags that wrap it, are not checked. Lines before and after them are.
 - **A tag whose own markup a Twig branch splits**, such as one ending in `>` in one branch and `/>` in
   another. The whole tag is left alone, its first line included.
-- **An open tag with no `>` at the end of the file, and markup swallowed by an unquoted attribute
-  value** that runs into the next tag (`<li id=b<span>`). Anywhere else a missing `>` is a parsing
-  error and no rule runs.
+- **An open tag the parser could not read cleanly**: no `>` at the end of the file, a quote or `<`
+  left in an attribute name, or markup swallowed by an unquoted attribute value that runs into the
+  next tag (`<li id=b<span>`). Anywhere else a missing `>` is a parsing error and no rule runs.
+  [`no-parse-errors`](no-parse-errors.md) reports the tag itself.
 - **The content of an element that is never closed**, meaning an element with no closing tag that holds
   other nodes. In `<ul><li>a<li>b</ul>` the second `li` becomes a child of the first, so its content
   is skipped. The parser cannot tell where these elements end.

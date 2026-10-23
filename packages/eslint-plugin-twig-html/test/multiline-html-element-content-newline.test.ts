@@ -6,6 +6,7 @@ async function lint(code: string, ruleOptions?: Record<string, unknown>, fix = t
   const rules: Linter.RulesRecord = {
     'twig-html/attrs-newline': 'off',
     'twig-html/indent': indentRule,
+    'twig-html/no-parse-errors': 'off',
     'twig-html/quotes': 'off',
     'twig-html/multiline-html-element-content-newline': ruleOptions ? ['warn', ruleOptions] : 'warn',
   };

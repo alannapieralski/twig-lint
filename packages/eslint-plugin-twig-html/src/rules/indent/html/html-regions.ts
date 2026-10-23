@@ -1,7 +1,7 @@
 import { whitespaceSensitiveElements } from '../../../shared/html-elements.js';
 import { lineIndentationAt } from '../../../shared/line-indentation.js';
 import type { Range } from '../../../shared/range.js';
-import { isOpenTagSwallowingMarkup } from '../../../shared/swallowed-markup.js';
+import { isOpenTagUnsound } from '../../../shared/unsound-open-tags.js';
 import type { AttributesOf } from '../../../shared/tag-attributes.js';
 import { bodyOf, flattenMarkup, interiorOf, isElement, nameOf } from './html-elements.js';
 import type { Element, MarkupNode, OpenTag } from './types.js';
@@ -11,6 +11,7 @@ type HtmlSource = {
   readonly attributesOf: AttributesOf;
   readonly ignores: readonly string[];
   readonly rawContentTags: readonly string[];
+  readonly unsoundTagStarts: ReadonlySet<number>;
 };
 
 export type HtmlRegions = {
@@ -30,7 +31,7 @@ function isDefined<Value>(value: Value | undefined): value is Value {
 
 function findSkippedInElement(
   element: Element,
-  text: string,
+  unsoundTagStarts: ReadonlySet<number>,
   attributes: readonly { readonly range: Range }[],
   ignoredNames: ReadonlySet<string>,
   whitespaceSensitiveNames: ReadonlySet<string>,
@@ -40,8 +41,8 @@ function findSkippedInElement(
 
   if (!openEnd) return [[openStart.range[1], Infinity]];
 
-  const isSwallowingMarkup = isOpenTagSwallowingMarkup({ openEnd, attributes }, text);
-  if (isSwallowingMarkup) return [[openStart.range[1], element.range[1]]];
+  const isUnsoundOpenTag = isOpenTagUnsound(element, unsoundTagStarts);
+  if (isUnsoundOpenTag) return [[openStart.range[1], element.range[1]]];
 
   if (!close) return attributeInteriors;
 
@@ -60,14 +61,14 @@ function findUnclosedContent(element: Element): Range | undefined {
 }
 
 export function findHtmlRegions(document: MarkupNode, source: HtmlSource): HtmlRegions {
-  const { text, attributesOf } = source;
+  const { attributesOf, unsoundTagStarts } = source;
   const ignoredNames = new Set(source.ignores.map((name) => name.toLowerCase()));
   const whitespaceSensitiveNames = new Set([...whitespaceSensitiveElements, ...source.rawContentTags].map((name) => name.toLowerCase()));
   const markupNodes = flattenMarkup(document.children ?? []);
   const elements = markupNodes.filter(isElement);
 
   const tokenInteriors = markupNodes.filter((node) => singleTokenNodeTypes.has(node.type)).map((node) => interiorOf(node.range));
-  const elementSkips = elements.flatMap((element) => findSkippedInElement(element, text, attributesOf(element), ignoredNames, whitespaceSensitiveNames));
+  const elementSkips = elements.flatMap((element) => findSkippedInElement(element, unsoundTagStarts, attributesOf(element), ignoredNames, whitespaceSensitiveNames));
 
   return {
     elements,

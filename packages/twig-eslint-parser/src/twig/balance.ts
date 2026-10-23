@@ -1,5 +1,6 @@
-import type { TwigBlockSummary } from 'twig-eslint-parser';
-import type { Range } from './range.js';
+import type { TwigBlockSummary } from './blocks.js';
+
+type Range = readonly [number, number];
 
 const branchContinuations: ReadonlySet<string> = new Set(['else', 'elseif']);
 

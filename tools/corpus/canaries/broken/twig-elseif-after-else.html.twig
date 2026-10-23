@@ -1,0 +1,12 @@
+<header class="top" id="head" data-js="nav">
+  <ul class="list" id="main" data-a="1">
+    {% if items %}
+      <li class="item" data-x="y" id="z">{{ item.title }}</li>
+    {% else %}
+      <li class="item" data-x="y" id="z">None</li>
+    {% elseif other %}
+      <li class="item" data-x="y" id="z">Other</li>
+    {% endif %}
+  </ul>
+</header>
+<footer class="bottom" id="foot" data-js="end">Done</footer>
