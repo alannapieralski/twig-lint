@@ -29,7 +29,7 @@ export function createConfigFactory(plugin: ESLint.Plugin): (options?: ConfigOpt
       rules: {
         ...betterTailwindcss.plugin.configs.recommended.rules,
         'better-tailwindcss/enforce-consistent-line-wrapping': ['warn', { selectors: attributeSelectors }],
-        'twig-tailwind/no-interpolated-attributes': 'error',
+        'twig-tailwind/no-twig-interpolation': 'error',
         'twig-tailwind/no-unparsed-twig': 'error',
       },
     };

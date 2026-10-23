@@ -17,8 +17,7 @@
     { "check": "parser/output-matches-source", "noFailures": "all" }
   ],
   "twig-tailwind.html.twig": [
-    { "check": "twig-tailwind/config:recommended", "clean": [1] },
-    { "check": "twig-tailwind/no-interpolated-attributes", "reports": [2] },
+    { "check": "twig-tailwind/no-twig-interpolation", "reports": [1, 2] },
     { "check": "twig-tailwind/no-unparsed-twig", "reports": [3] },
     { "check": "parser/converts-every-block", "failures": [3] },
     { "check": "parser/line-coverage", "reports": [3], "clean": [1, 2] }

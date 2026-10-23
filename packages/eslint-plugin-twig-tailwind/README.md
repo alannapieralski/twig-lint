@@ -70,7 +70,7 @@ The config applies to `**/*.twig` and sets:
   attributes such as `class=""`. Wrapping a string inside a Twig array or call splits it over
   lines within its quotes, which reads badly, so a long list of classes there is better split
   into more array items by hand;
-- [`twig-tailwind/no-interpolated-attributes`](docs/rules/no-interpolated-attributes.md) and
+- [`twig-tailwind/no-twig-interpolation`](docs/rules/no-twig-interpolation.md) and
   [`twig-tailwind/no-unparsed-twig`](docs/rules/no-unparsed-twig.md) as errors.
 
 ESLint merges `settings`, so your `entryPoint` sits next to the selectors instead of replacing
@@ -126,7 +126,7 @@ anyone who still wants to build the whole list by hand.
 
 | Rule | Description | Recommended |
 |---|---|---|
-| [`no-interpolated-attributes`](docs/rules/no-interpolated-attributes.md) | Disallow Twig inside attribute values such as `class=""` | error |
+| [`no-twig-interpolation`](docs/rules/no-twig-interpolation.md) | Disallow Twig interpolation in attributes and strings | error |
 | [`no-unparsed-twig`](docs/rules/no-unparsed-twig.md) | Report Twig blocks the parser could not read | error |
 
 ## Interpolated strings
@@ -139,7 +139,7 @@ The `twig-tailwind/twig` processor prevents this: it drops every better-tailwind
 with it every fix, that starts inside a Twig string containing `#{ }`. Other strings in the file
 are linted and fixed as usual, and messages from other plugins are kept. The classes inside an
 interpolated string are therefore not checked; use an array such as `['flex', modifier]` instead
-to keep them visible. An ESLint config applies one processor per file, so
+to keep them visible. [`no-twig-interpolation`](docs/rules/no-twig-interpolation.md) reports these strings. An ESLint config applies one processor per file, so
 if you set your own processor for `.twig` files, these strings are no longer silenced.
 
 ## CUBE CSS separators

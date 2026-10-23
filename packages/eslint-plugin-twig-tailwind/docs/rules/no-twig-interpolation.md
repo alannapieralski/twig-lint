@@ -1,6 +1,6 @@
-# twig-tailwind/no-interpolated-attributes
+# twig-tailwind/no-twig-interpolation
 
-Disallow Twig inside attribute values such as `class=""`, so every class stays visible to linting.
+Disallow Twig interpolation in attributes and strings.
 
 Enabled as an error by `createConfig()`.
 
@@ -11,17 +11,23 @@ produces. This rule reports Twig (`{{ }}`, `{% %}` or `{# #}`) inside `class=""`
 alternatives, `{% set classes = [...] %}` with `attributes.addClass()`, or `{ classes: [...] }`
 passed to an include.
 
+The same goes for a Twig string that interpolates with `#{ }`. better-tailwindcss does not understand
+`#{`, so the `twig-tailwind/twig` processor silences it and the classes in the string are never
+checked. The rule reports every such string, and every string is checked, not only class lists.
+
 Examples of **incorrect** code:
 
 ```twig
 <div class="card {{ modifier }}">
 <p class="flex {% if active %}font-bold{% endif %}">
+{% set classes = "flex #{modifier} p-4" %}
 ```
 
 Examples of **correct** code:
 
 ```twig
 {% set classes = ['card', is_featured ? 'card--featured'] %}
+{% set classes = ['flex', modifier, 'p-4'] %}
 <div{{ attributes.addClass(classes) }}>
 
 {% include 'numiko:card' with { classes: ['w-full', modifier] } only %}
@@ -36,10 +42,10 @@ once by this rule.
 
 | Option | Default | Description |
 |---|---|---|
-| `attributes` | `['class']` | Attribute names (case-insensitive) to check. |
+| `attributes` | `['class']` | Attribute names (case-insensitive) to check. Strings with `#{ }` are always checked. |
 
 ```js
-'twig-tailwind/no-interpolated-attributes': ['error', { attributes: ['class', 'style'] }],
+'twig-tailwind/no-twig-interpolation': ['error', { attributes: ['class', 'style'] }],
 ```
 
 ## Testing

@@ -1,4 +1,4 @@
-import { containsTwig, isAttributeNode, type AttributeNode, type OmittedAttribute } from 'twig-eslint-parser';
+import { containsTwig, isAttributeNode, type AttributeNode, type OmittedAttribute, type TwigStringSummary } from 'twig-eslint-parser';
 import type { Problem } from '../../shared/problem.js';
 import type { Range } from '../../shared/range.js';
 import type { ResolvedOptions } from './options.js';
@@ -20,4 +20,10 @@ export function findOmittedAttributeProblems(omittedAttributes: readonly Omitted
   const restrictedAttributes = omittedAttributes.filter((attribute) => options.restrictedNames.has(attribute.name.toLowerCase()));
 
   return restrictedAttributes.map((attribute) => describeProblem(attribute.name, attribute.range));
+}
+
+export function findInterpolatedStringProblems(strings: readonly TwigStringSummary[]): Problem[] {
+  const interpolatedStrings = strings.filter((string) => string.isInterpolated);
+
+  return interpolatedStrings.map((string) => ({ range: string.range, messageId: 'twigInString', data: {} }));
 }

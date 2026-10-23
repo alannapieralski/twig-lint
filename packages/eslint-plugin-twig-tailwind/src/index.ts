@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import type { ESLint } from 'eslint';
 import { createConfigFactory } from './configs/create-config.js';
 import { createProcessor } from './processors/twig-processor.js';
-import { noInterpolatedAttributes } from './rules/no-interpolated-attributes/index.js';
+import { noTwigInterpolation } from './rules/no-twig-interpolation/index.js';
 import { noUnparsedTwig } from './rules/no-unparsed-twig/index.js';
 
 const { name, version } = createRequire(import.meta.url)('../package.json') as { name: string; version: string };
@@ -10,7 +10,7 @@ const { name, version } = createRequire(import.meta.url)('../package.json') as {
 const plugin = {
   meta: { name, version },
   rules: {
-    'no-interpolated-attributes': noInterpolatedAttributes,
+    'no-twig-interpolation': noTwigInterpolation,
     'no-unparsed-twig': noUnparsedTwig,
   },
   processors: { twig: createProcessor({ name, version }) },
