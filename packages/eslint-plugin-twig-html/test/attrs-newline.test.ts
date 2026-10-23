@@ -176,7 +176,7 @@ describe('twig-html/attrs-newline', () => {
       overrideConfigFile: true,
       overrideConfig: [
         twigHtml.configs.recommended,
-        { ...twigHtml.configs.recommended, files: ['**/*.svg.twig'], ignores: [], rules: { 'twig-html/attrs-newline': ['warn', { ignoreInside: [] }] } },
+        { ...twigHtml.configs.recommended, files: ['**/*.svg.twig'], ignores: [], rules: { 'twig-html/attrs-newline': ['warn', { ignores: [] }] } },
       ],
     });
     const [sprite] = await eslint.lintText('<svg xmlns="a" viewBox="0 0 1 1" width="1"></svg>', { filePath: 'sprite.svg.twig' });
@@ -199,9 +199,9 @@ describe('twig-html/attrs-newline', () => {
 
   it('can lay out inline SVG, or skip other elements', async () => {
     const svg = '<svg class="icon" viewBox="0 0 24 24"></svg>';
-    expect(await fixed(svg, { ignoreInside: [] })).toBe('<svg\n  class="icon"\n  viewBox="0 0 24 24"\n></svg>');
+    expect(await fixed(svg, { ignores: [] })).toBe('<svg\n  class="icon"\n  viewBox="0 0 24 24"\n></svg>');
     const math = '<math display="block" class="a"></math>';
-    expect(await fixed(math, { ignoreInside: ['math'] })).toBe(math);
+    expect(await fixed(math, { ignores: ['math'] })).toBe(math);
   });
 
   it('keeps Windows line endings when it breaks a tag', async () => {

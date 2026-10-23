@@ -64,15 +64,13 @@ Every string the Twig lexer reads is checked. That includes:
 
 The rule never changes what a template renders. It does not report:
 
-- **A value or string that contains the wanted quote**, such as `title='say "hi"'` or `{{ "it's" }}`,
-  because switching would need an escape.
-- **With `twig: 'single'`, a double-quoted Twig string that interpolates**, such as `"a #{b}"`, since
-  only double quotes interpolate.
-- **With `twig: 'double'`, a single-quoted Twig string containing `#{`**, since double quotes would
-  start interpolating it.
-- **Quotes in text, comments, `<script>` and `<style>` content, and `<textarea>` and `<title>`
-  text**, and DOCTYPE identifiers, because they have no meaning to HTML.
-- **Strings in `{# #}` comments and `{% verbatim %}`**, because they are text to Twig.
+| Skipped | Why | Setting |
+|---|---|---|
+| A value or string that contains the wanted quote, such as `title='say "hi"'` or `{{ "it's" }}` | Switching would need an escape | Built in |
+| With `twig: 'single'`, a double-quoted Twig string that interpolates, such as `"a #{b}"` | Only double quotes interpolate | Built in |
+| With `twig: 'double'`, a single-quoted Twig string containing `#{` | Double quotes would start interpolating it | Built in |
+| Quotes in text, comments, `<script>` and `<style>` content, and `<textarea>` and `<title>` text, and DOCTYPE identifiers | They have no meaning to HTML | Built in |
+| Strings in `{# #}` comments and `{% verbatim %}` | They are text to Twig | Built in |
 
 ### Reported but not fixed
 

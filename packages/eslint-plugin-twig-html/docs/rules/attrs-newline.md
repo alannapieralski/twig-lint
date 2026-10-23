@@ -77,11 +77,11 @@ at the tag's own indentation.
 
 ### Left alone
 
-- **Tags at or under the threshold**, however they are written, because the rule does not normalise
-  them.
-- **Tags inside `ignoreInside` elements, and those elements themselves** (by default `svg`). Inline SVG
-  puts many short tags on one line, and one attribute per line would make it much longer for no gain.
-- **`textarea` and `title` content.** It is text, so the rule never reads markup there.
+| Skipped | Why | Setting |
+|---|---|---|
+| Tags at or under the threshold, however they are written | The rule does not normalise them | `ifAttrsMoreThan` |
+| Elements in `ignores`, and every tag inside them | Inline SVG puts many short tags on one line, and one attribute per line would make it much longer for no gain | `ignores`, default `['svg']` |
+| `textarea` and `title` content | It is text, so the rule never reads markup there | Built in |
 
 ### Reported but not fixed
 
@@ -102,7 +102,7 @@ at the tag's own indentation.
 |---|---|---|
 | `ifAttrsMoreThan` | `1` | Lay out a tag once it has more attributes than this. `0` lays out every tag that has an attribute. |
 | `closeStyle` | `'newline'` | `'newline'` puts `>` or `/>` on its own line; `'sameline'` keeps it after the last attribute. |
-| `ignoreInside` | `['svg']` | Leave tags inside these elements, and the elements themselves, alone. Setting it replaces the list; `[]` lays SVG out too. |
+| `ignores` | `['svg']` | Leave tags inside these elements, and the elements themselves, alone. Setting it replaces the list; `[]` lays SVG out too. |
 
 ```js
 'twig-html/attrs-newline': ['warn', { ifAttrsMoreThan: 2, closeStyle: 'sameline' }],
@@ -122,7 +122,7 @@ export default [
     ...twigHtml.configs.recommended,
     files: ['**/*.svg.twig'],
     ignores: [],
-    rules: { 'twig-html/attrs-newline': ['warn', { ignoreInside: [] }] },
+    rules: { 'twig-html/attrs-newline': ['warn', { ignores: [] }] },
   },
 ];
 ```
@@ -150,7 +150,7 @@ Checked against `@html-eslint/eslint-plugin` 0.67 running on Twig through `twig-
 | | `@html-eslint/attrs-newline` | `twig-html/attrs-newline` |
 |---|---|---|
 | Threshold | More than 2 attributes | More than 1 |
-| Options | `ifAttrsMoreThan`, `closeStyle`, `maxLen`, `skip`, `inline` | `ifAttrsMoreThan`, `closeStyle`, `ignoreInside` |
+| Options | `ifAttrsMoreThan`, `closeStyle`, `maxLen`, `skip`, `inline` | `ifAttrsMoreThan`, `closeStyle`, `ignores` |
 | Indentation | None; left to `@html-eslint/indent` | None; left to `twig-html/indent` |
 | Twig block around attributes | Each Twig tag is an attribute of its own, so `{% if %}` and `{% endif %}` get their own lines and the block is split | The block stays together on one line |
 | Twig comment between attributes | Dropped by the fix, which rebuilds the tag from the attributes it parsed | Reported, not fixed |

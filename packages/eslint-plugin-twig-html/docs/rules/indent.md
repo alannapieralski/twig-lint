@@ -124,20 +124,19 @@ lines and moved content stay at the tag's own indentation.
 
 These lines keep whatever indentation the author wrote:
 
-- **Content of `pre`, `textarea` and any element named in the parser's `rawContentTags` option**,
-  including the line of their closing tag, because whitespace there is content.
-- **Content of `script` and `style`, and of any element named in `ignores`.** Their closing tags are
-  still indented.
-- **Inner lines of a multi-line attribute value.** `eslint-plugin-twig-tailwind` wraps `class` values
-  and owns their layout.
-- **Inner lines of a multi-line Twig or HTML comment.** A comment is free text.
-- **Lines that start inside a multi-line Twig string**, because the whitespace is part of the string.
-- **Lines of a multi-line `{{ }}` or `{% %}` that are not inside brackets and not a method chain**,
-  such as a `?` continuation, a long condition or the closing `%}`. How to wrap the rest of an
-  expression is left to the author.
-- **Inner lines of Twig that starts inside a skipped region**, such as a multi-line attribute value.
-- **The bodies of `{% verbatim %}` and `{% raw %}`.** Twig prints them as written.
-- **YAML front matter** between `---` lines at the top of the file, as in Drupal help topics.
+| Skipped | Why | Setting |
+|---|---|---|
+| Content of `pre` and `textarea`, including the line of their closing tag | Whitespace there is content | Built in |
+| Content of any element named in the parser's `rawContentTags` option, including the line of its closing tag | Whitespace there is content | `rawContentTags`, a parser option |
+| Content of `script` and `style`. Their closing tags are still indented | The content is code | Built in |
+| Content of any element named in `ignores`. Their closing tags are still indented | Elements you choose to leave alone | `ignores`, default `[]` |
+| Inner lines of a multi-line attribute value | `eslint-plugin-twig-tailwind` wraps `class` values and owns their layout | Built in |
+| Inner lines of a multi-line Twig or HTML comment | A comment is free text | Built in |
+| Lines that start inside a multi-line Twig string | The whitespace is part of the string | Built in |
+| Lines of a multi-line `{{ }}` or `{% %}` that are not inside brackets and not a method chain, such as a `?` continuation, a long condition or the closing `%}` | How to wrap the rest of an expression is left to the author | Built in |
+| Inner lines of Twig that starts inside a skipped region, such as a multi-line attribute value | The region owns its layout | Built in |
+| The bodies of `{% verbatim %}` and `{% raw %}` | Twig prints them as written | Built in |
+| YAML front matter between `---` lines at the top of the file, as in Drupal help topics | It is not markup | Built in |
 
 ### Not checked at all
 
@@ -210,7 +209,7 @@ preset of eslint-plugin-vue 10:
 |---|---|---|
 | Indent size | `2` | `2` |
 | `attribute`, `closeBracket`, `alignAttributesVertically` | `1`, `0`, `true` | Same |
-| `ignores` | AST selectors, so an element can be ignored by attribute or position | Element names only |
+| Ignoring elements | `ignores`: AST selectors, so an element can be ignored by attribute or position | `ignores`: element names only |
 | `baseIndent` | `1`: children of `<template>` are indented | Not needed: Twig templates have no root wrapper, so top-level content is at column 0 |
 | Twig and Vue blocks | `v-if` lives on the element, so blocks add no level | Every Twig block body adds a level |
 | Expressions inside `{{ }}` | Indented like JavaScript | Lines inside `{ }`, `[ ]` and `( )` are indented one step from the line that opened them, and `.method()` chains one step from the line that starts them; other lines are left alone (see Known gaps) |

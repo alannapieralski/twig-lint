@@ -13,7 +13,7 @@ export type TagSource = {
   readonly isIgnored: (tag: TagNode) => boolean;
 };
 
-export function createTagSource(sourceCode: SourceCode, services: TwigParserServices, ignoreInside: readonly string[]): TagSource {
+export function createTagSource(sourceCode: SourceCode, services: TwigParserServices, ignores: readonly string[]): TagSource {
   const { text } = sourceCode;
 
   return {
@@ -21,6 +21,6 @@ export function createTagSource(sourceCode: SourceCode, services: TwigParserServ
     lineBreak: lineBreakUsedIn(text),
     blocks: services.blocks,
     attributesOf: createAttributesOf(services.omittedAttributes),
-    isIgnored: createIgnoredInsideCheck(sourceCode, ignoreInside),
+    isIgnored: createIgnoredInsideCheck(sourceCode, ignores),
   };
 }

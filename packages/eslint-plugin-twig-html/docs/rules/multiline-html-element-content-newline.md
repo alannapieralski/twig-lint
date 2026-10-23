@@ -100,18 +100,15 @@ that is never closed, moved content stays at the tag's indentation.
 
 ### Left alone
 
-- **An element that starts and ends on one line**, however long its content, because it is not
-  multi-line.
-- **An empty element** (`></div>`), unless `ignoreWhenEmpty` is off. Setting it off turns a multi-line
-  `></div>` into `>\n</div>`.
-- **Elements in `ignores`, and everything inside them.** By default that is `pre`, `textarea` and
-  common inline elements (`a`, `span`, `strong`, `label`, `svg` and the like), where a line break may
-  render as a space. Inline SVG is skipped this way, so taking `svg` out of `ignores` lays it out.
-- **`pre` and `textarea`, and everything inside them**, even when `ignores` leaves them out, since
-  their whitespace is content.
-- **Tags whose name is Twig**, such as `<{{ element }}>`, since Twig may render them as an inline
-  element.
-- **Tags with no closing tag**, such as `<img>`.
+| Skipped | Why | Setting |
+|---|---|---|
+| An element that starts and ends on one line | It is not multi-line, however long its content | Built in |
+| An empty element (`></div>`) | Nothing to move. With the setting off, a multi-line `></div>` becomes `>\n</div>` | `ignoreWhenEmpty`, default `true` |
+| Inline elements (`a`, `span`, `strong`, `label`, `svg` and the like), and everything inside them | A line break may render as a space. With the setting off, `svg` is laid out | `ignoreInlineElements`, default `true` |
+| Elements in `ignores`, and everything inside them | Elements you choose to leave alone | `ignores`, default `[]` |
+| `pre` and `textarea`, and everything inside them | Their whitespace is content | Built in |
+| Tags whose name is Twig, such as `<{{ element }}>` | Twig may render them as an inline element | Built in |
+| Tags with no closing tag, such as `<img>` | They have no content | Built in |
 
 ### Reported but not fixed
 
@@ -136,7 +133,8 @@ that is never closed, moved content stays at the tag's indentation.
 
 | Option | Default | Description |
 |---|---|---|
-| `ignores` | `['pre', 'textarea', ...inline elements]` | Leave these elements, and everything inside them, alone. Setting it replaces the whole list. |
+| `ignores` | `[]` | Leave these elements, and everything inside them, alone. `pre` and `textarea` are always left alone. |
+| `ignoreInlineElements` | `true` | Leave inline elements (`a`, `span`, `strong`, `label`, `svg` and the like), and everything inside them, alone. When `false`, they are checked, and reported but not fixed. |
 | `ignoreWhenEmpty` | `true` | Leave elements with no content at all alone. When `false`, `></div>` becomes `>\n</div>`. |
 | `allowEmptyLines` | `false` | Allow blank lines around the content. Only a missing line break is reported. |
 
@@ -151,12 +149,12 @@ The rule follows `vue/multiline-html-element-content-newline`. Checked against t
 
 | | `vue` | `twig-html/multiline-html-element-content-newline` |
 |---|---|---|
-| Options and defaults | `ignores`, `ignoreWhenEmpty`, `allowEmptyLines`; ignores `pre`, `textarea` and inline elements | Same, with the same inline element list |
+| Options | `ignores`, `ignoreWhenEmpty`, `allowEmptyLines` | Same, plus `ignoreInlineElements`. Vue lists the inline elements in the `ignores` default; here they sit behind `ignoreInlineElements`, and `ignores` starts empty |
 | Multi-line element | Closing tag starts on a later line than the opening tag | Same |
 | Message | ``Expected 1 line break after opening tag (`<div>`), but no line breaks found.`` | Same |
 | Elements fixed | Every element | Only elements whose edge whitespace browsers do not render; others are reported |
 | Indentation after the fix | Replaces the whitespace with a bare line break | Keeps the tag's indentation; `twig-html/indent` indents |
-| `pre` and `textarea` | Ignored by default | Always ignored |
+| `pre` and `textarea` | In the `ignores` default, so they can be removed | Always ignored |
 | Twig | Not applicable | Skips Twig-named tags and elements whose edges sit in another Twig branch |
 
 ## Compared with `@html-eslint/element-newline`
@@ -168,7 +166,7 @@ Checked against `@html-eslint/eslint-plugin` 0.67 running on Twig through `twig-
 | Scope | Every element, even on one line: `<div><p>x</p></div>` is split | Only multi-line elements |
 | Text content | Treated as inline: a multi-line `<h2>` with only text is left alone | Moved onto its own lines |
 | Child elements | A line break after the opening tag when a child element is not in `inline` (none are by default) | One line break at each edge of any multi-line element |
-| Options | `inline`, `skip` | `ignores`, `ignoreWhenEmpty`, `allowEmptyLines` |
+| Options | `inline`, `skip` | `ignores`, `ignoreInlineElements`, `ignoreWhenEmpty`, `allowEmptyLines` |
 | Elements left alone | `pre` and `code` by default | `pre`, `textarea` and inline elements by default |
 
 ## Testing

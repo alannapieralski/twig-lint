@@ -7,8 +7,8 @@ function normaliseElementName(name: string | undefined): string {
   return (name ?? '').toLowerCase();
 }
 
-export function createIgnoredInsideCheck(sourceCode: SourceCode, ignoreInside: readonly string[]): (tag: TagNode) => boolean {
-  const ignoredElementNames = new Set(ignoreInside.map(normaliseElementName));
+export function createIgnoredInsideCheck(sourceCode: SourceCode, ignores: readonly string[]): (tag: TagNode) => boolean {
+  const ignoredElementNames = new Set(ignores.map(normaliseElementName));
 
   return (tag) => {
     const tagAsEslintNode = tag as unknown as EslintNode;

@@ -22,7 +22,7 @@ Status line: severity in configs.recommended, fixable or not.
 ### Working with other rules   only when it applies
 
 ## What it skips
-### Left alone
+### Left alone           a table: Skipped, Why, Setting
 ### Reported but not fixed
 ### Not checked at all
 ### Known gaps            only what is still to build
@@ -44,8 +44,16 @@ Status line: severity in configs.recommended, fixable or not.
 
 ### What it skips
 
-- Every bullet says what is skipped and why. Left alone means no report. Reported but not fixed
+- Every entry says what is skipped and why. Left alone means no report. Reported but not fixed
   means a report without a fix. Not checked at all means the rule does not run there.
+- **Left alone is a table** with the columns Skipped, Why and Setting. Setting is either the option
+  that controls the skip, with its default, or `Built in` when the user cannot change it. Every skip
+  is one or the other, so a reader can tell which parts of a file they can bring back.
+- An option's default holds only what the option controls. A skip that is always on is built in and
+  never sits in a default list, even when the list would show it.
+- Every rule option named in the Setting column has a row in the Options table. A parser option
+  (`rawContentTags`) is named there and documented in the parser README.
+- Reported but not fixed, Not checked at all and Known gaps stay bullets.
 - Known gaps lists behaviour that is not built yet, one line each. Delete a line when it is built.
 - Omit a subheading that has no bullets.
 

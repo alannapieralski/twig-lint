@@ -1,17 +1,19 @@
 import { whitespaceSensitiveElements, inlineNonVoidElements } from '../../shared/html-elements.js';
 
-export type Options = { ignores?: string[]; ignoreWhenEmpty?: boolean; allowEmptyLines?: boolean };
+export type Options = { ignores?: string[]; ignoreInlineElements?: boolean; ignoreWhenEmpty?: boolean; allowEmptyLines?: boolean };
 
 const defaultOptions: Required<Options> = {
-  ignores: [...whitespaceSensitiveElements, ...inlineNonVoidElements],
+  ignores: [],
+  ignoreInlineElements: true,
   ignoreWhenEmpty: true,
-  allowEmptyLines: false,
+  allowEmptyLines: true,
 };
 
 export const optionsSchema = {
   type: 'object',
   properties: {
     allowEmptyLines: { type: 'boolean' },
+    ignoreInlineElements: { type: 'boolean' },
     ignoreWhenEmpty: { type: 'boolean' },
     ignores: { type: 'array', items: { type: 'string' }, uniqueItems: true },
   },
@@ -20,4 +22,9 @@ export const optionsSchema = {
 
 export function resolveOptions(rawOptions: unknown): Required<Options> {
   return { ...defaultOptions, ...(rawOptions as Options | undefined) };
+}
+
+export function resolveSkippedElements(options: Required<Options>): string[] {
+  const inlineElements = options.ignoreInlineElements ? inlineNonVoidElements : [];
+  return [...whitespaceSensitiveElements, ...inlineElements, ...options.ignores];
 }
