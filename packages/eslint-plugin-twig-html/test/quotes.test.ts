@@ -116,8 +116,9 @@ describe('twig-html/quotes', () => {
       expect((await lint('<input disabled {{ attributes }}>')).messages).toEqual([]);
     });
 
-    it('checks script and style tags', async () => {
-      expect(await fixed("<script src='/a.js'></script><style media='print'></style>")).toBe('<script src="/a.js"></script><style media="print"></style>');
+    it('leaves script and style tags alone', async () => {
+      const code = "<script src='/a.js'></script><style media='print'></style>";
+      expect(await fixed(code)).toBe(code);
     });
 
     it('leaves quotes in text, comments, scripts, styles and raw text alone', async () => {

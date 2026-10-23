@@ -54,8 +54,6 @@ Parts of the tag name are never counted and stay on the tag's line.
 
 ### Which tags are checked
 
-- **`script` and `style`:** their opening tags are checked like any other tag, so `src`, `type` and
-  `defer` each go on their own line. Their content is never checked.
 - **Multi-line attribute values:** kept as they are. Only the whitespace between attributes changes.
 
 ### What the fix changes
@@ -81,6 +79,7 @@ at the tag's own indentation.
 |---|---|---|
 | Tags at or under the threshold, however they are written | The rule does not normalise them | `ifAttrsMoreThan` |
 | Elements in `ignores`, and every tag inside them | Inline SVG puts many short tags on one line, and one attribute per line would make it much longer for no gain | `ignores`, default `['svg']` |
+| `<script>` and `<style>` elements | The whole element is left as written | Built in |
 | `textarea` and `title` content | It is text, so the rule never reads markup there | Built in |
 
 ### Reported but not fixed

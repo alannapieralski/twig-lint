@@ -86,7 +86,7 @@ Examples of **correct** code:
 ### Which elements are fixed
 
 - **Elements whose edge whitespace browsers do not render:** `div`, `p`, `li`, `table` and its parts,
-  headings, `button`, `title` and SVG containers, among others. A `title` is fixed even though the
+  headings, `button`, `select` and its `option`s, `title` and SVG containers, among others. A `title` is fixed even though the
   parser reads its content as raw text, because browsers trim it.
 - **Other elements** are reported but not fixed: see What it skips.
 
@@ -106,6 +106,7 @@ that is never closed, moved content stays at the tag's indentation.
 | An empty element (`></div>`) | Nothing to move. With the setting off, a multi-line `></div>` becomes `>\n</div>` | `ignoreWhenEmpty`, default `true` |
 | Inline elements (`a`, `span`, `strong`, `label`, `svg` and the like), and everything inside them | A line break may render as a space. With the setting off, `svg` is laid out | `ignoreInlineElements`, default `true` |
 | Elements in `ignores`, and everything inside them | Elements you choose to leave alone | `ignores`, default `[]` |
+| `script` and `style`, and everything inside them | They hold code, not markup | Built in |
 | `pre` and `textarea`, and everything inside them | Their whitespace is content | Built in |
 | Tags whose name is Twig, such as `<{{ element }}>` | Twig may render them as an inline element | Built in |
 | Tags with no closing tag, such as `<img>` | They have no content | Built in |
@@ -123,11 +124,6 @@ that is never closed, moved content stays at the tag's indentation.
   Moving the edges would move the Twig tags with them. Twig blocks that open and close inside the
   content are fine.
 - **An open tag that is missing its `>`**, where the parser reads the markup after it as attributes.
-
-### Known gaps
-
-- **`script` and `style` are not checked.** After `attrs-newline` splits a `<script>` opening tag, its
-  content stays on the `>` line (`>init()</script>`), unlike every other element.
 
 ## Options
 

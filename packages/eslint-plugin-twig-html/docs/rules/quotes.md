@@ -33,7 +33,7 @@ Examples of **correct** code:
 
 ### HTML attribute values
 
-- **Every attribute of every tag** is checked, `<script>` and `<style>` tags included. Attributes left
+- **Every attribute of every tag** is checked, except on `<script>` and `<style>`. Attributes left
   out of the AST by the parser option `ignoreInterpolatedAttributes`, such as `class` under
   `eslint-plugin-twig-tailwind`'s recommended config, are still checked.
 - **Twig inside a value is opaque to HTML.** In `class='{{ "a" }}'` only the outer quotes are HTML
@@ -69,6 +69,7 @@ The rule never changes what a template renders. It does not report:
 | A value or string that contains the wanted quote, such as `title='say "hi"'` or `{{ "it's" }}` | Switching would need an escape | Built in |
 | With `twig: 'single'`, a double-quoted Twig string that interpolates, such as `"a #{b}"` | Only double quotes interpolate | Built in |
 | With `twig: 'double'`, a single-quoted Twig string containing `#{` | Double quotes would start interpolating it | Built in |
+| Attributes of `<script>` and `<style>` tags | The elements are left as written | Built in |
 | Quotes in text, comments, `<script>` and `<style>` content, and `<textarea>` and `<title>` text, and DOCTYPE identifiers | They have no meaning to HTML | Built in |
 | Strings in `{# #}` comments and `{% verbatim %}` | They are text to Twig | Built in |
 

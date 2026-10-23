@@ -30,6 +30,10 @@ describe('twig-html/multiline-html-element-content-newline', () => {
     );
   });
 
+  it('moves the options of a select onto their own lines, since browsers trim them', async () => {
+    expect(await fixed('<select\n  id="a"\n  name="b"\n><option>One</option></select>')).toBe('<select\n  id="a"\n  name="b"\n>\n  <option>One</option>\n</select>');
+  });
+
   it('moves a title\'s text onto its own line, since browsers trim it', async () => {
     expect(await fixed('<title\n  id="t"\n  class=""\n>{{ head_title }}</title>')).toBe('<title\n  id="t"\n  class=""\n>\n  {{ head_title }}\n</title>');
   });

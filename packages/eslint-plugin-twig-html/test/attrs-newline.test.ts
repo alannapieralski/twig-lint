@@ -158,8 +158,9 @@ describe('twig-html/attrs-newline', () => {
     expect(result.messages.filter((message) => message.fatal)).toEqual([]);
   });
 
-  it('checks <script> and <style> tags too', async () => {
-    expect(await fixed('<script src="a.js" type="module" defer></script>')).toBe('<script\n  src="a.js"\n  type="module"\n  defer\n></script>');
+  it('leaves <script> and <style> tags alone', async () => {
+    const code = '<script src="a.js" type="module" defer></script><style media="print" id="a" data-x></style>';
+    expect(await fixed(code)).toBe(code);
   });
 
   it('is not applied to .svg.twig templates by the recommended config', async () => {
@@ -208,9 +209,15 @@ describe('twig-html/attrs-newline', () => {
     expect(await fixed('<div>\r\n  <a href="#" class="a">x</a>\r\n</div>')).toBe('<div>\r\n  <a\r\n    href="#"\r\n    class="a"\r\n  >x</a>\r\n</div>');
   });
 
-  it('never touches markup inside textarea or title, which is text', async () => {
+  it('never touches markup inside textarea, which is text', async () => {
     const code = '<textarea name="a" rows="2"><p class="x" id="y">typed</p></textarea>';
     expect(await fixed(code)).toBe('<textarea\n  name="a"\n  rows="2"\n><p class="x" id="y">typed</p></textarea>');
+  });
+
+  it('breaks the opening tag of a title but never reads its text as markup', async () => {
+    expect(await fixed('<title id="a" class="b" lang="en"><p class="x" id="y" lang="z"></title>')).toBe(
+      '<title\n  id="a"\n  class="b"\n  lang="en"\n><p class="x" id="y" lang="z"></title>',
+    );
   });
 });
 

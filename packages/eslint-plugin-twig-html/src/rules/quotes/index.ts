@@ -1,6 +1,8 @@
 import type { Rule } from 'eslint';
 import { readTwigServices } from 'twig-eslint-parser';
 import { docsUrlFor } from '../../shared/docs-url.js';
+import { skippedElements } from '../../shared/html-elements.js';
+import { createIgnoredInsideCheck } from '../../shared/ignored-inside.js';
 import { reportProblems } from '../../shared/report-problems.js';
 import { createAttributesOf } from '../../shared/tag-attributes.js';
 import { tagListeners } from '../../shared/tag-listeners.js';
@@ -30,8 +32,9 @@ export const quotes: Rule.RuleModule = {
     const { blocks, strings, omittedAttributes } = readTwigServices(sourceCode, context.id);
     const source = { text: sourceCode.text, blocks, ...quotesFor(options) };
     const attributesOf = createAttributesOf(omittedAttributes);
+    const isSkipped = createIgnoredInsideCheck(sourceCode, skippedElements);
 
-    const checkTag = (tag: TagWithAttributes) => reportProblems(context, findTagProblems(tag, attributesOf, source));
+    const checkTag = (tag: TagWithAttributes) => reportProblems(context, findTagProblems(tag, attributesOf, source, isSkipped));
 
     return {
       Program: () => reportProblems(context, findTwigStringProblems(strings, source)),
