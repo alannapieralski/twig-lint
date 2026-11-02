@@ -57,7 +57,7 @@ Codes without a prefix are the names the HTML specification gives the error. Cod
 |---|---|---|
 | `eof-in-comment` | A comment has no `-->` before the end of the file. | `<!-- note` |
 | `eof-in-tag` | An open or closing tag has no `>` before the end of the file. | `<div class="a"`, `<p>a</p` |
-| `unexpected-character-in-attribute-name` | An attribute name holds a quote or `<`, usually because an earlier value was quoted wrongly. | `<li class="a' data-x="y">` |
+| `unexpected-character-in-attribute-name` | An attribute name holds a quote or `<`, usually because an earlier value was quoted wrongly or the `=` before a value is missing. | `<li class="a' data-x="y">`, `<button type"button">` |
 | `unexpected-character-in-unquoted-attribute-value` | An unquoted value holds a quote or `<`, so the tag takes in the markup after it. | `<li id=b<span>x</span></li>` |
 | `unexpected-solidus-in-tag` | A `/` in an open tag is not followed by `>`, and no attribute before it holds a stray quote or `<`. The browser ignores it, but the parser does not read the attributes after it. | `<img src="a" / >` |
 | `x-invalid-end-tag` | A closing tag matches no open element. The message names the element that is open there, if any. | `<p>a</p></div>` |

@@ -86,6 +86,14 @@ describe('unexpected-character-in-attribute-name', () => {
     expect(diagnostic).toMatchObject({ code: 'unexpected-character-in-attribute-name', range: [0, code.indexOf('>') + 1] });
   });
 
+  it.each([
+    '<button type"button" class="a">x</button>',
+    '<button class="a" type"button">x</button>',
+    "<button type'button'>x</button>",
+  ])('reports a quoted value whose = is missing: %s', (code) => {
+    expect(codesOf(code)).toEqual(['unexpected-character-in-attribute-name']);
+  });
+
   it('reports the < before a / when a missing > lets the tag take in the next closing tag', () => {
     expect(codesOf('<ul>\n  <li class="x"{{ item }}</li>\n</ul>')).toEqual(['unexpected-character-in-attribute-name']);
   });

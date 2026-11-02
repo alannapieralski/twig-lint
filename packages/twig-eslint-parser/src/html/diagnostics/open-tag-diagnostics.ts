@@ -36,13 +36,13 @@ function textWithoutTwig(text: string, range: Range, blocks: readonly TwigBlockS
 }
 
 function describeStrayCharacter(attribute: AttributeNode, text: string, blocks: readonly TwigBlockSummary[]): StrayCharacterDiagnostic | undefined {
-  const withoutQuotedValues = textWithoutTwig(text, attribute.range, blocks).replace(QUOTED_VALUE, '');
-  if (!CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(withoutQuotedValues)) {
-    return undefined;
+  const [name = '', ...valueParts] = textWithoutTwig(text, attribute.range, blocks).split('=');
+  if (CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(name)) {
+    return STRAY_CHARACTER_IN_NAME;
   }
 
-  const [name = ''] = withoutQuotedValues.split('=');
-  return CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(name) ? STRAY_CHARACTER_IN_NAME : STRAY_CHARACTER_IN_VALUE;
+  const valueWithoutQuotedParts = valueParts.join('=').replace(QUOTED_VALUE, '');
+  return CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(valueWithoutQuotedParts) ? STRAY_CHARACTER_IN_VALUE : undefined;
 }
 
 function findOpenTagDiagnostic(element: MarkupElement, text: string, blocks: readonly TwigBlockSummary[]): TwigDiagnostic | undefined {
