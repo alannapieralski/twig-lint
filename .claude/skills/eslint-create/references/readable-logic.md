@@ -56,7 +56,9 @@ const messageId = !firstWrong.isClosing ? 'attributeLine' : options.closeStyle =
 
 ```ts
 function messageIdForSeparator(separator: AttributeSeparator, closeStyle: CloseStyle): MessageId {
-  if (!separator.isClosing) return 'attributeLine';
+  if (!separator.isClosing) {
+    return 'attributeLine';
+  }
   return closeStyle === 'newline' ? 'closeOnOwnLine' : 'closeAfterLastAttribute';
 }
 ```

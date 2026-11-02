@@ -12,17 +12,23 @@ const WHITESPACE_ONLY = /^\s*$/;
 const IGNORED_INDENTATION = /^[ \t]*$/;
 
 function isSeparatorCorrect(separatorText: string, separator: AttributeSeparator, lineBreak: string): boolean {
-  if (!separator.isLineBreak) return separatorText === separator.expected;
+  if (!separator.isLineBreak) {
+    return separatorText === separator.expected;
+  }
   return separatorText.startsWith(lineBreak) && IGNORED_INDENTATION.test(separatorText.slice(lineBreak.length));
 }
 
 function messageIdForSeparator(separator: AttributeSeparator, closeStyle: CloseStyle): string {
-  if (!separator.isClosing) return 'attributeLine';
+  if (!separator.isClosing) {
+    return 'attributeLine';
+  }
   return closeStyle === 'newline' ? 'closeOnOwnLine' : 'closeAfterLastAttribute';
 }
 
 function findReportedEnd(separator: AttributeSeparator, tag: TagNode, groups: readonly Range[]): number {
-  if (separator.isClosing) return tag.openEnd.range[1];
+  if (separator.isClosing) {
+    return tag.openEnd.range[1];
+  }
 
   const groupAfterSeparator = groups.find(([start]) => start === separator.range[1]);
   return groupAfterSeparator?.[1] ?? separator.range[1];
@@ -32,12 +38,16 @@ export function findAttributeProblems(tag: TagNode, source: TagSource, options: 
   const { text, lineBreak, blocks, attributesOf, isIgnored, unreadableTagStarts } = source;
   const attributes = attributesOf(tag);
   const groups = groupAttributes(tag, attributes, blocks);
-  if (groups.length <= options.ifAttrsMoreThan || isIgnored(tag)) return [];
+  if (groups.length <= options.ifAttrsMoreThan || isIgnored(tag)) {
+    return [];
+  }
 
   const separators = describeSeparators(tag, groups, text, lineBreak, options.closeStyle);
   const wrongSeparators = separators.filter((separator) => !isSeparatorCorrect(text.slice(...separator.range), separator, lineBreak));
   const firstWrongSeparator = wrongSeparators[0];
-  if (!firstWrongSeparator) return [];
+  if (!firstWrongSeparator) {
+    return [];
+  }
 
   const areAllSeparatorsWhitespace = separators.every((separator) => WHITESPACE_ONLY.test(text.slice(...separator.range)));
   const isFixable = areAllSeparatorsWhitespace && !isOpenTagUnreadable(tag, unreadableTagStarts);

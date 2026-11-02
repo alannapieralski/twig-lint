@@ -9,21 +9,31 @@ const DEFAULT_EXCLUDED_DIRECTORIES = ['node_modules', 'vendor', '.git'];
 const TAILWIND_SETTING_NAMES = ['cwd', 'entryPoint', 'tsconfig'] as const;
 
 function parseTailwindSettings(rootPath: string, value: unknown): TailwindSettings {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error(`"tailwind" for ${rootPath} must be an object with ${TAILWIND_SETTING_NAMES.join(', ')}.`);
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`"tailwind" for ${rootPath} must be an object with ${TAILWIND_SETTING_NAMES.join(', ')}.`);
+  }
   const unknownNames = Object.keys(value).filter((name) => !(TAILWIND_SETTING_NAMES as readonly string[]).includes(name));
-  if (unknownNames.length > 0) throw new Error(`"tailwind" for ${rootPath} has unknown settings: ${unknownNames.join(', ')}.`);
+  if (unknownNames.length > 0) {
+    throw new Error(`"tailwind" for ${rootPath} has unknown settings: ${unknownNames.join(', ')}.`);
+  }
   const settings: Record<string, string> = {};
   for (const name of TAILWIND_SETTING_NAMES) {
     const setting = (value as Record<string, unknown>)[name];
-    if (setting === undefined) continue;
-    if (typeof setting !== 'string' || setting === '') throw new Error(`"tailwind.${name}" for ${rootPath} must be a path.`);
+    if (setting === undefined) {
+      continue;
+    }
+    if (typeof setting !== 'string' || setting === '') {
+      throw new Error(`"tailwind.${name}" for ${rootPath} must be a path.`);
+    }
     settings[name] = resolve(rootPath, setting);
   }
   return settings;
 }
 
 function parseRoot(entry: unknown): CorpusRoot {
-  if (typeof entry === 'string') return { path: resolve(entry), quick: false };
+  if (typeof entry === 'string') {
+    return { path: resolve(entry), quick: false };
+  }
   if (typeof entry === 'object' && entry !== null && typeof (entry as { path?: unknown }).path === 'string') {
     const { path, quick, tailwind } = entry as { path: string; quick?: unknown; tailwind?: unknown };
     const rootPath = resolve(path);
@@ -35,7 +45,9 @@ function parseRoot(entry: unknown): CorpusRoot {
 function parseConfigFile(configPath: string): CorpusConfig {
   const raw: unknown = JSON.parse(readFileSync(configPath, 'utf8'));
   const { roots, exclude = DEFAULT_EXCLUDED_DIRECTORIES } = raw as { roots?: unknown; exclude?: string[] };
-  if (!Array.isArray(roots) || roots.length === 0) throw new Error(`${configPath} must have a non-empty "roots" array.`);
+  if (!Array.isArray(roots) || roots.length === 0) {
+    throw new Error(`${configPath} must have a non-empty "roots" array.`);
+  }
   return { roots: roots.map(parseRoot), exclude, isFromEnvironment: false };
 }
 
@@ -46,7 +58,9 @@ export function loadConfig(repositoryRoot: string, environment: NodeJS.ProcessEn
     : readLocalConfig(repositoryRoot);
 
   const missing = config.roots.filter((root) => !existsSync(root.path));
-  if (missing.length > 0) throw new Error(`Corpus roots do not exist: ${missing.map((root) => root.path).join(', ')}`);
+  if (missing.length > 0) {
+    throw new Error(`Corpus roots do not exist: ${missing.map((root) => root.path).join(', ')}`);
+  }
   return config;
 }
 
@@ -62,12 +76,16 @@ function selectRoots(config: CorpusConfig, options: Pick<CorpusOptions, 'quick' 
   let roots = config.roots;
   if (options.quick) {
     roots = roots.filter((root) => root.quick);
-    if (roots.length === 0) throw new Error('--quick needs at least one root with "quick": true in corpus.config.json.');
+    if (roots.length === 0) {
+      throw new Error('--quick needs at least one root with "quick": true in corpus.config.json.');
+    }
   }
   if (options.roots !== undefined) {
     const filters = options.roots;
     roots = roots.filter((root) => filters.some((filter) => root.path.includes(filter)));
-    if (roots.length === 0) throw new Error(`No corpus root matches --roots ${filters.join(',')}.`);
+    if (roots.length === 0) {
+      throw new Error(`No corpus root matches --roots ${filters.join(',')}.`);
+    }
   }
   return roots;
 }
@@ -79,7 +97,9 @@ export function discoverTemplates(config: CorpusConfig, options: Pick<CorpusOpti
     const files = globSync('**/*.twig', { cwd: root.path, exclude: (name) => excluded.has(name) });
     for (const file of files) {
       const path = resolve(root.path, file);
-      if (templatesByPath.has(path)) continue;
+      if (templatesByPath.has(path)) {
+        continue;
+      }
       templatesByPath.set(path, { root: root.path, path, relativePath: file, source: readFileSync(path, 'utf8') });
     }
   }

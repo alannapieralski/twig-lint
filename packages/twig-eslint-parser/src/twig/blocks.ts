@@ -32,12 +32,20 @@ function findBracketPairs(block: TwigBlock): Range[] {
   const openOffsets: number[] = [];
 
   for (const token of block.tokens) {
-    if (token.type !== 'PUNCTUATION') continue;
-    if (OPENING_BRACKETS.has(token.value)) openOffsets.push(token.start);
-    if (!CLOSING_BRACKETS.has(token.value)) continue;
+    if (token.type !== 'PUNCTUATION') {
+      continue;
+    }
+    if (OPENING_BRACKETS.has(token.value)) {
+      openOffsets.push(token.start);
+    }
+    if (!CLOSING_BRACKETS.has(token.value)) {
+      continue;
+    }
 
     const openOffset = openOffsets.pop();
-    if (openOffset === undefined) throw new Error(`A Twig bracket closes at ${token.start} without having opened.`);
+    if (openOffset === undefined) {
+      throw new Error(`A Twig bracket closes at ${token.start} without having opened.`);
+    }
     pairs.push([openOffset, token.start]);
   }
 
@@ -65,12 +73,16 @@ export function isShortFormTag(block: TwigBlock): boolean {
 }
 
 function opensNesting(block: TwigBlock, closedTagNames: ReadonlySet<string>): boolean {
-  if (block.tagName === undefined || !(BLOCK_TAGS.has(block.tagName) || closedTagNames.has(block.tagName))) return false;
+  if (block.tagName === undefined || !(BLOCK_TAGS.has(block.tagName) || closedTagNames.has(block.tagName))) {
+    return false;
+  }
   return !isShortFormTag(block);
 }
 
 function nestingDepthChange(block: TwigBlock, closedTagNames: ReadonlySet<string>): TwigBlockSummary['depthChange'] {
-  if (block.tagName?.startsWith('end')) return -1;
+  if (block.tagName?.startsWith('end')) {
+    return -1;
+  }
   return opensNesting(block, closedTagNames) ? 1 : 0;
 }
 
@@ -113,7 +125,9 @@ const BLOCK_KIND_BY_OPENING_TYPE: Partial<Record<TwigTokenType, { kind: TwigBloc
 function createBlock(kind: TwigBlockKind, tokens: TwigToken[]): TwigBlock {
   const first = tokens[0];
   const last = tokens.at(-1);
-  if (!first || !last) throw new Error('A Twig block needs at least its opening and closing delimiters.');
+  if (!first || !last) {
+    throw new Error('A Twig block needs at least its opening and closing delimiters.');
+  }
 
   const tagName = kind === 'tag' ? tokens.find((token) => token.type === 'NAME')?.value : undefined;
   return { kind, start: first.start, end: last.end, tokens, tagName };
@@ -121,7 +135,9 @@ function createBlock(kind: TwigBlockKind, tokens: TwigToken[]): TwigBlock {
 
 function findClosingIndex(tokens: readonly TwigToken[], openingIndex: number, closingType: TwigTokenType): number {
   for (let index = openingIndex + 1; index < tokens.length; index += 1) {
-    if (tokens[index]?.type === closingType) return index;
+    if (tokens[index]?.type === closingType) {
+      return index;
+    }
   }
   return -1;
 }
@@ -139,7 +155,9 @@ export function groupTwigBlocks(tokens: readonly TwigToken[]): TwigBlock[] {
     }
 
     const closingIndex = findClosingIndex(tokens, index, blockKind.closingType);
-    if (closingIndex === -1) throw new Error(`Twig ${blockKind.kind} block opened at offset ${opening.start} has no closing delimiter.`);
+    if (closingIndex === -1) {
+      throw new Error(`Twig ${blockKind.kind} block opened at offset ${opening.start} has no closing delimiter.`);
+    }
 
     blocks.push(createBlock(blockKind.kind, tokens.slice(index, closingIndex + 1)));
     index = closingIndex + 1;

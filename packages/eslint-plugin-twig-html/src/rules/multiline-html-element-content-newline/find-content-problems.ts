@@ -19,14 +19,18 @@ function isLineBreakCountInvalid(lineBreaks: number, allowEmptyLines: boolean): 
 }
 
 function describeTagInMessage(edge: ContentEdge, tag: TagNode, source: TagSource): string {
-  if (edge.messageId === 'unexpectedBeforeOpeningBracket' && tag.close) return abbreviateTwigInTag(tag.close.range, source.text, source.blocks);
+  if (edge.messageId === 'unexpectedBeforeOpeningBracket' && tag.close) {
+    return abbreviateTwigInTag(tag.close.range, source.text, source.blocks);
+  }
   return `${abbreviateTwigInTag(tag.openStart.range, source.text, source.blocks)}>`;
 }
 
 function describeEdgeProblem(edge: ContentEdge, tag: TagNode, tagIndentation: string, source: TagSource, options: Required<Options>, isFixable: boolean): Problem | undefined {
   const whitespace = source.text.slice(...edge.range);
   const lineBreaks = countLineBreaks(whitespace);
-  if (!isLineBreakCountInvalid(lineBreaks, options.allowEmptyLines)) return undefined;
+  if (!isLineBreakCountInvalid(lineBreaks, options.allowEmptyLines)) {
+    return undefined;
+  }
 
   const keptIndentation = lineBreaks === 0 ? tagIndentation : indentationAfterLastLineBreak(whitespace);
   const lineBreaksFound = lineBreaks === 0 ? 'no' : String(lineBreaks);
@@ -41,18 +45,26 @@ function describeEdgeProblem(edge: ContentEdge, tag: TagNode, tagIndentation: st
 
 export function findContentProblems(tag: TagNode, source: TagSource, options: Required<Options>): Problem[] {
   const { close, name } = tag;
-  if (!close || name === undefined || !PLAIN_ELEMENT_NAME.test(name)) return [];
+  if (!close || name === undefined || !PLAIN_ELEMENT_NAME.test(name)) {
+    return [];
+  }
 
   const { text, blocks, isIgnored, unreadableTagStarts } = source;
   const contentRange: Range = [tag.openEnd.range[1], close.range[0]];
   const isSingleLine = lineStartOf(text, close.range[0]) <= tag.openStart.range[0];
-  if (isSingleLine) return [];
+  if (isSingleLine) {
+    return [];
+  }
 
   const isEmpty = contentRange[0] === contentRange[1];
-  if (options.ignoreWhenEmpty && isEmpty) return [];
+  if (options.ignoreWhenEmpty && isEmpty) {
+    return [];
+  }
 
   const isUnsafeToCheck = isOpenTagUnreadable(tag, unreadableTagStarts) || !isTwigBalancedWithin(contentRange, blocks) || isIgnored(tag);
-  if (isUnsafeToCheck) return [];
+  if (isUnsafeToCheck) {
+    return [];
+  }
 
   const isFixable = ELEMENTS_WITH_UNRENDERED_EDGE_WHITESPACE.has(name);
   const tagIndentation = lineIndentationAt(text, tag.openStart.range[0]);

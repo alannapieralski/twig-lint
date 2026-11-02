@@ -6,15 +6,21 @@ import type { ParseForOutputChecks } from './output-checks.js';
 type Mutable = Record<string, unknown>;
 
 function tagsIn(value: unknown, found: Mutable[] = []): Mutable[] {
-  if (typeof value !== 'object' || value === null) return found;
+  if (typeof value !== 'object' || value === null) {
+    return found;
+  }
   if (Array.isArray(value)) {
     value.forEach((child) => tagsIn(child, found));
     return found;
   }
   const node = value as Mutable;
-  if (node['type'] === 'Tag') found.push(node);
+  if (node['type'] === 'Tag') {
+    found.push(node);
+  }
   for (const [key, child] of Object.entries(node)) {
-    if (key !== 'parent') tagsIn(child, found);
+    if (key !== 'parent') {
+      tagsIn(child, found);
+    }
   }
   return found;
 }
@@ -51,7 +57,9 @@ describe('checkParserOutput', () => {
   it('reports the line of the first class attribute the parser did not read', () => {
     const dropSecondTagAttributes = parseAndBreak((tags) => {
       const second = tags[1];
-      if (second) second['attributes'] = [];
+      if (second) {
+        second['attributes'] = [];
+      }
     });
     const issues = checkParserOutput('<ul class="a">\n  <li class="b">x</li>\n</ul>', dropSecondTagAttributes);
     expect(issues.filter((issue) => issue.check === 'html: every class attribute is read')).toEqual([

@@ -34,7 +34,9 @@ export function findMarkupElements(document: MarkupTreeNode): MarkupElement[] {
   const toVisit = [document];
 
   for (let node = toVisit.pop(); node; node = toVisit.pop()) {
-    if (isMarkupElement(node)) elements.push(node);
+    if (isMarkupElement(node)) {
+      elements.push(node);
+    }
     toVisit.push(...(node.children ?? []));
   }
 
@@ -53,11 +55,15 @@ export function findLastNode(document: MarkupTreeNode): MarkupTreeNode {
 
 function findChildOpenAt(node: MarkupTreeNode, offset: number, openUntil: number): { element: MarkupElement; openUntil: number } | undefined {
   for (const child of node.children ?? []) {
-    if (!isMarkupElement(child) || !child.openEnd || child.selfClosing) continue;
+    if (!isMarkupElement(child) || !child.openEnd || child.selfClosing) {
+      continue;
+    }
 
     const childOpenUntil = child.close?.range[0] ?? openUntil;
     const isOpenAtOffset = child.openEnd.range[1] <= offset && offset < childOpenUntil;
-    if (isOpenAtOffset) return { element: child, openUntil: childOpenUntil };
+    if (isOpenAtOffset) {
+      return { element: child, openUntil: childOpenUntil };
+    }
   }
 
   return undefined;

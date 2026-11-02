@@ -38,17 +38,27 @@ function findSkippedInElement(
   const { openStart, openEnd, close } = element;
   const attributeInteriors = attributes.map((attribute) => interiorOf(attribute.range));
 
-  if (!openEnd) return [[openStart.range[1], Infinity]];
+  if (!openEnd) {
+    return [[openStart.range[1], Infinity]];
+  }
 
   const isUnreadableOpenTag = isOpenTagUnreadable(element, unreadableTagStarts);
-  if (isUnreadableOpenTag) return [[openStart.range[1], element.range[1]]];
+  if (isUnreadableOpenTag) {
+    return [[openStart.range[1], element.range[1]]];
+  }
 
-  if (!close) return attributeInteriors;
+  if (!close) {
+    return attributeInteriors;
+  }
 
-  if (whitespaceSensitiveNames.has(elementNameOf(element))) return [...attributeInteriors, [openEnd.range[1], close.range[1]]];
+  if (whitespaceSensitiveNames.has(elementNameOf(element))) {
+    return [...attributeInteriors, [openEnd.range[1], close.range[1]]];
+  }
 
   const isContentLeftAlone = Object.hasOwn(RAW_TEXT_ELEMENT_NAMES, element.type) || ignoredNames.has(elementNameOf(element));
-  if (isContentLeftAlone) return [...attributeInteriors, [openEnd.range[1], close.range[0]]];
+  if (isContentLeftAlone) {
+    return [...attributeInteriors, [openEnd.range[1], close.range[0]]];
+  }
 
   return attributeInteriors;
 }
@@ -60,7 +70,9 @@ function findTextLeftUnread(document: MarkupNode, text: string): Range[] {
 
 function findUnclosedContent(element: Element): Range | undefined {
   const hasUnclosedChildren = !element.close && (element.children ?? []).length > 0;
-  if (!element.openEnd || !hasUnclosedChildren) return undefined;
+  if (!element.openEnd || !hasUnclosedChildren) {
+    return undefined;
+  }
   return [element.openEnd.range[1], element.range[1]];
 }
 
@@ -87,7 +99,9 @@ export function describeOpenTags(elements: readonly Element[], source: HtmlSourc
   const { text, attributesOf } = source;
 
   return elements.flatMap((element): OpenTag[] => {
-    if (!element.openEnd) return [];
+    if (!element.openEnd) {
+      return [];
+    }
 
     const attributes = attributesOf(element);
     const tagStart = element.openStart.range[0];

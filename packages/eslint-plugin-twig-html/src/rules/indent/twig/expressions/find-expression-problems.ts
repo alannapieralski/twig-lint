@@ -11,7 +11,9 @@ import type { IndentLayout } from '../../types.js';
 function findBlockProblems(block: TwigBlockSummary, layout: IndentLayout, text: string, options: ResolvedOptions, isInsideString: (offset: number) => boolean): Problem[] {
   const startLineContent = contentStartOf(text, lineStartOf(text, block.range[0]));
   const isLaidOut = isChecked(block.range[0], layout) && isChecked(startLineContent, layout);
-  if (!isLaidOut) return [];
+  if (!isLaidOut) {
+    return [];
+  }
 
   const startLineIndentation = expectedIndentAt(startLineContent, layout, options);
   const lines = findExpressionLines({ text, block, startLineIndentation, unitText: options.unit.text, isInsideString });

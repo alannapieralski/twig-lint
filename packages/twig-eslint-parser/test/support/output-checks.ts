@@ -28,16 +28,22 @@ function isNode(value: unknown): value is Node {
 }
 
 function walk(value: unknown, visit: (node: Node, parent: Node | undefined) => void, parent?: Node, seen = new Set<object>()): void {
-  if (typeof value !== 'object' || value === null || seen.has(value)) return;
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return;
+  }
   seen.add(value);
   if (Array.isArray(value)) {
     value.forEach((child) => walk(child, visit, parent, seen));
     return;
   }
   const node = isNode(value) ? value : undefined;
-  if (node) visit(node, parent);
+  if (node) {
+    visit(node, parent);
+  }
   for (const [key, child] of Object.entries(value)) {
-    if (key !== 'parent' && key !== 'loc' && key !== 'range') walk(child, visit, node ?? parent, seen);
+    if (key !== 'parent' && key !== 'loc' && key !== 'range') {
+      walk(child, visit, node ?? parent, seen);
+    }
   }
 }
 
@@ -65,15 +71,21 @@ const CLOSE_TAG_PATTERN = /<\/\s*((?:\{\{.*?\}\}|[^\s>{])+)\s*>?/g;
 const TWIG_TAG_OR_COMMENT = /\{%|\{#/;
 
 function collectHtmlLeaves(value: unknown, leaves: Node[] = [], seen = new Set<object>()): Node[] {
-  if (typeof value !== 'object' || value === null || seen.has(value)) return leaves;
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return leaves;
+  }
   seen.add(value);
   if (Array.isArray(value)) {
     value.forEach((child) => collectHtmlLeaves(child, leaves, seen));
     return leaves;
   }
-  if (isNode(value) && typeof value['value'] === 'string') leaves.push(value);
+  if (isNode(value) && typeof value['value'] === 'string') {
+    leaves.push(value);
+  }
   for (const [key, child] of Object.entries(value)) {
-    if (!KEYS_OUTSIDE_THE_HTML_TREE.has(key)) collectHtmlLeaves(child, leaves, seen);
+    if (!KEYS_OUTSIDE_THE_HTML_TREE.has(key)) {
+      collectHtmlLeaves(child, leaves, seen);
+    }
   }
   return leaves;
 }
@@ -91,7 +103,9 @@ function withName(tag: ParsedTag): TagNode {
 function collectTags(body: unknown): TagNode[] {
   const tags: TagNode[] = [];
   walk(body, (node) => {
-    if (isParsedTag(node)) tags.push(withName(node));
+    if (isParsedTag(node)) {
+      tags.push(withName(node));
+    }
   });
   return tags;
 }
@@ -109,11 +123,15 @@ function findUncoveredSource(code: string, coveredRanges: readonly Range[]): Ran
   const addGap = (start: number, end: number) => {
     const gap = code.slice(start, end);
     const contentStart = gap.search(/\S/);
-    if (contentStart === -1) return;
+    if (contentStart === -1) {
+      return;
+    }
     uncovered.push([start + contentStart, start + gap.trimEnd().length]);
   };
   for (const [start, end] of [...coveredRanges].sort((first, second) => first[0] - second[0])) {
-    if (start > position) addGap(position, start);
+    if (start > position) {
+      addGap(position, start);
+    }
     position = Math.max(position, end);
   }
   addGap(position, code.length);
@@ -134,7 +152,9 @@ function isLeftOpen(tag: TagNode): boolean {
 
 function containsUnclosedElement(tag: TagNode): boolean {
   return (tag.children ?? []).some((child) => {
-    if (!isParsedTag(child)) return false;
+    if (!isParsedTag(child)) {
+      return false;
+    }
     const childTag = withName(child);
     return isLeftOpen(childTag) || containsUnclosedElement(childTag);
   });
@@ -149,13 +169,19 @@ function checkTreeShape(tags: readonly TagNode[], report: ReportIssue): void {
     const children = tag.children ?? [];
     children.forEach((child, index) => {
       const previous = children[index - 1];
-      if (previous && child.range[0] < previous.range[1]) report('html: siblings in source order', `${child.type} after ${previous.type} in <${tag.name}>`, child.range);
-      if (child.range[0] < tag.range[0] || child.range[1] > tag.range[1]) report('html: child inside parent', `${child.type} outside <${tag.name}>`, child.range);
+      if (previous && child.range[0] < previous.range[1]) {
+        report('html: siblings in source order', `${child.type} after ${previous.type} in <${tag.name}>`, child.range);
+      }
+      if (child.range[0] < tag.range[0] || child.range[1] > tag.range[1]) {
+        report('html: child inside parent', `${child.type} outside <${tag.name}>`, child.range);
+      }
     });
     const attributes = tag.attributes ?? [];
     attributes.forEach((attribute, index) => {
       const previous = attributes[index - 1];
-      if (previous && attribute.range[0] < previous.range[1]) report('html: siblings in source order', `attribute ${JSON.stringify(attribute.key.value).slice(0, 40)} in <${tag.name}>`, attribute.range);
+      if (previous && attribute.range[0] < previous.range[1]) {
+        report('html: siblings in source order', `attribute ${JSON.stringify(attribute.key.value).slice(0, 40)} in <${tag.name}>`, attribute.range);
+      }
     });
   }
 }
@@ -164,7 +190,9 @@ function checkLeavesDoNotOverlap(leaves: readonly Node[], code: string, report: 
   const sorted = [...leaves].sort((first, second) => first.range[0] - second.range[0]);
   sorted.forEach((leaf, index) => {
     const previous = sorted[index - 1];
-    if (!previous || leaf.range[0] >= previous.range[1]) return;
+    if (!previous || leaf.range[0] >= previous.range[1]) {
+      return;
+    }
     report('html: nodes do not overlap', `${leaf.type} ${JSON.stringify(code.slice(...leaf.range)).slice(0, 40)} overlaps ${previous.type}`, leaf.range);
   });
 }
@@ -184,7 +212,9 @@ function describeUncoveredSource(code: string, [start, end]: Range, tags: readon
     issues.push({ check, detail: closeTag.slice(0, 60), range: [closeStart, closeStart + closeTag.length] });
     remainder = remainder.replace(closeTag, '');
   }
-  if (/\S/.test(remainder)) issues.push({ check: 'html: source is covered', detail: JSON.stringify(remainder.trim()).slice(0, 60), range: [start, end] });
+  if (/\S/.test(remainder)) {
+    issues.push({ check: 'html: source is covered', detail: JSON.stringify(remainder.trim()).slice(0, 60), range: [start, end] });
+  }
   return issues;
 }
 
@@ -192,8 +222,12 @@ function verbatimDelimiterRanges(code: string, blocks: readonly TwigBlock[]): Ra
   const ranges: Range[] = [];
   let bodyStart: number | undefined;
   for (const block of blocks) {
-    if (block.tagName === 'verbatim') bodyStart = block.end;
-    if (block.tagName !== 'endverbatim' || bodyStart === undefined) continue;
+    if (block.tagName === 'verbatim') {
+      bodyStart = block.end;
+    }
+    if (block.tagName !== 'endverbatim' || bodyStart === undefined) {
+      continue;
+    }
     for (const delimiter of code.slice(bodyStart, block.start).matchAll(/\{\{|\}\}|\{%|%\}|\{#|#\}/g)) {
       ranges.push([bodyStart + delimiter.index, bodyStart + delimiter.index + 2]);
     }
@@ -229,7 +263,9 @@ function maskCommentsAndRawText(markup: string): string {
       commentOrTag.lastIndex = end;
       continue;
     }
-    if (!RAW_TEXT_ELEMENTS.has(tagName.toLowerCase())) continue;
+    if (!RAW_TEXT_ELEMENTS.has(tagName.toLowerCase())) {
+      continue;
+    }
     const closeTag = masked.toLowerCase().indexOf(`</${tagName.toLowerCase()}`, contentStart);
     const end = closeTag === -1 ? masked.length : closeTag;
     masked = blankOut(masked, contentStart, end);
@@ -249,7 +285,9 @@ function findClassAttributesInMarkup(code: string, blocks: readonly TwigBlock[])
   for (const tag of masked.matchAll(/<([A-Za-z][\w:-]*)((?:=\s*"[^"]*"|=\s*'[^']*'|[^>])*)(?:>|$)/g)) {
     const [, name = '', head = ''] = tag;
     const headStart = tag.index + 1 + name.length;
-    for (const attribute of head.matchAll(/(^|\s)class\s*=/gi)) offsets.push(headStart + attribute.index + (attribute[1]?.length ?? 0));
+    for (const attribute of head.matchAll(/(^|\s)class\s*=/gi)) {
+      offsets.push(headStart + attribute.index + (attribute[1]?.length ?? 0));
+    }
   }
   return offsets;
 }
@@ -269,8 +307,12 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
   const locate = createOffsetLocator(code);
   const lineOf = (offset: number) => locate(offset).line;
   const report = (check: string, detail: string, where?: number | Range) => {
-    if (where === undefined) return issues.push({ check, detail });
-    if (typeof where === 'number') return issues.push({ check, detail, line: where });
+    if (where === undefined) {
+      return issues.push({ check, detail });
+    }
+    if (typeof where === 'number') {
+      return issues.push({ check, detail, line: where });
+    }
     return issues.push({ check, detail, line: lineOf(where[0]), range: where });
   };
   const hasSameLoc = (node: Node) => {
@@ -284,39 +326,65 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
   const expressionBlocks = allBlocks.filter((block) => block.kind !== 'comment');
   const services = result.services.twig;
   const unparsedBlocks = services.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig');
-  for (const block of unparsedBlocks) report('converts every Twig block', `${code.slice(...block.range)} (${block.message})`, [block.range[0], block.range[1]]);
+  for (const block of unparsedBlocks) {
+    report('converts every Twig block', `${code.slice(...block.range)} (${block.message})`, [block.range[0], block.range[1]]);
+  }
   const convertedRanges: Range[] = expressionBlocks
     .filter((block) => toSameLengthJavaScript(block) !== undefined && !unparsedBlocks.some((unparsed) => unparsed.range[0] === block.start))
     .map((block) => [block.start, block.end]);
 
   const stringCountByStart = new Map<number, number>();
   walk(result.ast.twigBody, (node, parent) => {
-    if (!isRangeInSource(node)) return report('twig: range inside the source', `${node.type} ${JSON.stringify(node.range)}`);
+    if (!isRangeInSource(node)) {
+      return report('twig: range inside the source', `${node.type} ${JSON.stringify(node.range)}`);
+    }
     const source = code.slice(...node.range);
-    if (!hasSameLoc(node)) report('twig: loc matches range', `${node.type} "${source.slice(0, 40)}"`, node.range);
-    if (parent && (node.range[0] < parent.range[0] || node.range[1] > parent.range[1])) report('twig: child inside parent', `${node.type} "${source.slice(0, 40)}" in ${parent.type}`, node.range);
-    if (!parent && !convertedRanges.some(([start, end]) => node.range[0] >= start && node.range[1] <= end)) report('twig: statement inside its block', `${node.type} "${source.slice(0, 40)}"`, node.range);
+    if (!hasSameLoc(node)) {
+      report('twig: loc matches range', `${node.type} "${source.slice(0, 40)}"`, node.range);
+    }
+    if (parent && (node.range[0] < parent.range[0] || node.range[1] > parent.range[1])) {
+      report('twig: child inside parent', `${node.type} "${source.slice(0, 40)}" in ${parent.type}`, node.range);
+    }
+    if (!parent && !convertedRanges.some(([start, end]) => node.range[0] >= start && node.range[1] <= end)) {
+      report('twig: statement inside its block', `${node.type} "${source.slice(0, 40)}"`, node.range);
+    }
     if (node.type === 'Identifier' && source !== node['name']) {
       const name = String(node['name']);
       const isRenamedReservedWord = name.length === source.length && name.startsWith('_') && source.slice(1).replace(/[^A-Za-z0-9_]/g, '_') === name.slice(1);
-      if (!isRenamedReservedWord) report('twig: identifier matches source', `"${name}" vs "${source}"`, node.range);
+      if (!isRenamedReservedWord) {
+        report('twig: identifier matches source', `"${name}" vs "${source}"`, node.range);
+      }
     }
-    if (node.type === 'Literal' && source !== node['raw']) report('twig: literal matches source', `${JSON.stringify(node['raw'])} vs ${JSON.stringify(source)}`, node.range);
+    if (node.type === 'Literal' && source !== node['raw']) {
+      report('twig: literal matches source', `${JSON.stringify(node['raw'])} vs ${JSON.stringify(source)}`, node.range);
+    }
     const isString = node.type === 'TemplateLiteral' || (node.type === 'Literal' && typeof node['value'] === 'string');
-    if (isString) stringCountByStart.set(node.range[0], (stringCountByStart.get(node.range[0]) ?? 0) + 1);
-    if (node.type === 'TemplateLiteral' && (!/^['"]/.test(source) || source.at(-1) !== source[0])) report('twig: string range on its Twig quotes', source.slice(0, 60), node.range);
+    if (isString) {
+      stringCountByStart.set(node.range[0], (stringCountByStart.get(node.range[0]) ?? 0) + 1);
+    }
+    if (node.type === 'TemplateLiteral' && (!/^['"]/.test(source) || source.at(-1) !== source[0])) {
+      report('twig: string range on its Twig quotes', source.slice(0, 60), node.range);
+    }
     if (node.type === 'TemplateElement') {
       const inner = code.slice(node.range[0] + 1, node.range[1] - (node['tail'] ? 1 : 2));
       const raw = (node['value'] as { raw: string }).raw;
-      if (inner !== raw) report('twig: string text matches source', `${JSON.stringify(raw).slice(0, 50)} vs ${JSON.stringify(inner).slice(0, 50)}`, node.range);
+      if (inner !== raw) {
+        report('twig: string text matches source', `${JSON.stringify(raw).slice(0, 50)} vs ${JSON.stringify(inner).slice(0, 50)}`, node.range);
+      }
     }
   });
   for (const block of expressionBlocks) {
-    if (!convertedRanges.some(([start]) => start === block.start)) continue;
+    if (!convertedRanges.some(([start]) => start === block.start)) {
+      continue;
+    }
     for (const token of block.tokens) {
-      if (token.type !== 'OPENING_QUOTE') continue;
+      if (token.type !== 'OPENING_QUOTE') {
+        continue;
+      }
       const count = stringCountByStart.get(token.start) ?? 0;
-      if (count !== 1) report('twig: every string appears once', `${count} times: ${code.slice(token.start, token.start + 50).split('\n')[0]}`, [token.start, token.end]);
+      if (count !== 1) {
+        report('twig: every string appears once', `${count} times: ${code.slice(token.start, token.start + 50).split('\n')[0]}`, [token.start, token.end]);
+      }
     }
   }
 
@@ -324,9 +392,13 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
   const branchSegments = branchSegmentsOf(code);
   const tags = collectTags(result.ast.body);
   walk(result.ast.body, (node) => {
-    if (!isRangeInSource(node)) return report('html: range inside the source', `${node.type} ${JSON.stringify(node.range)}`);
+    if (!isRangeInSource(node)) {
+      return report('html: range inside the source', `${node.type} ${JSON.stringify(node.range)}`);
+    }
     const source = code.slice(...node.range);
-    if (!hasSameLoc(node)) report('html: loc matches range', `${node.type} "${source.slice(0, 40)}"`, node.range);
+    if (!hasSameLoc(node)) {
+      report('html: loc matches range', `${node.type} "${source.slice(0, 40)}"`, node.range);
+    }
     const value = node['value'];
     if (typeof value === 'string' && value !== source && !node.type.startsWith('Css') && !overlaps(node.range, commentRanges)) {
       report('html: node text matches source', `${node.type} ${JSON.stringify(source).slice(0, 50)} read as ${JSON.stringify(value).slice(0, 50)}`, node.range);
@@ -338,18 +410,32 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
       const closeCheck = isInsideABranch(tag.range[0], branchSegments) ? 'html: element left open in a Twig branch' : 'html: element closes';
       report(closeCheck, `line ${tag.loc.start.line}: ${code.slice(...tag.openStart.range).slice(0, 60)}`, tag.openStart.range);
     }
-    if (tag.type !== 'Tag') continue;
+    if (tag.type !== 'Tag') {
+      continue;
+    }
     for (const part of ['openStart', 'openEnd', 'close'] as const) {
       const token = tag[part] as Token | undefined;
-      if (token && code.slice(...token.range) !== token.value) report('html: tag parts match source', `${part} ${JSON.stringify(token.value).slice(0, 40)}`, token.range);
+      if (token && code.slice(...token.range) !== token.value) {
+        report('html: tag parts match source', `${part} ${JSON.stringify(token.value).slice(0, 40)}`, token.range);
+      }
     }
     const openStartAfterName = code.slice(tag.openStart.range[0] + 1, tag.openStart.range[1]).toLowerCase().slice(tag.name.length);
-    if (!code.slice(tag.openStart.range[0] + 1).toLowerCase().startsWith(tag.name.toLowerCase()) || !/^(\{|$)/.test(openStartAfterName)) report('html: tag name matches source', `${tag.name} vs ${code.slice(...tag.openStart.range)}`, tag.openStart.range);
-    if (isTwigGluedToName(tag.name)) report('html: Twig block glued to a name', `<${tag.name.slice(0, 60)}`, tag.openStart.range);
+    if (!code.slice(tag.openStart.range[0] + 1).toLowerCase().startsWith(tag.name.toLowerCase()) || !/^(\{|$)/.test(openStartAfterName)) {
+      report('html: tag name matches source', `${tag.name} vs ${code.slice(...tag.openStart.range)}`, tag.openStart.range);
+    }
+    if (isTwigGluedToName(tag.name)) {
+      report('html: Twig block glued to a name', `<${tag.name.slice(0, 60)}`, tag.openStart.range);
+    }
     for (const attribute of tag.attributes ?? []) {
-      if (code.slice(...attribute.key.range) !== attribute.key.value) report('html: attribute name matches source', JSON.stringify(attribute.key.value).slice(0, 40), attribute.key.range);
-      if (isTwigGluedToName(attribute.key.value)) report('html: Twig block glued to a name', JSON.stringify(attribute.key.value).slice(0, 60), attribute.key.range);
-      if (attribute.key.value.toLowerCase() === 'class') classAttributesRead.push(attribute.key.range[0]);
+      if (code.slice(...attribute.key.range) !== attribute.key.value) {
+        report('html: attribute name matches source', JSON.stringify(attribute.key.value).slice(0, 40), attribute.key.range);
+      }
+      if (isTwigGluedToName(attribute.key.value)) {
+        report('html: Twig block glued to a name', JSON.stringify(attribute.key.value).slice(0, 60), attribute.key.range);
+      }
+      if (attribute.key.value.toLowerCase() === 'class') {
+        classAttributesRead.push(attribute.key.range[0]);
+      }
     }
   }
   const classAttributesInMarkup = findClassAttributesInMarkup(code, allBlocks);
@@ -364,7 +450,9 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
   checkLeavesDoNotOverlap(leaves, code, report);
   const coveredRanges = [...leaves.map((leaf) => leaf.range), ...equalsSignRanges(tags), ...services.omittedAttributes.map((attribute) => attribute.range), ...commentRanges, ...verbatimDelimiterRanges(code, allBlocks)];
   for (const range of findUncoveredSource(code, coveredRanges)) {
-    for (const issue of describeUncoveredSource(code, range, tags, branchSegments)) report(issue.check, issue.detail, issue.range ?? range);
+    for (const issue of describeUncoveredSource(code, range, tags, branchSegments)) {
+      report(issue.check, issue.detail, issue.range ?? range);
+    }
   }
 
   return issues;

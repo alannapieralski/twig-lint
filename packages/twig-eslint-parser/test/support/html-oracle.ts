@@ -88,7 +88,9 @@ function describeToken(token: GoldenToken): string {
 
 function endOfDelimiter(source: string, offset: number, delimiter: string, token: GoldenToken): number {
   const trimmed = source[offset] === '-' || source[offset] === '~' ? offset + 1 : offset;
-  if (!source.startsWith(delimiter, trimmed)) throw new Error(`Expected "${delimiter}" for the ${describeToken(token)}.`);
+  if (!source.startsWith(delimiter, trimmed)) {
+    throw new Error(`Expected "${delimiter}" for the ${describeToken(token)}.`);
+  }
   return trimmed + delimiter.length;
 }
 
@@ -100,7 +102,9 @@ function endOfText(source: string, start: number, value: string, token: GoldenTo
       index += source[index + 1] === '\n' ? 2 : 1;
       continue;
     }
-    if (!source.startsWith(character, index)) throw new Error(`The ${describeToken(token)} does not match the source.`);
+    if (!source.startsWith(character, index)) {
+      throw new Error(`The ${describeToken(token)} does not match the source.`);
+    }
     index += character.length;
   }
   return index;
@@ -117,13 +121,17 @@ function rangesInGap(source: string, gapStart: number, gapEnd: number): TwigRang
     const rest = source.slice(index, gapEnd);
     if (rest.startsWith('{#')) {
       const close = rest.indexOf('#}', 2);
-      if (close === -1) throw new Error(`Unterminated Twig comment at offset ${index}.`);
+      if (close === -1) {
+        throw new Error(`Unterminated Twig comment at offset ${index}.`);
+      }
       ranges.push({ start: index, end: index + close + 2, kind: 'comment' });
       index += close + 2;
       continue;
     }
     const rawTag = RAW_TAG_IN_GAP.exec(rest);
-    if (!rawTag) throw new Error(`Twig emitted no token for ${JSON.stringify(rest.slice(0, 40))} at offset ${index}.`);
+    if (!rawTag) {
+      throw new Error(`Twig emitted no token for ${JSON.stringify(rest.slice(0, 40))} at offset ${index}.`);
+    }
     ranges.push({ start: index, end: index + rawTag[0].length, kind: 'tag' });
     index += rawTag[0].length;
   }
@@ -138,16 +146,22 @@ export function twigRangesFromOracle(source: string, golden: Golden): TwigRange[
 
   for (const token of golden.tokens) {
     const offset = toUtf16.get(token.offset);
-    if (offset === undefined) throw new Error(`The ${describeToken(token)} is not on a character boundary.`);
+    if (offset === undefined) {
+      throw new Error(`The ${describeToken(token)} is not on a character boundary.`);
+    }
 
     if (token.type === 'begin of print statement' || token.type === 'begin of statement block') {
-      if (open) throw new Error(`The ${describeToken(token)} opens inside another block.`);
+      if (open) {
+        throw new Error(`The ${describeToken(token)} opens inside another block.`);
+      }
       open = { kind: token.type === 'begin of print statement' ? 'print' : 'tag', start: offset };
       continue;
     }
     if (token.type === 'end of print statement' || token.type === 'end of statement block') {
       const kind = token.type === 'end of print statement' ? 'print' : 'tag';
-      if (open?.kind !== kind) throw new Error(`The ${describeToken(token)} closes no open ${kind} block.`);
+      if (open?.kind !== kind) {
+        throw new Error(`The ${describeToken(token)} closes no open ${kind} block.`);
+      }
       const block: TwigRange = { start: open.start, end: endOfDelimiter(source, offset, endDelimiterByKind[kind], token), kind };
       blocks.push(block);
       covered.push([block.start, block.end]);
@@ -155,21 +169,29 @@ export function twigRangesFromOracle(source: string, golden: Golden): TwigRange[
       continue;
     }
     if (token.type === 'text') {
-      if (open) throw new Error(`The ${describeToken(token)} is inside a block.`);
+      if (open) {
+        throw new Error(`The ${describeToken(token)} is inside a block.`);
+      }
       covered.push([offset, endOfText(source, offset, String(token.value), token)]);
       continue;
     }
     if (token.type === 'end of template') {
-      if (open) throw new Error(`The ${describeToken(token)} leaves a block open.`);
+      if (open) {
+        throw new Error(`The ${describeToken(token)} leaves a block open.`);
+      }
       continue;
     }
-    if (!open) throw new Error(`The ${describeToken(token)} is outside any block.`);
+    if (!open) {
+      throw new Error(`The ${describeToken(token)} is outside any block.`);
+    }
   }
 
   const gapRanges: TwigRange[] = [];
   let cursor = 0;
   for (const [start, end] of covered) {
-    if (start < cursor) throw new Error(`Twig tokens overlap at offset ${start}.`);
+    if (start < cursor) {
+      throw new Error(`Twig tokens overlap at offset ${start}.`);
+    }
     gapRanges.push(...rangesInGap(source, cursor, start));
     cursor = end;
   }
@@ -191,7 +213,9 @@ function blankTwigRanges(source: string, twigRanges: readonly TwigRange[]): stri
   const characters = source.split('');
   for (const range of twigRanges) {
     for (let index = range.start; index < range.end; index += 1) {
-      if (characters[index] !== '\n' && characters[index] !== '\r') characters[index] = ' ';
+      if (characters[index] !== '\n' && characters[index] !== '\r') {
+        characters[index] = ' ';
+      }
     }
   }
   return characters.join('');
@@ -202,7 +226,9 @@ function startsAttributeName(character: string | undefined): boolean {
 }
 
 function fillerFor(state: ScanState, range: TwigRange, source: string): Filler {
-  if (range.kind !== 'print') return 'blank';
+  if (range.kind !== 'print') {
+    return 'blank';
+  }
   switch (state.mode) {
     case 'attribute-name':
     case 'tag-open':
@@ -233,71 +259,121 @@ function nextState(state: ScanState, character: string): ScanState {
     case 'data':
       return character === '<' ? { ...state, mode: 'tag-open', isEndTag: false } : state;
     case 'tag-open':
-      if (character === '/') return { ...state, mode: 'end-tag-open', isEndTag: true };
-      if (isLetter) return startTagState(state, character);
+      if (character === '/') {
+        return { ...state, mode: 'end-tag-open', isEndTag: true };
+      }
+      if (isLetter) {
+        return startTagState(state, character);
+      }
       return nextState({ ...state, mode: 'data' }, character);
     case 'end-tag-open':
       return isLetter ? startTagState(state, character) : { ...state, mode: 'data' };
     case 'tag-name':
-      if (isWhitespace) return { ...state, mode: 'before-attribute-name' };
-      if (character === '/') return { ...state, mode: 'self-closing' };
-      if (character === '>') return { ...state, mode: 'data' };
+      if (isWhitespace) {
+        return { ...state, mode: 'before-attribute-name' };
+      }
+      if (character === '/') {
+        return { ...state, mode: 'self-closing' };
+      }
+      if (character === '>') {
+        return { ...state, mode: 'data' };
+      }
       return { ...state, tagName: state.tagName + character.toLowerCase() };
     case 'before-attribute-name':
     case 'after-attribute-value':
     case 'self-closing':
-      if (isWhitespace) return { ...state, mode: 'before-attribute-name' };
-      if (character === '/') return { ...state, mode: 'self-closing' };
-      if (character === '>') return { ...state, mode: 'data' };
+      if (isWhitespace) {
+        return { ...state, mode: 'before-attribute-name' };
+      }
+      if (character === '/') {
+        return { ...state, mode: 'self-closing' };
+      }
+      if (character === '>') {
+        return { ...state, mode: 'data' };
+      }
       return { ...state, mode: 'attribute-name' };
     case 'attribute-name':
-      if (isWhitespace) return { ...state, mode: 'after-attribute-name' };
-      if (character === '/') return { ...state, mode: 'self-closing' };
-      if (character === '>') return { ...state, mode: 'data' };
+      if (isWhitespace) {
+        return { ...state, mode: 'after-attribute-name' };
+      }
+      if (character === '/') {
+        return { ...state, mode: 'self-closing' };
+      }
+      if (character === '>') {
+        return { ...state, mode: 'data' };
+      }
       return character === '=' ? { ...state, mode: 'before-attribute-value' } : state;
     case 'after-attribute-name':
-      if (isWhitespace) return state;
-      if (character === '/') return { ...state, mode: 'self-closing' };
-      if (character === '>') return { ...state, mode: 'data' };
+      if (isWhitespace) {
+        return state;
+      }
+      if (character === '/') {
+        return { ...state, mode: 'self-closing' };
+      }
+      if (character === '>') {
+        return { ...state, mode: 'data' };
+      }
       return character === '=' ? { ...state, mode: 'before-attribute-value' } : { ...state, mode: 'attribute-name' };
     case 'before-attribute-value':
-      if (isWhitespace) return state;
-      if (character === '"') return { ...state, mode: 'attribute-value-double' };
-      if (character === "'") return { ...state, mode: 'attribute-value-single' };
-      if (character === '>') return { ...state, mode: 'data' };
+      if (isWhitespace) {
+        return state;
+      }
+      if (character === '"') {
+        return { ...state, mode: 'attribute-value-double' };
+      }
+      if (character === "'") {
+        return { ...state, mode: 'attribute-value-single' };
+      }
+      if (character === '>') {
+        return { ...state, mode: 'data' };
+      }
       return { ...state, mode: 'attribute-value-unquoted' };
     case 'attribute-value-double':
       return character === '"' ? { ...state, mode: 'after-attribute-value' } : state;
     case 'attribute-value-single':
       return character === "'" ? { ...state, mode: 'after-attribute-value' } : state;
     case 'attribute-value-unquoted':
-      if (isWhitespace) return { ...state, mode: 'before-attribute-name' };
+      if (isWhitespace) {
+        return { ...state, mode: 'before-attribute-name' };
+      }
       return character === '>' ? { ...state, mode: 'data' } : state;
   }
 }
 
 function endOfOpaqueMarkup(blanked: string, index: number): number | undefined {
-  if (blanked.startsWith('<!-->', index)) return index + 5;
-  if (blanked.startsWith('<!--->', index)) return index + 6;
+  if (blanked.startsWith('<!-->', index)) {
+    return index + 5;
+  }
+  if (blanked.startsWith('<!--->', index)) {
+    return index + 6;
+  }
   if (blanked.startsWith('<!--', index)) {
     const close = blanked.indexOf('-->', index + 4);
     return close === -1 ? blanked.length : close + 3;
   }
-  if (!blanked.startsWith('<!', index) && !blanked.startsWith('<?', index)) return undefined;
+  if (!blanked.startsWith('<!', index) && !blanked.startsWith('<?', index)) {
+    return undefined;
+  }
   const close = blanked.indexOf('>', index + 2);
   return close === -1 ? blanked.length : close + 1;
 }
 
 function endOfRawText(blanked: string, index: number, tagName: string): number {
-  if (tagName === 'plaintext') return blanked.length;
+  if (tagName === 'plaintext') {
+    return blanked.length;
+  }
   const closing = new RegExp(`</${tagName}[\\t\\n\\f\\r />]`, 'ig');
   closing.lastIndex = index;
   return closing.exec(blanked)?.index ?? blanked.length;
 }
 
 function stateAfterTagEnds(previous: ScanState, emitted: ScanState): ScanState {
-  if (!FOREIGN_ROOTS.has(previous.tagName)) return emitted;
-  if (previous.isEndTag) return { ...emitted, foreignDepth: Math.max(0, emitted.foreignDepth - 1) };
+  if (!FOREIGN_ROOTS.has(previous.tagName)) {
+    return emitted;
+  }
+  if (previous.isEndTag) {
+    return { ...emitted, foreignDepth: Math.max(0, emitted.foreignDepth - 1) };
+  }
   return previous.mode === 'self-closing' ? emitted : { ...emitted, foreignDepth: emitted.foreignDepth + 1 };
 }
 
@@ -314,7 +390,9 @@ function maskTwig(source: string, twigRanges: readonly TwigRange[]): string {
 
   while (index < characters.length) {
     const range = rangesByStart.get(index);
-    if (range && fillerFor(state, range, source) === 'name') characters.fill('x', range.start, range.end);
+    if (range && fillerFor(state, range, source) === 'name') {
+      characters.fill('x', range.start, range.end);
+    }
 
     const opaqueEnd = state.mode === 'data' && characters[index] === '<' ? endOfOpaqueMarkup(blanked, index) : undefined;
     if (opaqueEnd !== undefined) {
@@ -326,11 +404,15 @@ function maskTwig(source: string, twigRanges: readonly TwigRange[]): string {
     const previous = state;
     state = nextState(state, character);
     index += 1;
-    if (character !== '>' || state.mode !== 'data' || !TAG_MODES.has(previous.mode)) continue;
+    if (character !== '>' || state.mode !== 'data' || !TAG_MODES.has(previous.mode)) {
+      continue;
+    }
 
     const emitted = stateAfterTagEnds(previous, state);
     state = emitted;
-    if (isRawTextStart(previous, emitted)) index = endOfRawText(blanked, index, previous.tagName);
+    if (isRawTextStart(previous, emitted)) {
+      index = endOfRawText(blanked, index, previous.tagName);
+    }
   }
   return characters.join('');
 }
@@ -342,25 +424,33 @@ class ScriptingDisabledSaxParser extends SAXParser {
 
   override onStartTag(token: Token.TagToken): void {
     super.onStartTag(token);
-    if (token.tagName === 'noscript') this.tokenizer.state = TokenizerMode.DATA;
+    if (token.tagName === 'noscript') {
+      this.tokenizer.state = TokenizerMode.DATA;
+    }
   }
 }
 
 function locationOf(token: StartTag | EndTag): SaxLocation {
   const location = token.sourceCodeLocation as SaxLocation | null | undefined;
-  if (!location) throw new Error('parse5 returned a token without a source location.');
+  if (!location) {
+    throw new Error('parse5 returned a token without a source location.');
+  }
   return location;
 }
 
 function skipWhitespace(text: string, index: number): number {
   let cursor = index;
-  while (HTML_WHITESPACE.test(text[cursor] ?? '')) cursor += 1;
+  while (HTML_WHITESPACE.test(text[cursor] ?? '')) {
+    cursor += 1;
+  }
   return cursor;
 }
 
 function valueRangeAfterName(masked: string, nameEnd: number): Range | undefined {
   const equals = skipWhitespace(masked, nameEnd);
-  if (masked[equals] !== '=') return undefined;
+  if (masked[equals] !== '=') {
+    return undefined;
+  }
   const valueStart = skipWhitespace(masked, equals + 1);
   const quote = masked[valueStart];
   if (quote === '"' || quote === "'") {
@@ -368,7 +458,9 @@ function valueRangeAfterName(masked: string, nameEnd: number): Range | undefined
     return [valueStart + 1, close === -1 ? masked.length : close];
   }
   let valueEnd = valueStart;
-  while (valueEnd < masked.length && !HTML_WHITESPACE.test(masked[valueEnd] ?? '') && masked[valueEnd] !== '>') valueEnd += 1;
+  while (valueEnd < masked.length && !HTML_WHITESPACE.test(masked[valueEnd] ?? '') && masked[valueEnd] !== '>') {
+    valueEnd += 1;
+  }
   return [valueStart, valueEnd];
 }
 
@@ -380,9 +472,13 @@ function openTagStartEnd(source: string, nameEnd: number, twigRanges: readonly T
   let end = nameEnd;
   for (;;) {
     const gluedTwig = twigRanges.find((range) => range.start === end);
-    if (gluedTwig) end = gluedTwig.end;
-    else if (end > nameEnd && /[^\s/>]/.test(source[end] ?? '>')) end += 1;
-    else return end;
+    if (gluedTwig) {
+      end = gluedTwig.end;
+    } else if (end > nameEnd && /[^\s/>]/.test(source[end] ?? '>')) {
+      end += 1;
+    } else {
+      return end;
+    }
   }
 }
 
@@ -418,9 +514,13 @@ function collectOracleEvents(source: string, masked: string): OracleEvent[] {
 
 function findRawTextRegions(events: readonly OracleEvent[], sourceLength: number): Range[] {
   return events.flatMap((event, index): Range[] => {
-    if (event.kind !== 'start' || event.selfClosing || !RAW_TEXT_ELEMENTS.has(event.tag.name)) return [];
+    if (event.kind !== 'start' || event.selfClosing || !RAW_TEXT_ELEMENTS.has(event.tag.name)) {
+      return [];
+    }
     const following = events.slice(index + 1).find((candidate) => candidate.kind !== 'text');
-    if (following?.kind === 'start') return [];
+    if (following?.kind === 'start') {
+      return [];
+    }
     return [[event.tag.range[1], following?.kind === 'end' ? following.tag.range[0] : sourceLength]];
   });
 }
@@ -428,8 +528,12 @@ function findRawTextRegions(events: readonly OracleEvent[], sourceLength: number
 function indexOfOpenElement(openElements: readonly OpenElement[], pairingName: string): number {
   for (let index = openElements.length - 1; index >= 0; index -= 1) {
     const name = openElements[index]?.pairingName ?? '';
-    if (name === pairingName) return index;
-    if (SPECIAL_ELEMENTS.has(name)) return -1;
+    if (name === pairingName) {
+      return index;
+    }
+    if (SPECIAL_ELEMENTS.has(name)) {
+      return -1;
+    }
   }
   return -1;
 }
@@ -442,9 +546,13 @@ function walkOpenElements(events: readonly OracleEvent[]): { readonly endTagKind
   for (const event of events) {
     if (event.kind === 'start') {
       parentStarts.set(event.tag.range[0], openElements.at(-1)?.start);
-      if (!event.selfClosing && !VOID_ELEMENTS.has(event.tag.name)) openElements.push({ pairingName: event.tag.pairingName, start: event.tag.range[0] });
+      if (!event.selfClosing && !VOID_ELEMENTS.has(event.tag.name)) {
+        openElements.push({ pairingName: event.tag.pairingName, start: event.tag.range[0] });
+      }
     }
-    if (event.kind !== 'end') continue;
+    if (event.kind !== 'end') {
+      continue;
+    }
     const openIndex = indexOfOpenElement(openElements, event.tag.pairingName);
     if (openIndex === -1) {
       endTagKinds.set(event.tag.range[0], 'unmatched');
@@ -472,7 +580,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readRange(value: unknown, description: string): Range {
   const range = isRecord(value) ? value['range'] : undefined;
-  if (!Array.isArray(range) || typeof range[0] !== 'number' || typeof range[1] !== 'number') throw new Error(`Expected a ranged ${description} in the parser output.`);
+  if (!Array.isArray(range) || typeof range[0] !== 'number' || typeof range[1] !== 'number') {
+    throw new Error(`Expected a ranged ${description} in the parser output.`);
+  }
   return [range[0], range[1]];
 }
 
@@ -500,7 +610,9 @@ function collectOurTags(ast: unknown): OurTag[] {
   const tags: OurTag[] = [];
   const seen = new Set<object>();
   const visit = (value: unknown, parentStart: number | undefined): void => {
-    if (!isRecord(value) || seen.has(value)) return;
+    if (!isRecord(value) || seen.has(value)) {
+      return;
+    }
     seen.add(value);
     if (Array.isArray(value)) {
       value.forEach((child) => visit(child, parentStart));
@@ -508,9 +620,13 @@ function collectOurTags(ast: unknown): OurTag[] {
     }
     const isTag = value['type'] === 'Tag' || value['type'] === 'ScriptTag' || value['type'] === 'StyleTag';
     const tag = isTag ? readOurTag(value, parentStart) : undefined;
-    if (tag) tags.push(tag);
+    if (tag) {
+      tags.push(tag);
+    }
     for (const [key, child] of Object.entries(value)) {
-      if (key !== 'parent' && key !== 'loc' && key !== 'range' && key !== 'tokens' && key !== 'comments') visit(child, tag ? tag.openStart[0] : parentStart);
+      if (key !== 'parent' && key !== 'loc' && key !== 'range' && key !== 'tokens' && key !== 'comments') {
+        visit(child, tag ? tag.openStart[0] : parentStart);
+      }
     }
   };
   visit(ast, undefined);
@@ -550,8 +666,11 @@ function createLineLocator(source: string): (offset: number) => number {
     let high = lineStarts.length - 1;
     while (low < high) {
       const middle = Math.ceil((low + high) / 2);
-      if ((lineStarts[middle] ?? 0) <= offset) low = middle;
-      else high = middle - 1;
+      if ((lineStarts[middle] ?? 0) <= offset) {
+        low = middle;
+      } else {
+        high = middle - 1;
+      }
     }
     return low + 1;
   };
@@ -595,12 +714,16 @@ function compareAttributes(
 
   const oracleNames = new Set(oracleTag.attributes.map((attribute) => attribute.name));
   for (const attribute of ourTag.attributes) {
-    if (matchedKeys.has(attribute)) continue;
+    if (matchedKeys.has(attribute)) {
+      continue;
+    }
     if (gluesTwigTagToOtherContent(attribute.key, twigRanges)) {
       report('attribute names', attribute.key, 'attribute key glues a Twig tag to other content');
       continue;
     }
-    if (isTwigOnly(source, attribute.key, twigRanges) || oracleNames.has(masked.slice(...attribute.key).toLowerCase())) continue;
+    if (isTwigOnly(source, attribute.key, twigRanges) || oracleNames.has(masked.slice(...attribute.key).toLowerCase())) {
+      continue;
+    }
     report('attributes', attribute.key, 'extra attribute');
   }
 }
@@ -622,9 +745,14 @@ export function compareWithHtmlOracle(source: string, twigRanges: readonly TwigR
   const oracleStarts = new Set(oracle.startTags.map((tag) => tag.range[0]));
 
   for (const tag of ours) {
-    if (oracleStarts.has(tag.openStart[0])) continue;
-    if (isInRawText(tag.openStart[0])) report('raw text', [tag.openStart[0], tag.openEnd[1]], `<${tag.name}> is parsed as a tag inside raw text`);
-    else report('start tags', [tag.openStart[0], tag.openEnd[1]], `extra start tag <${tag.name}>`);
+    if (oracleStarts.has(tag.openStart[0])) {
+      continue;
+    }
+    if (isInRawText(tag.openStart[0])) {
+      report('raw text', [tag.openStart[0], tag.openEnd[1]], `<${tag.name}> is parsed as a tag inside raw text`);
+    } else {
+      report('start tags', [tag.openStart[0], tag.openEnd[1]], `extra start tag <${tag.name}>`);
+    }
   }
 
   for (const oracleTag of oracle.startTags) {
@@ -638,15 +766,21 @@ export function compareWithHtmlOracle(source: string, twigRanges: readonly TwigR
       report('tag names', oracleTag.range, `tag name ends at ${ourTag.openStart[1]}, oracle ${oracleOpenStartEnd}`);
       continue;
     }
-    if (ourTag.openEnd[1] !== oracleTag.range[1]) report('start tags', oracleTag.range, `start tag ends at ${ourTag.openEnd[1]}, oracle ${oracleTag.range[1]}`);
+    if (ourTag.openEnd[1] !== oracleTag.range[1]) {
+      report('start tags', oracleTag.range, `start tag ends at ${ourTag.openEnd[1]}, oracle ${oracleTag.range[1]}`);
+    }
     compareAttributes(source, twigRanges, masked, oracleTag, ourTag, report);
-    if (oracle.parentStarts.get(oracleTag.range[0]) !== ourTag.parentStart) report('parents', ourTag.range, `<${ourTag.name}> sits in a different element than the oracle puts it in`);
+    if (oracle.parentStarts.get(oracleTag.range[0]) !== ourTag.parentStart) {
+      report('parents', ourTag.range, `<${ourTag.name}> sits in a different element than the oracle puts it in`);
+    }
   }
 
   const ourCloseStarts = new Set(ours.flatMap((tag) => (tag.close ? [tag.close[0]] : [])));
   const branchSegments = branchSegmentsOf(source);
   for (const endTag of oracle.endTags) {
-    if (ourCloseStarts.has(endTag.range[0])) continue;
+    if (ourCloseStarts.has(endTag.range[0])) {
+      continue;
+    }
     const branchTags = ours.map((tag) => ({ name: tag.name, openStart: tag.openStart[0], isClosed: tag.close !== undefined }));
     const isBranchPaired = isClosedInAnotherBranch(branchSegments, endTag.range[0], endTag.name, branchTags);
     const check = isBranchPaired ? BRANCH_PAIRED_END_TAG_CHECK.replace('html-oracle: ', '') : endTagChecks[oracle.endTagKinds.get(endTag.range[0]) ?? 'unmatched'];

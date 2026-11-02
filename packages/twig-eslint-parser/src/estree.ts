@@ -20,10 +20,14 @@ function isNode(value: unknown): value is EstreeNode {
 
 function relocateTree(value: unknown, offset: number, locate: (offset: number) => SourcePosition): void {
   if (Array.isArray(value)) {
-    for (const item of value) relocateTree(item, offset, locate);
+    for (const item of value) {
+      relocateTree(item, offset, locate);
+    }
     return;
   }
-  if (!isNode(value)) return;
+  if (!isNode(value)) {
+    return;
+  }
 
   const start = value.start + offset;
   const end = value.end + offset;
@@ -33,7 +37,9 @@ function relocateTree(value: unknown, offset: number, locate: (offset: number) =
   value.loc = { start: locate(start), end: locate(end) };
 
   for (const [key, child] of Object.entries(value)) {
-    if (key !== 'loc' && key !== 'range') relocateTree(child, offset, locate);
+    if (key !== 'loc' && key !== 'range') {
+      relocateTree(child, offset, locate);
+    }
   }
 }
 

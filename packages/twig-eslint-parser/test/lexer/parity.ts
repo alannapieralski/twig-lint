@@ -79,7 +79,9 @@ function utf16IndexByByteOffset(source: string): Map<number, number> {
 
 function toUtf16Index(template: Template, byteOffset: number): number {
   const index = template.toUtf16.get(byteOffset);
-  if (index === undefined) throw new Error(`Golden offset ${byteOffset} is not a character boundary.`);
+  if (index === undefined) {
+    throw new Error(`Golden offset ${byteOffset} is not a character boundary.`);
+  }
   return index;
 }
 
@@ -88,9 +90,13 @@ function positionTokens(tokens: Token[]): PositionedToken[] {
   let insideComment = false;
   return tokens.map((token, index) => {
     const value = token.value === null || token.value === undefined ? '' : String(token.value);
-    if (token.type === 'COMMENT_START') insideComment = true;
+    if (token.type === 'COMMENT_START') {
+      insideComment = true;
+    }
     const positioned = { index, type: token.type, value, start, end: start + value.length, line: token.line, column: token.column, insideComment };
-    if (token.type === 'COMMENT_END') insideComment = false;
+    if (token.type === 'COMMENT_END') {
+      insideComment = false;
+    }
     start = positioned.end;
     return positioned;
   });
@@ -105,8 +111,11 @@ function lastIndexAtOrBefore(sortedValues: readonly number[], target: number): n
   let high = sortedValues.length - 1;
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
-    if ((sortedValues[middle] ?? 0) <= target) low = middle;
-    else high = middle - 1;
+    if ((sortedValues[middle] ?? 0) <= target) {
+      low = middle;
+    } else {
+      high = middle - 1;
+    }
   }
   return low;
 }
@@ -124,14 +133,18 @@ function tokensOverlapping(template: Template, first: PositionedToken, end: numb
   const tokens = [first];
   for (let index = first.index + 1; (template.ours[index]?.start ?? end) < end; index += 1) {
     const token = template.ours[index];
-    if (token) tokens.push(token);
+    if (token) {
+      tokens.push(token);
+    }
   }
   return tokens;
 }
 
 function tagTokensFrom(ours: PositionedToken[], tagStart: PositionedToken): PositionedToken[] {
   let index = tagStart.index;
-  while (index < ours.length - 1 && ours[index]?.type !== 'TAG_END') index += 1;
+  while (index < ours.length - 1 && ours[index]?.type !== 'TAG_END') {
+    index += 1;
+  }
   return ours.slice(tagStart.index, index + 1);
 }
 
@@ -157,18 +170,26 @@ function normaliseNewlines(text: string): string {
 }
 
 function readEscapeSequence(text: string, position: number): { bytes: Buffer; next: number } {
-  if (position >= text.length) return { bytes: Buffer.from('\\'), next: position };
+  if (position >= text.length) {
+    return { bytes: Buffer.from('\\'), next: position };
+  }
 
   const character = String.fromCodePoint(text.codePointAt(position) ?? 0);
 
   const escapedCharacter = escapedCharacterByLetter[character];
-  if (escapedCharacter) return { bytes: Buffer.from(escapedCharacter), next: position + 1 };
+  if (escapedCharacter) {
+    return { bytes: Buffer.from(escapedCharacter), next: position + 1 };
+  }
 
   const hexadecimal = /^x([0-9a-fA-F]{1,2})/.exec(text.slice(position, position + 3));
-  if (hexadecimal?.[1]) return { bytes: Buffer.from([parseInt(hexadecimal[1], 16)]), next: position + hexadecimal[0].length };
+  if (hexadecimal?.[1]) {
+    return { bytes: Buffer.from([parseInt(hexadecimal[1], 16)]), next: position + hexadecimal[0].length };
+  }
 
   const octal = /^[0-7]{1,3}/.exec(text.slice(position, position + 3));
-  if (octal) return { bytes: Buffer.from([parseInt(octal[0], 8) % 256]), next: position + octal[0].length };
+  if (octal) {
+    return { bytes: Buffer.from([parseInt(octal[0], 8) % 256]), next: position + octal[0].length };
+  }
 
   return { bytes: Buffer.from(character), next: position + character.length };
 }
@@ -195,34 +216,51 @@ function decodeTwigStringContent(content: string): string {
 function endOfNormalisedText(source: string, start: number, normalised: string): number | undefined {
   let sourceIndex = start;
   for (const character of normalised) {
-    if (character === '\n' && source.startsWith('\r\n', sourceIndex)) sourceIndex += 2;
-    else if (character === '\n' && source[sourceIndex] === '\r') sourceIndex += 1;
-    else if (source.startsWith(character, sourceIndex)) sourceIndex += character.length;
-    else return undefined;
+    if (character === '\n' && source.startsWith('\r\n', sourceIndex)) {
+      sourceIndex += 2;
+    } else if (character === '\n' && source[sourceIndex] === '\r') {
+      sourceIndex += 1;
+    } else if (source.startsWith(character, sourceIndex)) {
+      sourceIndex += character.length;
+    } else {
+      return undefined;
+    }
   }
   return sourceIndex;
 }
 
 function expectedTypeOf(twigToken: GoldenToken): TokenType {
-  if (twigToken.type === 'operator') return ourTypeByTwigOperator[String(twigToken.value)] ?? 'OPERATOR';
+  if (twigToken.type === 'operator') {
+    return ourTypeByTwigOperator[String(twigToken.value)] ?? 'OPERATOR';
+  }
 
   const expectedType = ourTypeByTwigType[twigToken.type];
-  if (!expectedType) throw new Error(`No type mapping for Twig token type "${twigToken.type}".`);
+  if (!expectedType) {
+    throw new Error(`No type mapping for Twig token type "${twigToken.type}".`);
+  }
   return expectedType;
 }
 
 function quotedStringSpan(ours: PositionedToken[], openingQuote: PositionedToken): PositionedToken[] {
   const next = ours[openingQuote.index + 1];
   const afterNext = ours[openingQuote.index + 2];
-  if (next?.type === 'STRING' && afterNext) return [openingQuote, next, afterNext];
+  if (next?.type === 'STRING' && afterNext) {
+    return [openingQuote, next, afterNext];
+  }
   return next ? [openingQuote, next] : [openingQuote];
 }
 
 function spanOf(twigToken: GoldenToken, first: PositionedToken, ours: PositionedToken[]): PositionedToken[] {
   const next = ours[first.index + 1];
-  if (BEGIN_DELIMITER_TWIG_TYPES.has(twigToken.type) && next && MODIFIER_TYPES.has(next.type)) return [first, next];
-  if (END_DELIMITER_TWIG_TYPES.has(twigToken.type) && next && MODIFIER_TYPES.has(first.type)) return [first, next];
-  if (twigToken.type === 'string' && first.type === 'OPENING_QUOTE') return quotedStringSpan(ours, first);
+  if (BEGIN_DELIMITER_TWIG_TYPES.has(twigToken.type) && next && MODIFIER_TYPES.has(next.type)) {
+    return [first, next];
+  }
+  if (END_DELIMITER_TWIG_TYPES.has(twigToken.type) && next && MODIFIER_TYPES.has(first.type)) {
+    return [first, next];
+  }
+  if (twigToken.type === 'string' && first.type === 'OPENING_QUOTE') {
+    return quotedStringSpan(ours, first);
+  }
   return [first];
 }
 
@@ -232,16 +270,22 @@ function describeSpan(span: PositionedToken[]): string {
 
 function stringShapeMismatch(span: PositionedToken[]): string | undefined {
   const [first, middle, last] = span;
-  if (span.length === 1 && first?.type === 'STRING') return undefined;
+  if (span.length === 1 && first?.type === 'STRING') {
+    return undefined;
+  }
 
   const closing = span.length === 3 ? last : middle;
   const hasContent = span.length === 2 || middle?.type === 'STRING';
-  if (first?.type === 'OPENING_QUOTE' && hasContent && closing?.type === 'CLOSING_QUOTE' && closing.value === first.value) return undefined;
+  if (first?.type === 'OPENING_QUOTE' && hasContent && closing?.type === 'CLOSING_QUOTE' && closing.value === first.value) {
+    return undefined;
+  }
   return `our tokens are ${describeSpan(span)}, not one quoted string`;
 }
 
 function typeMismatch(twigToken: GoldenToken, span: PositionedToken[]): string | undefined {
-  if (twigToken.type === 'string') return stringShapeMismatch(span);
+  if (twigToken.type === 'string') {
+    return stringShapeMismatch(span);
+  }
 
   const expectedType = expectedTypeOf(twigToken);
   const main = END_DELIMITER_TWIG_TYPES.has(twigToken.type) ? span.at(-1) : span[0];
@@ -250,7 +294,9 @@ function typeMismatch(twigToken: GoldenToken, span: PositionedToken[]): string |
 
 function ourValueAsTwigSees(twigToken: GoldenToken, span: PositionedToken[]): unknown {
   const [first] = span;
-  if (!first) return undefined;
+  if (!first) {
+    return undefined;
+  }
   switch (twigToken.type) {
     case 'name':
     case 'punctuation':
@@ -272,7 +318,9 @@ function valueMismatch(twigToken: GoldenToken, span: PositionedToken[]): string 
 }
 
 function extentMismatch(twigToken: GoldenToken, span: PositionedToken[], template: Template): string | undefined {
-  if (twigToken.end === undefined) return undefined;
+  if (twigToken.end === undefined) {
+    return undefined;
+  }
 
   const twigEnd = toUtf16Index(template, twigToken.end);
   const ourEnd = span.at(-1)?.end;
@@ -281,11 +329,15 @@ function extentMismatch(twigToken: GoldenToken, span: PositionedToken[], templat
 
 function positionMismatches(twigToken: GoldenToken, first: PositionedToken, template: Template): string[] {
   const mismatches: string[] = [];
-  if (first.line !== twigToken.line) mismatches.push(`our line is ${first.line}`);
+  if (first.line !== twigToken.line) {
+    mismatches.push(`our line is ${first.line}`);
+  }
 
   const columnIsReset = template.columnsResetByLineTag.some((range) => range.start <= first.start && first.start < range.end);
   const physicalColumn = physicalColumnOf(template, first.start);
-  if (!columnIsReset && first.column !== physicalColumn) mismatches.push(`our column is ${first.column}, the source's is ${physicalColumn}`);
+  if (!columnIsReset && first.column !== physicalColumn) {
+    mismatches.push(`our column is ${first.column}, the source's is ${physicalColumn}`);
+  }
   return mismatches;
 }
 
@@ -314,18 +366,24 @@ function findVerbatimBodies(tags: PositionedToken[][], ours: PositionedToken[], 
 // Returns the line Twig reports for text that starts at start.
 function ourLineAsTwigCountsIt(template: Template, containing: PositionedToken, start: number): number {
   const endverbatimEnd = template.verbatimBodies.get(containing.index);
-  if (endverbatimEnd === undefined) return lineOfOffset(containing, start, template.source);
+  if (endverbatimEnd === undefined) {
+    return lineOfOffset(containing, start, template.source);
+  }
 
   return lineOfOffset(containing, endverbatimEnd, template.source);
 }
 
 function compareText(twigToken: GoldenToken, start: number, template: Template): Comparison {
   const end = endOfNormalisedText(template.source, start, String(twigToken.value));
-  if (end === undefined) return { mismatches: [describeMismatch(twigToken, 'the source differs from Twig\'s text')], claimed: [] };
+  if (end === undefined) {
+    return { mismatches: [describeMismatch(twigToken, 'the source differs from Twig\'s text')], claimed: [] };
+  }
 
   const text = { start, end };
   const containing = tokenContaining(template, start);
-  if (!containing) return { mismatches: [describeMismatch(twigToken, 'no token of ours covers it')], claimed: [], text };
+  if (!containing) {
+    return { mismatches: [describeMismatch(twigToken, 'no token of ours covers it')], claimed: [], text };
+  }
 
   const intruder = tokensOverlapping(template, containing, end).find((token) => token.type !== 'TEXT' || token.insideComment);
   const mismatches: string[] = [];
@@ -334,20 +392,28 @@ function compareText(twigToken: GoldenToken, start: number, template: Template):
     mismatches.push(describeMismatch(twigToken, `our ${intruder.type} ${JSON.stringify(intruder.value)} at offset ${intruder.start} is ${where}, but Twig has text there`));
   }
   const ourLine = ourLineAsTwigCountsIt(template, containing, start);
-  if (ourLine !== twigToken.line) mismatches.push(describeMismatch(twigToken, `our line is ${ourLine}`));
+  if (ourLine !== twigToken.line) {
+    mismatches.push(describeMismatch(twigToken, `our line is ${ourLine}`));
+  }
   return { mismatches, claimed: [], text };
 }
 
 function compareTwigToken(twigToken: GoldenToken, template: Template): Comparison {
   const start = toUtf16Index(template, twigToken.offset);
-  if (twigToken.type === 'text') return compareText(twigToken, start, template);
+  if (twigToken.type === 'text') {
+    return compareText(twigToken, start, template);
+  }
 
   const first = template.oursByStart.get(start);
-  if (!first) return { mismatches: [describeMismatch(twigToken, 'no token of ours starts here')], claimed: [] };
+  if (!first) {
+    return { mismatches: [describeMismatch(twigToken, 'no token of ours starts here')], claimed: [] };
+  }
 
   const span = spanOf(twigToken, first, template.ours);
   const shapeMismatch = typeMismatch(twigToken, span);
-  if (shapeMismatch) return { mismatches: [describeMismatch(twigToken, shapeMismatch)], claimed: span };
+  if (shapeMismatch) {
+    return { mismatches: [describeMismatch(twigToken, shapeMismatch)], claimed: span };
+  }
 
   const reasons = [valueMismatch(twigToken, span), extentMismatch(twigToken, span, template), ...positionMismatches(twigToken, first, template)];
   return { mismatches: reasons.filter((reason) => reason !== undefined).map((reason) => describeMismatch(twigToken, reason)), claimed: span };
@@ -357,9 +423,15 @@ function closingQuoteOf(ours: PositionedToken[], openingQuote: PositionedToken):
   let depth = 0;
   for (let index = openingQuote.index + 1; index < ours.length; index += 1) {
     const type = ours[index]?.type;
-    if (type === 'OPENING_QUOTE') depth += 1;
-    if (type === 'CLOSING_QUOTE' && depth === 0) return ours[index];
-    if (type === 'CLOSING_QUOTE') depth -= 1;
+    if (type === 'OPENING_QUOTE') {
+      depth += 1;
+    }
+    if (type === 'CLOSING_QUOTE' && depth === 0) {
+      return ours[index];
+    }
+    if (type === 'CLOSING_QUOTE') {
+      depth -= 1;
+    }
   }
   return undefined;
 }
@@ -367,8 +439,12 @@ function closingQuoteOf(ours: PositionedToken[], openingQuote: PositionedToken):
 function findQuotesOfStringsTwigLexesInParts(ours: PositionedToken[], claimed: Set<number>): PositionedToken[] {
   return ours.flatMap((token) => {
     const next = ours[token.index + 1];
-    if (token.type !== 'OPENING_QUOTE' || token.value !== '"' || claimed.has(token.index)) return [];
-    if (!next || !claimed.has(next.index) || !['STRING', 'INTERPOLATION_START'].includes(next.type)) return [];
+    if (token.type !== 'OPENING_QUOTE' || token.value !== '"' || claimed.has(token.index)) {
+      return [];
+    }
+    if (!next || !claimed.has(next.index) || !['STRING', 'INTERPOLATION_START'].includes(next.type)) {
+      return [];
+    }
 
     const closingQuote = closingQuoteOf(ours, token);
     return closingQuote ? [token, closingQuote] : [token];
@@ -388,10 +464,15 @@ function findTokensWithoutTwigToken(template: Template, claimed: Set<number>): s
 function uncoveredRuns(token: PositionedToken, covered: Uint8Array): Range[] {
   const runs: Range[] = [];
   for (let offset = token.start; offset < token.end; offset += 1) {
-    if (covered[offset]) continue;
+    if (covered[offset]) {
+      continue;
+    }
     const previous = runs.at(-1);
-    if (previous?.end === offset) previous.end = offset + 1;
-    else runs.push({ start: offset, end: offset + 1 });
+    if (previous?.end === offset) {
+      previous.end = offset + 1;
+    } else {
+      runs.push({ start: offset, end: offset + 1 });
+    }
   }
   return runs;
 }
@@ -409,7 +490,9 @@ function isTrimmedFromRight(ours: PositionedToken[], text: PositionedToken): boo
 }
 
 function isWhitespaceTwigTrims(template: Template, text: PositionedToken, run: Range): boolean {
-  if (!WHITESPACE_TWIG_TRIMS.test(template.source.slice(run.start, run.end))) return false;
+  if (!WHITESPACE_TWIG_TRIMS.test(template.source.slice(run.start, run.end))) {
+    return false;
+  }
   return (run.start === text.start && isTrimmedFromLeft(template.ours, text)) || (run.end === text.end && isTrimmedFromRight(template.ours, text));
 }
 

@@ -39,14 +39,18 @@ export function createProgressReporter(output: ProgressOutput, now: () => number
     let lastPrintedAt = startedAt;
     let lastPercentStep = 0;
     return (done, counts = {}) => {
-      if (done <= 0 || done >= total) return;
+      if (done <= 0 || done >= total) {
+        return;
+      }
       const current = now();
       const percent = Math.floor((done / total) * 100);
       const percentStep = Math.floor(percent / LOG_PERCENT_STEP);
       const isDue = output.isTerminal
         ? current - lastPrintedAt >= TERMINAL_INTERVAL_MILLISECONDS
         : percentStep > lastPercentStep || current - lastPrintedAt >= LOG_INTERVAL_MILLISECONDS;
-      if (!isDue) return;
+      if (!isDue) {
+        return;
+      }
       lastPrintedAt = current;
       lastPercentStep = percentStep;
       const perSecond = Math.round(done / Math.max((current - startedAt) / 1000, 0.001));

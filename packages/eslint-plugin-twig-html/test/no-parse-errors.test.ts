@@ -14,7 +14,9 @@ async function lint(code: string, ruleOptions?: Record<string, boolean>) {
   const rules: Linter.RulesRecord = { ...otherRules, ...(ruleOptions && { 'twig-html/no-parse-errors': ['warn', ruleOptions] }) };
   const eslint = new ESLint({ overrideConfigFile: true, overrideConfig: [twigHtml.configs.recommended, { files: ['**/*.twig'], rules }] });
   const [result] = await eslint.lintText(code, { filePath: 'template.html.twig' });
-  if (!result) throw new Error('ESLint returned no result.');
+  if (!result) {
+    throw new Error('ESLint returned no result.');
+  }
   return result.messages;
 }
 

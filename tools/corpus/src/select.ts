@@ -14,6 +14,8 @@ export function selectChecks(packages: readonly PackageCorpus[], options: Pick<C
     && (options.package === undefined || packageName === options.package)
     && (options.rule === undefined || matchesRule(check, options.rule))
     && (options.check === undefined || check.id === options.check));
-  if (selected.length > 0) return selected;
+  if (selected.length > 0) {
+    return selected;
+  }
   throw new Error(`No check matches the given filters. Available checks:\n${everyCheck.map(({ package: packageName, check }) => `  ${packageName}: ${check.id}`).join('\n')}`);
 }

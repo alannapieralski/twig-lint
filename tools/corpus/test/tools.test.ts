@@ -36,7 +36,9 @@ function fixingRule(replaceWith: (source: string) => string, { reportsWhenClean 
       Program: (node) => {
         const { text } = context.sourceCode;
         const replacement = replaceWith(text);
-        if (replacement === text && !reportsWhenClean) return;
+        if (replacement === text && !reportsWhenClean) {
+          return;
+        }
         context.report({ node, message: 'rewrite', fix: (fixer) => fixer.replaceTextRange([0, text.length], replacement) });
       },
     }),
@@ -130,7 +132,9 @@ describe('ruleChecks', () => {
   async function failuresOf(rule: Rule.RuleModule, fixKeeps: FixKeeps = 'code'): Promise<readonly Finding[]> {
     const root = createCorpusDirectory({ 'a.twig': '<p>x</p>' });
     const [check] = ruleChecks({ plugin: pluginWith({ rewrite: rule }), prefix: 'fake', rules: { rewrite: { fixKeeps } } });
-    if (!check) throw new Error('No check was created.');
+    if (!check) {
+      throw new Error('No check was created.');
+    }
     const { findings } = await check.run([template(root)], { roots: new Map(), progress: () => undefined });
     return findings.filter((finding) => finding.severity === 'failure');
   }
@@ -146,13 +150,17 @@ describe('ruleChecks', () => {
       create: (context) => ({
         Program: (node) => {
           const parserOptions = context.languageOptions.parserOptions as { ignoreInterpolatedAttributes?: readonly string[] } | undefined;
-          if (parserOptions?.ignoreInterpolatedAttributes?.includes('class')) context.report({ node, message: 'hides class' });
+          if (parserOptions?.ignoreInterpolatedAttributes?.includes('class')) {
+            context.report({ node, message: 'hides class' });
+          }
         },
       }),
     };
     const variant = { name: 'hidden-class', languageOptions: { parserOptions: { ignoreInterpolatedAttributes: ['class'] } } };
     const [check] = ruleChecks({ plugin: pluginWith({ hides: reportsHiddenClasses }), prefix: 'fake', variant });
-    if (!check) throw new Error('No check was created.');
+    if (!check) {
+      throw new Error('No check was created.');
+    }
     expect([check.id, check.rule]).toEqual(['fake/hides [hidden-class]', 'fake/hides']);
     const root = createCorpusDirectory({ 'a.twig': '<p>x</p>' });
     const { findings } = await check.run([template(root)], { roots: new Map(), progress: () => undefined });
@@ -195,7 +203,9 @@ describe('ruleChecks', () => {
     const source = '<div class="a"\n  <p>x</p>';
     const root = createCorpusDirectory({ 'a.twig': source });
     const [check] = ruleChecks({ plugin: pluginWith({ rewrite: fixingRule((s) => s) }), prefix: 'fake', rules: { rewrite: { fixKeeps: 'code' } } });
-    if (!check) throw new Error('No check was created.');
+    if (!check) {
+      throw new Error('No check was created.');
+    }
     const { findings, stats } = await check.run([template(root, source)], { roots: new Map(), progress: () => undefined });
     expect(findings.map((finding) => [finding.severity, finding.message])).toEqual([['skipped', expect.stringContaining('the template cannot be parsed')]]);
     expect(stats).toMatchObject({ unparseable: 1, reports: 0, withReports: 0 });
@@ -205,14 +215,18 @@ describe('ruleChecks', () => {
     const root = createCorpusDirectory({ 'a.twig': '<p>x</p>' });
     const plugin = pluginWith({ rewrite: fixingRule((s) => s) });
     const [check] = ruleChecks({ plugin: { ...plugin, configs: { recommended: { ...plugin.configs.recommended, ignores: ['**/a.twig'] } } }, prefix: 'fake', rules: { rewrite: { fixKeeps: 'code' } } });
-    if (!check) throw new Error('No check was created.');
+    if (!check) {
+      throw new Error('No check was created.');
+    }
     const { findings, stats } = await check.run([template(root)], { roots: new Map(), progress: () => undefined });
     expect(findings.map((finding) => [finding.severity, finding.message])).toEqual([['skipped', 'the plugin config ignores this template']]);
     expect(stats).toMatchObject({ ignored: 1, reports: 0, withReports: 0 });
   });
 
   it('catches a rule that crashes', async () => {
-    const crashing: Rule.RuleModule = { meta: { type: 'problem', schema: [] }, create: () => { throw new Error('boom'); } };
+    const crashing: Rule.RuleModule = { meta: { type: 'problem', schema: [] }, create: () => {
+      throw new Error('boom');
+    } };
     const failures = await failuresOf(crashing);
     expect(failures[0]?.message).toContain('the rule crashed');
   });
@@ -291,8 +305,12 @@ describe('createProgressReporter', () => {
   function reporterWith(isTerminal: boolean) {
     const written: string[] = [];
     let time = 0;
-    const reporter = createProgressReporter({ write: (text) => { written.push(text); }, isTerminal }, () => time);
-    return { reporter, written, advance: (milliseconds: number) => { time += milliseconds; } };
+    const reporter = createProgressReporter({ write: (text) => {
+      written.push(text);
+    }, isTerminal }, () => time);
+    return { reporter, written, advance: (milliseconds: number) => {
+      time += milliseconds;
+    } };
   }
 
   it('prints a phase as one prefixed line', () => {

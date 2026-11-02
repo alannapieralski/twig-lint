@@ -9,7 +9,9 @@ export function unifiedDiff(before: string, after: string): string {
     writeFileSync(join(directory, 'before'), before);
     writeFileSync(join(directory, 'after'), after);
     const result = spawnSync('diff', ['-u', 'before', 'after'], { cwd: directory, encoding: 'utf8' });
-    if (result.error) throw result.error;
+    if (result.error) {
+      throw result.error;
+    }
     return result.stdout;
   } finally {
     rmSync(directory, { recursive: true, force: true });

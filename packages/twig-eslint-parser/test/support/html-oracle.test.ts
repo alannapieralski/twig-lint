@@ -37,11 +37,17 @@ function issuesForTreeWithoutTwigKinds(source: string, tokens: readonly CompactT
 
 function withoutCloseOf(ast: unknown, name: string): unknown {
   const visit = (node: unknown): void => {
-    if (typeof node !== 'object' || node === null) return;
+    if (typeof node !== 'object' || node === null) {
+      return;
+    }
     const record = node as Record<string, unknown>;
-    if (record['type'] === 'Tag' && record['name'] === name) delete record['close'];
+    if (record['type'] === 'Tag' && record['name'] === name) {
+      delete record['close'];
+    }
     for (const [key, child] of Object.entries(record)) {
-      if (key !== 'parent') (Array.isArray(child) ? child : [child]).forEach(visit);
+      if (key !== 'parent') {
+        (Array.isArray(child) ? child : [child]).forEach(visit);
+      }
     }
   };
   visit(ast);

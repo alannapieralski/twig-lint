@@ -12,12 +12,24 @@ const TAGS_THAT_SCOPE_BRANCHES: ReadonlySet<string> = new Set(['for', 'block', '
 
 function roleOf(block: TwigBlockSummary): Role | undefined {
   const { tagName } = block;
-  if (block.kind !== 'tag' || tagName === undefined) return undefined;
-  if (tagName === 'if') return 'start';
-  if (tagName === 'elseif' || tagName === 'else') return 'continue';
-  if (tagName === 'endif') return 'end';
-  if (tagName.startsWith('end') && TAGS_THAT_SCOPE_BRANCHES.has(tagName.slice('end'.length))) return 'blockClose';
-  if (TAGS_THAT_SCOPE_BRANCHES.has(tagName) && block.depthChange === 1) return 'blockOpen';
+  if (block.kind !== 'tag' || tagName === undefined) {
+    return undefined;
+  }
+  if (tagName === 'if') {
+    return 'start';
+  }
+  if (tagName === 'elseif' || tagName === 'else') {
+    return 'continue';
+  }
+  if (tagName === 'endif') {
+    return 'end';
+  }
+  if (tagName.startsWith('end') && TAGS_THAT_SCOPE_BRANCHES.has(tagName.slice('end'.length))) {
+    return 'blockClose';
+  }
+  if (TAGS_THAT_SCOPE_BRANCHES.has(tagName) && block.depthChange === 1) {
+    return 'blockOpen';
+  }
   return undefined;
 }
 
@@ -28,7 +40,9 @@ function splitIntoBranches(blocks: readonly TwigBlockSummary[]): BranchSegment[]
 
   for (const block of blocks) {
     const role = roleOf(block);
-    if (role === undefined) continue;
+    if (role === undefined) {
+      continue;
+    }
     const [start, end] = block.range;
     const top = stack.at(-1);
     switch (role) {
@@ -39,18 +53,24 @@ function splitIntoBranches(blocks: readonly TwigBlockSummary[]): BranchSegment[]
         stack.push({ kind: 'block' });
         break;
       case 'continue':
-        if (top?.kind !== 'if') break;
+        if (top?.kind !== 'if') {
+          break;
+        }
         branchSegments.push({ groupId: top.groupId, branchIndex: top.branchIndex, start: top.segmentStart, end: start });
         top.branchIndex += 1;
         top.segmentStart = end;
         break;
       case 'end':
-        if (top?.kind !== 'if') break;
+        if (top?.kind !== 'if') {
+          break;
+        }
         stack.pop();
         branchSegments.push({ groupId: top.groupId, branchIndex: top.branchIndex, start: top.segmentStart, end: start });
         break;
       case 'blockClose':
-        if (top?.kind === 'block') stack.pop();
+        if (top?.kind === 'block') {
+          stack.pop();
+        }
         break;
     }
   }

@@ -41,7 +41,9 @@ function templateKey(template: Template): string {
 }
 
 export function loadHistory(path: string): RunHistory {
-  if (!existsSync(path)) return EMPTY_HISTORY;
+  if (!existsSync(path)) {
+    return EMPTY_HISTORY;
+  }
   const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
   if (typeof parsed !== 'object' || parsed === null || !('templates' in parsed) || !('checks' in parsed)) {
     throw new Error(`${path} is not a corpus run history. Delete it to start a new one.`);
@@ -70,9 +72,15 @@ export function recordRun(templates: readonly Template[], runs: readonly CheckRu
   const checks = Object.fromEntries(runs.map(({ id, outcome }): [string, CheckHistory] => {
     const fingerprints: Record<string, string[]> = {};
     const add = (template: Template, fingerprint: string) => (fingerprints[templateKey(template)] ??= []).push(fingerprint);
-    for (const finding of outcome.findings) add(finding.template, fingerprintOf(finding));
-    for (const change of outcome.changes ?? []) add(change.template, fingerprintOfChange(change));
-    for (const list of Object.values(fingerprints)) list.sort();
+    for (const finding of outcome.findings) {
+      add(finding.template, fingerprintOf(finding));
+    }
+    for (const change of outcome.changes ?? []) {
+      add(change.template, fingerprintOfChange(change));
+    }
+    for (const list of Object.values(fingerprints)) {
+      list.sort();
+    }
     const coverage = outcome.lineCoverage && Object.fromEntries(templatesToScore(outcome.lineCoverage).map((entry): [string, LineCounts] => [templateKey(entry.template), [entry.lines, entry.uncovered, entry.excused]]));
     return [id, { ...(outcome.skipped !== undefined && { skipped: outcome.skipped }), templates: Object.keys(templateHashes), fingerprints, ...(coverage && { coverage }) }];
   }));
@@ -87,7 +95,9 @@ export function mergeHistory(previous: RunHistory, current: RunHistory): RunHist
       checks[id] = check;
       continue;
     }
-    if (check.skipped !== undefined) continue;
+    if (check.skipped !== undefined) {
+      continue;
+    }
     const rerun = new Set(check.templates);
     const keptFingerprints = Object.fromEntries(Object.entries(earlier.fingerprints).filter(([template]) => !rerun.has(template)));
     const keptCoverage = Object.fromEntries(Object.entries(earlier.coverage ?? {}).filter(([template]) => !rerun.has(template)));
@@ -103,16 +113,22 @@ export function mergeHistory(previous: RunHistory, current: RunHistory): RunHist
 
 function countBySeverity(fingerprints: readonly string[]): Counts {
   const counts: Record<Severity, number> = { report: 0, failure: 0, skipped: 0, fix: 0 };
-  for (const fingerprint of fingerprints) counts[severityOf(fingerprint)] += 1;
+  for (const fingerprint of fingerprints) {
+    counts[severityOf(fingerprint)] += 1;
+  }
   return counts;
 }
 
 function difference(from: readonly string[], to: readonly string[]): string[] {
   const remaining = new Map<string, number>();
-  for (const item of to) remaining.set(item, (remaining.get(item) ?? 0) + 1);
+  for (const item of to) {
+    remaining.set(item, (remaining.get(item) ?? 0) + 1);
+  }
   return from.filter((item) => {
     const count = remaining.get(item) ?? 0;
-    if (count === 0) return true;
+    if (count === 0) {
+      return true;
+    }
     remaining.set(item, count - 1);
     return false;
   });
@@ -121,7 +137,9 @@ function difference(from: readonly string[], to: readonly string[]): string[] {
 export function compareRuns(previous: RunHistory, current: RunHistory): CheckComparison[] {
   return Object.entries(current.checks).flatMap(([id, check]): CheckComparison[] => {
     const earlier = previous.checks[id];
-    if (!earlier) return [];
+    if (!earlier) {
+      return [];
+    }
     const earlierTemplates = new Set(earlier.templates);
     const comparable = check.templates.filter((template) => earlierTemplates.has(template) && previous.templates[template] === current.templates[template]);
     const added: Example[] = [];
@@ -137,7 +155,9 @@ export function compareRuns(previous: RunHistory, current: RunHistory): CheckCom
       beforeAll.push(...before);
       afterAll.push(...after);
       for (const [totals, source] of [[coverageBefore, earlier.coverage], [coverageAfter, check.coverage]] as const) {
-        (source?.[template] ?? [0, 0, 0]).forEach((count, position) => { totals[position] = (totals[position] ?? 0) + count; });
+        (source?.[template] ?? [0, 0, 0]).forEach((count, position) => {
+          totals[position] = (totals[position] ?? 0) + count;
+        });
       }
       added.push(...difference(after, before).map((fingerprint) => ({ template, fingerprint })));
       removed.push(...difference(before, after).map((fingerprint) => ({ template, fingerprint })));
@@ -157,8 +177,12 @@ export function compareRuns(previous: RunHistory, current: RunHistory): CheckCom
 }
 
 function isLargeSwing(before: number, after: number): boolean {
-  if (before === after) return false;
-  if (before === 0 || after === 0) return true;
+  if (before === after) {
+    return false;
+  }
+  if (before === 0 || after === 0) {
+    return true;
+  }
   return Math.abs(after - before) >= STRICT_MINIMUM_CHANGE && Math.abs(after - before) / before > STRICT_CHANGE_RATIO;
 }
 
@@ -166,11 +190,21 @@ export function describeStrictViolations(comparisons: readonly CheckComparison[]
   return comparisons.flatMap((comparison) => {
     const { id, before, after } = comparison;
     const violations: string[] = [];
-    if (comparison.isSkipped && !comparison.wasSkipped) violations.push(`${id} was skipped this time`);
-    if (isLargeSwing(before.report, after.report)) violations.push(`${id} reports went from ${before.report} to ${after.report}`);
-    if (isLargeSwing(before.fix, after.fix)) violations.push(`${id} fixed templates went from ${before.fix} to ${after.fix}`);
-    if (comparison.coverage && comparison.coverage.after[1] > comparison.coverage.before[1]) violations.push(`${id} lines not read rose from ${comparison.coverage.before[1]} to ${comparison.coverage.after[1]}`);
-    if (after.skipped > before.skipped) violations.push(`${id} skipped templates rose from ${before.skipped} to ${after.skipped}`);
+    if (comparison.isSkipped && !comparison.wasSkipped) {
+      violations.push(`${id} was skipped this time`);
+    }
+    if (isLargeSwing(before.report, after.report)) {
+      violations.push(`${id} reports went from ${before.report} to ${after.report}`);
+    }
+    if (isLargeSwing(before.fix, after.fix)) {
+      violations.push(`${id} fixed templates went from ${before.fix} to ${after.fix}`);
+    }
+    if (comparison.coverage && comparison.coverage.after[1] > comparison.coverage.before[1]) {
+      violations.push(`${id} lines not read rose from ${comparison.coverage.before[1]} to ${comparison.coverage.after[1]}`);
+    }
+    if (after.skipped > before.skipped) {
+      violations.push(`${id} skipped templates rose from ${before.skipped} to ${after.skipped}`);
+    }
     return violations;
   });
 }
@@ -183,7 +217,9 @@ function describeExample({ template, fingerprint }: Example): string {
 
 export function renderComparison(comparisons: readonly CheckComparison[], strictViolations: readonly string[] | undefined): string {
   const lines = ['', '## Changes since the last run', ''];
-  if (comparisons.length === 0) return `${[...lines, 'No earlier run of these checks to compare with.'].join('\n')}\n`;
+  if (comparisons.length === 0) {
+    return `${[...lines, 'No earlier run of these checks to compare with.'].join('\n')}\n`;
+  }
   lines.push('| Check | Templates compared | Reports | Failures | Fixed | Skipped | Added | Removed |', '|---|---|---|---|---|---|---|---|');
   for (const { id, comparableTemplates, before, after, added, removed } of comparisons) {
     const pair = (severity: Severity) => (before[severity] === after[severity] ? `${after[severity]}` : `${before[severity]} → ${after[severity]}`);
@@ -193,7 +229,9 @@ export function renderComparison(comparisons: readonly CheckComparison[], strict
   if (withCoverage.length > 0) {
     lines.push('', '| Line coverage | Score | Lines not read | Lines not scored |', '|---|---|---|---|');
     for (const { id, coverage } of withCoverage) {
-      if (!coverage) continue;
+      if (!coverage) {
+        continue;
+      }
       const [beforeLines, beforeUncovered, beforeExcused] = coverage.before;
       const [afterLines, afterUncovered, afterExcused] = coverage.after;
       const scores = [scoreOf(beforeLines, beforeUncovered, beforeExcused), scoreOf(afterLines, afterUncovered, afterExcused)].map(formatScore);
@@ -202,10 +240,18 @@ export function renderComparison(comparisons: readonly CheckComparison[], strict
   }
   for (const { id, added, removed } of comparisons.filter((comparison) => comparison.added.length + comparison.removed.length > 0)) {
     lines.push('', `### ${id}`, '');
-    for (const example of added.slice(0, MAX_EXAMPLES)) lines.push(`- added: ${describeExample(example)}`);
-    if (added.length > MAX_EXAMPLES) lines.push(`- ... and ${added.length - MAX_EXAMPLES} more added`);
-    for (const example of removed.slice(0, MAX_EXAMPLES)) lines.push(`- removed: ${describeExample(example)}`);
-    if (removed.length > MAX_EXAMPLES) lines.push(`- ... and ${removed.length - MAX_EXAMPLES} more removed`);
+    for (const example of added.slice(0, MAX_EXAMPLES)) {
+      lines.push(`- added: ${describeExample(example)}`);
+    }
+    if (added.length > MAX_EXAMPLES) {
+      lines.push(`- ... and ${added.length - MAX_EXAMPLES} more added`);
+    }
+    for (const example of removed.slice(0, MAX_EXAMPLES)) {
+      lines.push(`- removed: ${describeExample(example)}`);
+    }
+    if (removed.length > MAX_EXAMPLES) {
+      lines.push(`- ... and ${removed.length - MAX_EXAMPLES} more removed`);
+    }
   }
   if (strictViolations && strictViolations.length > 0) {
     lines.push('', '## Strict check failed', '', ...strictViolations.map((violation) => `- ${violation}`), '', 'Review the changes, then run again without --strict to record this run as the new comparison point.');

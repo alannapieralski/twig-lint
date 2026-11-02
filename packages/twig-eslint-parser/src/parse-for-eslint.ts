@@ -54,8 +54,11 @@ function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number
     const javascript = toSameLengthJavaScript(block);
     if (javascript === undefined) {
       const isLoopWithoutIn = block.tagName === 'for';
-      if (isLoopWithoutIn) unparsedBlockDiagnostics.push({ code: 'x-unparsed-twig', message: 'This Twig block could not be parsed (a {% for %} needs "in").', range: blockRangeOf(block) });
-      else ignoredBlockCount += 1;
+      if (isLoopWithoutIn) {
+        unparsedBlockDiagnostics.push({ code: 'x-unparsed-twig', message: 'This Twig block could not be parsed (a {% for %} needs "in").', range: blockRangeOf(block) });
+      } else {
+        ignoredBlockCount += 1;
+      }
       continue;
     }
 

@@ -36,8 +36,12 @@ function describeError(error: unknown): string {
 }
 
 function oracleUnavailableReason(): string | undefined {
-  if (spawnSync('php', ['-v']).status !== 0) return 'PHP is not installed.';
-  if (!existsSync(resolve(oracleDirectory, 'vendor/autoload.php'))) return 'Run composer install in packages/twig-eslint-parser/tools/twig-oracle.';
+  if (spawnSync('php', ['-v']).status !== 0) {
+    return 'PHP is not installed.';
+  }
+  if (!existsSync(resolve(oracleDirectory, 'vendor/autoload.php'))) {
+    return 'Run composer install in packages/twig-eslint-parser/tools/twig-oracle.';
+  }
   return undefined;
 }
 
@@ -75,7 +79,9 @@ const lexerParity: Check = {
   id: 'parser/lexer-parity',
   run(templates, context): CheckOutcome {
     const skipped = oracleUnavailableReason();
-    if (skipped !== undefined) return { findings: [], stats: {}, skipped };
+    if (skipped !== undefined) {
+      return { findings: [], stats: {}, skipped };
+    }
 
     const templatesByPath = new Map(templates.map((template) => [template.path, template]));
     const findings: Finding[] = [];
@@ -86,7 +92,9 @@ const lexerParity: Check = {
       context.progress(index, { findings: findings.length });
       index += 1;
       const template = templatesByPath.get(result.path);
-      if (!template) throw new Error(`The Twig oracle returned a template that was not sent: ${result.path}`);
+      if (!template) {
+        throw new Error(`The Twig oracle returned a template that was not sent: ${result.path}`);
+      }
       if (result.error !== undefined) {
         rejectedByTwig += 1;
         findings.push({ check: 'parser/lexer-parity', severity: 'report', template, message: `Twig rejects it: ${result.error}`, ...(result.line !== undefined && { line: result.line }) });
@@ -94,7 +102,9 @@ const lexerParity: Check = {
       }
       comparedTokens += result.tokens?.length ?? 0;
       const mismatches = describeLexerMismatches(template, result as Golden);
-      if (mismatches.length > 0) findings.push({ check: 'parser/lexer-parity', severity: 'failure', template, message: mismatches.slice(0, 5).join('; ') });
+      if (mismatches.length > 0) {
+        findings.push({ check: 'parser/lexer-parity', severity: 'failure', template, message: mismatches.slice(0, 5).join('; ') });
+      }
     }
     return { findings, stats: { templates: templates.length, comparedTokens, rejectedByTwig } };
   },
@@ -129,10 +139,18 @@ const outputMatchesSource: Check = {
     for (const [index, template] of templates.entries()) {
       context.progress(index, { findings: findings.length });
       for (const issue of checkParserOutput(template.source)) {
-        if (issue.check === 'converts every Twig block') continue;
-        if (issue.check === 'template is valid Twig and HTML') stats.invalidTemplates += 1;
-        if (issue.check === 'html: element closes' || issue.check === 'html: element left open in a Twig branch') stats.elementsLeftOpen += 1;
-        if (issue.check === 'html: stray close tag') stats.strayCloseTags += 1;
+        if (issue.check === 'converts every Twig block') {
+          continue;
+        }
+        if (issue.check === 'template is valid Twig and HTML') {
+          stats.invalidTemplates += 1;
+        }
+        if (issue.check === 'html: element closes' || issue.check === 'html: element left open in a Twig branch') {
+          stats.elementsLeftOpen += 1;
+        }
+        if (issue.check === 'html: stray close tag') {
+          stats.strayCloseTags += 1;
+        }
         const severity = TEMPLATE_DEFECT_CHECKS.has(issue.check) ? 'report' : 'failure';
         findings.push({ check: 'parser/output-matches-source', severity, template, message: `${issue.check}: ${issue.detail}`, ...(issue.line !== undefined && { line: issue.line }) });
       }
@@ -161,7 +179,9 @@ const htmlOracle: Check = {
   id: 'parser/html-oracle',
   run(templates, context): CheckOutcome {
     const skipped = oracleUnavailableReason();
-    if (skipped !== undefined) return { findings: [], stats: {}, skipped };
+    if (skipped !== undefined) {
+      return { findings: [], stats: {}, skipped };
+    }
 
     const templatesByPath = new Map(templates.map((template) => [template.path, template]));
     const findings: Finding[] = [];
@@ -171,7 +191,9 @@ const htmlOracle: Check = {
       context.progress(index, { findings: findings.length });
       index += 1;
       const template = templatesByPath.get(result.path);
-      if (!template) throw new Error(`The Twig oracle returned a template that was not sent: ${result.path}`);
+      if (!template) {
+        throw new Error(`The Twig oracle returned a template that was not sent: ${result.path}`);
+      }
       if (result.error !== undefined) {
         stats.rejectedByTwig += 1;
         continue;
@@ -205,7 +227,9 @@ const metamorphic: Check = {
 };
 
 function twigReadingFor(result: OracleResult | undefined): TwigReading {
-  if (!result) return { kind: 'own-lexer' };
+  if (!result) {
+    return { kind: 'own-lexer' };
+  }
   return result.error === undefined ? { kind: 'oracle', golden: result as Golden } : { kind: 'rejected-by-twig' };
 }
 
@@ -275,8 +299,12 @@ const mutationRecall: Check = {
       const flagged = own.filter(({ outcome }) => outcome.isFlagged);
       const missedOrFalseAlarm = own.filter(({ outcome }) => (mutator.kind === 'defect' ? !outcome.isFlagged : outcome.isFlagged));
       stats[`${mutator.name} ${mutator.kind === 'defect' ? 'flagged' : 'false alarms'} %`] = percentage(flagged.length, own.length);
-      if (mutator.kind === 'defect') stats[`${mutator.name} at the edit %`] = percentage(own.filter(({ outcome }) => outcome.isFlaggedAtTheEdit).length, own.length);
-      if (mutator.kind === 'defect') stats[`${mutator.name} as a fault %`] = percentage(own.filter(({ outcome }) => outcome.isFlaggedAsFault).length, own.length);
+      if (mutator.kind === 'defect') {
+        stats[`${mutator.name} at the edit %`] = percentage(own.filter(({ outcome }) => outcome.isFlaggedAtTheEdit).length, own.length);
+      }
+      if (mutator.kind === 'defect') {
+        stats[`${mutator.name} as a fault %`] = percentage(own.filter(({ outcome }) => outcome.isFlaggedAsFault).length, own.length);
+      }
       for (const { template, outcome } of missedOrFalseAlarm.slice(0, MAX_MISSES_LISTED_PER_MUTATOR)) {
         const message = mutator.kind === 'defect' ? `${mutator.name}: the edit is not flagged` : `${mutator.name}: a harmless edit is flagged as ${outcome.flaggedCauses.join(', ')}`;
         findings.push({ check: 'parser/mutation-recall', severity: 'report', template, message, line: outcome.line });

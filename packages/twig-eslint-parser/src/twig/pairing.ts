@@ -14,10 +14,14 @@ export function findUnpairedTwigTag(blocks: readonly TwigBlockSummary[]): Unpair
     }
 
     const isMiddle = isMiddleTag(block);
-    if (!isMiddle && !isClosingTag(block)) continue;
+    if (!isMiddle && !isClosingTag(block)) {
+      continue;
+    }
 
     const openTag = isMiddle ? openTags.at(-1) : openTags.pop();
-    if (!openTag) return { block, message: `Twig tags don't pair up: ${tagText(block.tagName)} has no tag to belong to.` };
+    if (!openTag) {
+      return { block, message: `Twig tags don't pair up: ${tagText(block.tagName)} has no tag to belong to.` };
+    }
 
     const expectedEnd = `end${openTag.tagName}`;
     if (!isMiddle && block.tagName !== expectedEnd) {
@@ -26,7 +30,9 @@ export function findUnpairedTwigTag(blocks: readonly TwigBlockSummary[]): Unpair
   }
 
   const [firstUnclosed] = openTags;
-  if (!firstUnclosed) return undefined;
+  if (!firstUnclosed) {
+    return undefined;
+  }
 
   return { block: firstUnclosed, message: `Twig tags don't pair up: ${tagText(firstUnclosed.tagName)} is never closed, it needs ${tagText(`end${firstUnclosed.tagName}`)}.` };
 }

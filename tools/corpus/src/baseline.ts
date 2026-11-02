@@ -49,8 +49,12 @@ export function baselineCoverageOf(runs: readonly RunOfCheck[], templates: reado
 }
 
 function isKeyCoveredByTheRun(key: string, coverage: BaselineCoverage): boolean {
-  if (!coverage.checksRun.has(checkOfKey(key))) return false;
-  if (coverage.skippedTemplates.has(checkAndTemplateOf(key))) return false;
+  if (!coverage.checksRun.has(checkOfKey(key))) {
+    return false;
+  }
+  if (coverage.skippedTemplates.has(checkAndTemplateOf(key))) {
+    return false;
+  }
   return coverage.isFullRun || coverage.templateHashesRun.has(templateHashOfKey(key));
 }
 
@@ -64,9 +68,13 @@ export function updateBaselineKeys(baseline: ReadonlySet<string>, recordedKeys: 
 }
 
 export function loadBaseline(baselinePath: string): Set<string> {
-  if (!existsSync(baselinePath)) return new Set();
+  if (!existsSync(baselinePath)) {
+    return new Set();
+  }
   const entries: unknown = JSON.parse(readFileSync(baselinePath, 'utf8'));
-  if (!Array.isArray(entries)) throw new Error(`${baselinePath} must be a JSON array of finding keys.`);
+  if (!Array.isArray(entries)) {
+    throw new Error(`${baselinePath} must be a JSON array of finding keys.`);
+  }
   return new Set(entries.map(String));
 }
 

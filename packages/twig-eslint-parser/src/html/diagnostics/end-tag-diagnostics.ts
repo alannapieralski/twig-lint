@@ -25,7 +25,9 @@ function findNamesClosedBy(element: MarkupElement, unclosedElements: readonly Ma
 
 function describeStrayEndTag(token: SourceToken, source: EndTagSource): string {
   const openElement = findInnermostOpenElement(source.document, token.range[0]);
-  if (!openElement) return `${token.value} closes nothing, because no element is open. Remove it or add the opening tag.`;
+  if (!openElement) {
+    return `${token.value} closes nothing, because no element is open. Remove it or add the opening tag.`;
+  }
 
   return `${token.value} does not match the open ${openTagTextOf(openElement, source.text)}. Remove it or correct its name.`;
 }
@@ -42,18 +44,26 @@ export function findEndTagDiagnostics(source: EndTagSource): TwigDiagnostic[] {
   const diagnostics: TwigDiagnostic[] = [];
 
   for (const token of source.tokens) {
-    if (token.type !== 'CloseTag') continue;
+    if (token.type !== 'CloseTag') {
+      continue;
+    }
 
     const closedElement = elementByCloseStart.get(token.range[0]);
     const isPairedAcrossBranches = closedElement !== undefined && !isSameOnEveryTwigBranch(closedElement.range, source.blocks);
     if (isPairedAcrossBranches) {
-      for (const name of findNamesClosedBy(closedElement, unclosedElements)) namesClosedAcrossBranches.add(name);
+      for (const name of findNamesClosedBy(closedElement, unclosedElements)) {
+        namesClosedAcrossBranches.add(name);
+      }
     }
-    if (closedElement || isInsideTwigBranch(token.range[0], branchSpans)) continue;
+    if (closedElement || isInsideTwigBranch(token.range[0], branchSpans)) {
+      continue;
+    }
 
     const name = nameOfEndTag(token);
     const isLeftAlone = VOID_ELEMENTS.has(name) || namesClosedAcrossBranches.has(name);
-    if (isLeftAlone) continue;
+    if (isLeftAlone) {
+      continue;
+    }
 
     diagnostics.push({ code: 'x-invalid-end-tag', message: describeStrayEndTag(token, source), range: token.range });
   }

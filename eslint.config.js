@@ -38,6 +38,8 @@ export default defineConfig([
       '@stylistic/quotes': ['warn', 'single', { avoidEscape: true }],
       '@stylistic/semi': ['warn', 'always'],
       '@stylistic/keyword-spacing': 'warn',
+      '@stylistic/brace-style': ['warn', '1tbs', { allowSingleLine: false }],
+      'curly': ['warn', 'all'],
       '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports', fixStyle: 'separate-type-imports' }],
       '@typescript-eslint/no-import-type-side-effects': 'warn',
       '@typescript-eslint/no-shadow': 'warn',

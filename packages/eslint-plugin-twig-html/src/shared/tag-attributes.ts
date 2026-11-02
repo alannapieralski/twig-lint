@@ -23,7 +23,9 @@ export function createAttributesOf(omittedAttributes: readonly OmittedAttribute[
   return (tag) => {
     const attributesInTree = tag.attributes ?? [];
     const omitted = omittedByOwner.get(tag);
-    if (!omitted) return attributesInTree;
+    if (!omitted) {
+      return attributesInTree;
+    }
 
     return [...attributesInTree, ...omitted.map(({ attribute }) => attribute)].toSorted(byStart);
   };

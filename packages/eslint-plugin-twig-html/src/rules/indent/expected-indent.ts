@@ -18,10 +18,14 @@ export function expectedIndentAt(offset: number, layout: IndentLayout, options: 
   const { nestings } = layout;
 
   const openTag = layout.findOpenTagAt(offset);
-  if (openTag) return expectedInOpenTag(openTag, offset, nestings, options);
+  if (openTag) {
+    return expectedInOpenTag(openTag, offset, nestings, options);
+  }
 
   const closeTag = layout.findCloseTagAt(offset);
-  if (closeTag) return expectedInCloseTag(closeTag, nestings, options);
+  if (closeTag) {
+    return expectedInCloseTag(closeTag, nestings, options);
+  }
 
   return repeatUnit(options.unit, nestings.countAt(offset));
 }

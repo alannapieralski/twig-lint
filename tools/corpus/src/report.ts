@@ -58,7 +58,9 @@ export function buildCheckReports(results: readonly CheckResult[], baseline: Rea
 }
 
 export function renderCanaries(notes: readonly string[]): string {
-  if (notes.length === 0) return '';
+  if (notes.length === 0) {
+    return '';
+  }
   return `${['', '## Canaries', '', ...notes].join('\n')}\n`;
 }
 
@@ -87,9 +89,13 @@ function renderSummary(reports: readonly CheckReport[], templateCount: number, r
   }
   for (const report of reports.filter((candidate) => candidate.newFailures.length > 0)) {
     lines.push('', `## New failures: ${report.id}`, '');
-    for (const finding of report.newFailures.slice(0, MAX_LISTED_FAILURES_PER_CHECK)) lines.push(`- ${describeLocation(finding)}: ${finding.message}`);
+    for (const finding of report.newFailures.slice(0, MAX_LISTED_FAILURES_PER_CHECK)) {
+      lines.push(`- ${describeLocation(finding)}: ${finding.message}`);
+    }
     const unlisted = report.newFailures.length - MAX_LISTED_FAILURES_PER_CHECK;
-    if (unlisted > 0) lines.push(`- ... and ${unlisted} more in findings.ndjson`);
+    if (unlisted > 0) {
+      lines.push(`- ... and ${unlisted} more in findings.ndjson`);
+    }
   }
   return `${lines.join('\n')}\n`;
 }
@@ -100,24 +106,34 @@ function renderCoverageSections(results: readonly CheckResult[]): string {
 
 function writeCoverage(directory: string, results: readonly CheckResult[]): void {
   const lines = results.flatMap(({ check, outcome }) => (outcome.lineCoverage ? coverageNdjson(check.id, outcome.lineCoverage) : []));
-  if (lines.length > 0) writeFileSync(join(directory, 'coverage.ndjson'), `${lines.join('\n')}\n`);
+  if (lines.length > 0) {
+    writeFileSync(join(directory, 'coverage.ndjson'), `${lines.join('\n')}\n`);
+  }
 }
 
 function renderStaleBaseline(staleKeys: readonly string[]): string {
-  if (staleKeys.length === 0) return '';
+  if (staleKeys.length === 0) {
+    return '';
+  }
   const listed = staleKeys.slice(0, MAX_LISTED_FAILURES_PER_CHECK).map((key) => `- ${key}`);
   const unlisted = staleKeys.length > MAX_LISTED_FAILURES_PER_CHECK ? [`- ... and ${staleKeys.length - MAX_LISTED_FAILURES_PER_CHECK} more`] : [];
   return `${['', `## Stale baseline entries: ${staleKeys.length}`, '', 'These known failures no longer happen. Run with --update-baseline to drop them.', '', ...listed, ...unlisted].join('\n')}\n`;
 }
 
 function statusOf(finding: Finding, baseline: ReadonlySet<string>, isExpectedFailure: (finding: Finding) => boolean): 'report' | 'skipped' | 'expected' | 'known' | 'new' {
-  if (finding.severity !== 'failure') return finding.severity;
-  if (isExpectedFailure(finding)) return 'expected';
+  if (finding.severity !== 'failure') {
+    return finding.severity;
+  }
+  if (isExpectedFailure(finding)) {
+    return 'expected';
+  }
   return baseline.has(findingKey(finding)) ? 'known' : 'new';
 }
 
 function excerptOf(finding: Finding): string | undefined {
-  if (finding.line === undefined) return undefined;
+  if (finding.line === undefined) {
+    return undefined;
+  }
   return finding.template.source.split(/\r?\n/)[finding.line - 1]?.trim().slice(0, 160);
 }
 
@@ -142,7 +158,9 @@ function writeFindings(directory: string, results: readonly CheckResult[], basel
 function writeFailureFiles(directory: string, results: readonly CheckResult[]): void {
   for (const { check, outcome } of results) {
     const withDiffs = outcome.findings.filter((finding) => finding.severity === 'failure' && finding.before !== undefined && finding.after !== undefined);
-    if (withDiffs.length === 0) continue;
+    if (withDiffs.length === 0) {
+      continue;
+    }
     const checkDirectory = join(directory, 'failures', checkDirectoryName(check.id));
     mkdirSync(checkDirectory, { recursive: true });
     withDiffs.slice(0, MAX_FAILURE_FILES_PER_CHECK).forEach((finding, index) => {
@@ -171,11 +189,17 @@ function writeReportSamples(directory: string, check: Check, reports: readonly F
 
 function writeSamples(directory: string, results: readonly CheckResult[], sampleSize: number): void {
   for (const { check, outcome } of results) {
-    if (sampleSize === 0) continue;
+    if (sampleSize === 0) {
+      continue;
+    }
     const reports = outcome.findings.filter((finding) => finding.severity === 'report');
-    if (reports.length > 0) writeReportSamples(directory, check, reports, sampleSize);
+    if (reports.length > 0) {
+      writeReportSamples(directory, check, reports, sampleSize);
+    }
     const changes: readonly FixChange[] = outcome.changes ?? [];
-    if (changes.length === 0) continue;
+    if (changes.length === 0) {
+      continue;
+    }
     const checkDirectory = join(directory, 'samples', checkDirectoryName(check.id));
     mkdirSync(checkDirectory, { recursive: true });
     evenlySpaced(changes, sampleSize).forEach((change, index) => {

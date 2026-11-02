@@ -57,7 +57,9 @@ export function expectedInOpenTag(tag: OpenTag, offset: number, nestings: RangeC
 
   const depthWithinTag = nestings.countAt(offset) - tagDepth;
   const shouldAlign = options.alignAttributesVertically && tag.firstAttributeColumn !== undefined;
-  if (!shouldAlign) return `${tagIndentation}${repeatUnit(unit, depthWithinTag + options.attribute)}`;
+  if (!shouldAlign) {
+    return `${tagIndentation}${repeatUnit(unit, depthWithinTag + options.attribute)}`;
+  }
 
   const alignment = ' '.repeat(tag.firstAttributeColumn ?? 0);
   return `${tagIndentation}${alignment}${repeatUnit(unit, depthWithinTag)}`;

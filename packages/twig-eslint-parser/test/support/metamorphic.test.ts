@@ -13,7 +13,9 @@ const parseWithoutTwigKinds: TreeParser = (source) => {
 
 function rewrite(name: string, source: string): string {
   const selected = REWRITES.find((candidate) => candidate.name === name);
-  if (!selected) throw new Error(`No rewrite named ${name}.`);
+  if (!selected) {
+    throw new Error(`No rewrite named ${name}.`);
+  }
   return selected.apply(source, groupTwigBlocks(tokenizeTwig(source)));
 }
 

@@ -19,8 +19,12 @@ type TailwindPackage = { readonly path: string; readonly version: string };
 function findTailwindPackage(cwd: string): TailwindPackage | undefined {
   for (let directory = cwd; ; directory = dirname(directory)) {
     const path = join(directory, 'node_modules', 'tailwindcss', 'package.json');
-    if (existsSync(path)) return { path, version: (JSON.parse(readFileSync(path, 'utf8')) as { version: string }).version };
-    if (dirname(directory) === directory) return undefined;
+    if (existsSync(path)) {
+      return { path, version: (JSON.parse(readFileSync(path, 'utf8')) as { version: string }).version };
+    }
+    if (dirname(directory) === directory) {
+      return undefined;
+    }
   }
 }
 
@@ -33,11 +37,17 @@ function resolveTailwind(rootPath: string, root: CorpusRoot | undefined, fallbac
   const configured = root?.tailwind ?? {};
   const cwd = configured.cwd ?? (findTailwindPackage(rootPath) ? rootPath : fallbackCwd);
   const tailwind = findTailwindPackage(cwd);
-  if (tailwind === undefined) return { unavailable: `Tailwind CSS cannot be found from ${cwd}. Set "tailwind.cwd" for this root in corpus.config.json.` };
-  if (!isSupportedTailwind(tailwind.version)) return { unavailable: `Tailwind CSS ${tailwind.version} is older than ${OLDEST_SUPPORTED_TAILWIND.join('.')}, which better-tailwindcss cannot load.` };
+  if (tailwind === undefined) {
+    return { unavailable: `Tailwind CSS cannot be found from ${cwd}. Set "tailwind.cwd" for this root in corpus.config.json.` };
+  }
+  if (!isSupportedTailwind(tailwind.version)) {
+    return { unavailable: `Tailwind CSS ${tailwind.version} is older than ${OLDEST_SUPPORTED_TAILWIND.join('.')}, which better-tailwindcss cannot load.` };
+  }
   for (const setting of ['entryPoint', 'tsconfig'] as const) {
     const path = configured[setting];
-    if (path !== undefined && !existsSync(path)) return { unavailable: `"tailwind.${setting}" for this root does not exist: ${path}` };
+    if (path !== undefined && !existsSync(path)) {
+      return { unavailable: `"tailwind.${setting}" for this root does not exist: ${path}` };
+    }
   }
   const isFallback = root?.tailwind === undefined && tailwind.path === findTailwindPackage(fallbackCwd)?.path;
   return { settings: { cwd, ...(configured.entryPoint && { entryPoint: configured.entryPoint }), ...(configured.tsconfig && { tsconfig: configured.tsconfig }) }, isFallback };
@@ -52,13 +62,17 @@ function createTailwindLinterPool(configs: readonly Linter.Config[], context: Ch
   const fallbackRoots = new Set<string>();
   const linterFor = ({ root }: Template): RootLinter => {
     const existing = linterByRoot.get(root);
-    if (existing) return existing;
+    if (existing) {
+      return existing;
+    }
     const resolution = resolveTailwind(root, context.roots.get(root), fallbackCwd);
     if ('unavailable' in resolution) {
       linterByRoot.set(root, resolution);
       return resolution;
     }
-    if (resolution.isFallback) fallbackRoots.add(root);
+    if (resolution.isFallback) {
+      fallbackRoots.add(root);
+    }
     const tailwindSettings: Linter.Config = { files: ['**/*.twig'], settings: { 'better-tailwindcss': { ...betterTailwindSettings(configs), ...resolution.settings } } };
     const linter = { linter: new ESLint({ cwd: root, overrideConfigFile: true, fix: false, overrideConfig: [...configs, tailwindSettings] }) };
     linterByRoot.set(root, linter);
@@ -70,7 +84,9 @@ function createTailwindLinterPool(configs: readonly Linter.Config[], context: Ch
 function countReportsByRule(outcome: CheckOutcome): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const finding of outcome.findings) {
-    if (finding.severity !== 'report' || finding.message.startsWith('fix: ')) continue;
+    if (finding.severity !== 'report' || finding.message.startsWith('fix: ')) {
+      continue;
+    }
     const rule = finding.message.slice(0, finding.message.indexOf(':'));
     counts[rule] = (counts[rule] ?? 0) + 1;
   }

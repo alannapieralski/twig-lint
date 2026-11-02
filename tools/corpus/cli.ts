@@ -66,7 +66,9 @@ function run(command: string, args: string[], environment: NodeJS.ProcessEnv): n
 
 console.error('[corpus] building twig-eslint-parser');
 const buildStatus = run('npm', ['run', 'build', '-w', 'twig-eslint-parser', '--silent'], process.env);
-if (buildStatus !== 0) process.exit(buildStatus);
+if (buildStatus !== 0) {
+  process.exit(buildStatus);
+}
 
 process.exit(run(
   resolve(repositoryRoot, 'node_modules/.bin/vitest'),

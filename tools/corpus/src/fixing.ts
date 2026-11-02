@@ -33,8 +33,12 @@ export function applyOnePass(sourceText: string, messages: readonly Linter.LintM
 
   for (const { fix, ruleId } of fixable) {
     const [start, end] = fix.range;
-    if (lastEnd >= start || start > end) continue;
-    if (removesByteOrderMark(fix)) output = '';
+    if (lastEnd >= start || start > end) {
+      continue;
+    }
+    if (removesByteOrderMark(fix)) {
+      output = '';
+    }
     output += text.slice(Math.max(0, lastEnd), Math.max(0, start)) + fix.text;
     applied.push({ ruleId, replaced: text.slice(Math.max(0, start), end), replacement: fix.text });
     lastEnd = end;
@@ -53,11 +57,17 @@ export async function fixUntilSettled(
   let current = source;
   let messages = firstMessages;
   for (let pass = 1; pass <= MAX_PASSES; pass += 1) {
-    if (!messages.some(isFixable)) return { outcome: 'settled', output: current, passes: pass - 1, applied };
+    if (!messages.some(isFixable)) {
+      return { outcome: 'settled', output: current, passes: pass - 1, applied };
+    }
     const next = applyOnePass(current, messages);
     applied.push(...next.applied);
-    if (next.output === current) return { outcome: 'unresolved', output: current, passes: pass, applied };
-    if (seenOutputs.has(next.output)) return { outcome: 'oscillates', output: next.output, passes: pass, applied };
+    if (next.output === current) {
+      return { outcome: 'unresolved', output: current, passes: pass, applied };
+    }
+    if (seenOutputs.has(next.output)) {
+      return { outcome: 'oscillates', output: next.output, passes: pass, applied };
+    }
     seenOutputs.add(next.output);
     current = next.output;
     messages = await lint(current);

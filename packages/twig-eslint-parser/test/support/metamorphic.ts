@@ -48,7 +48,9 @@ function padDelimiters(source: string, blocks: readonly TwigBlock[]): string {
     const { leading, trailing } = innerWhitespaceTokens(block);
     const opening = block.tokens.find((token) => token.type !== 'VARIABLE_START' && token.type !== 'TAG_START' && token.type !== 'TRIMMING_MODIFIER' && token.type !== 'LINE_TRIMMING_MODIFIER');
     const closing = [...block.tokens].reverse().find((token) => token.type !== 'VARIABLE_END' && token.type !== 'TAG_END' && token.type !== 'TRIMMING_MODIFIER' && token.type !== 'LINE_TRIMMING_MODIFIER');
-    if (!opening || !closing) return [];
+    if (!opening || !closing) {
+      return [];
+    }
     return [...(leading ? [] : [{ at: opening.start, remove: 0, insert: ' ' }]), ...(trailing ? [] : [{ at: closing.end, remove: 0, insert: ' ' }])];
   });
   return applyEdits(source, edits);
@@ -62,18 +64,26 @@ function findBlocksInsideStartTags(source: string, blocks: readonly TwigBlock[])
   for (let index = 0; index < source.length; index += 1) {
     const block = blockByStart.get(index);
     if (block) {
-      if (isInTag && quote === undefined) insideTags.push(block);
+      if (isInTag && quote === undefined) {
+        insideTags.push(block);
+      }
       index = block.end - 1;
       continue;
     }
     const character = source[index] ?? '';
     if (quote !== undefined) {
-      if (character === quote) quote = undefined;
+      if (character === quote) {
+        quote = undefined;
+      }
       continue;
     }
-    if (!isInTag && character === '<' && /[A-Za-z]/.test(source[index + 1] ?? '')) isInTag = true;
-    else if (isInTag && (character === '"' || character === "'")) quote = character;
-    else if (isInTag && character === '>') isInTag = false;
+    if (!isInTag && character === '<' && /[A-Za-z]/.test(source[index + 1] ?? '')) {
+      isInTag = true;
+    } else if (isInTag && (character === '"' || character === "'")) {
+      quote = character;
+    } else if (isInTag && character === '>') {
+      isInTag = false;
+    }
   }
   return insideTags;
 }
@@ -117,7 +127,9 @@ function flatten(root: unknown): Entry[] {
   const entries: Entry[] = [];
   const seen = new Set<object>();
   const visit = (value: unknown, depth: number): void => {
-    if (typeof value !== 'object' || value === null || seen.has(value)) return;
+    if (typeof value !== 'object' || value === null || seen.has(value)) {
+      return;
+    }
     seen.add(value);
     if (Array.isArray(value)) {
       value.forEach((child) => visit(child, depth));
@@ -130,7 +142,9 @@ function flatten(root: unknown): Entry[] {
       entries.push({ depth, description: describeNode(node), offset: range?.[0] ?? 0 });
     }
     for (const [key, child] of Object.entries(node)) {
-      if (!KEYS_NEVER_COMPARED.has(key)) visit(child, isNode ? depth + 1 : depth);
+      if (!KEYS_NEVER_COMPARED.has(key)) {
+        visit(child, isNode ? depth + 1 : depth);
+      }
     }
   };
   visit(root, 0);
@@ -151,7 +165,9 @@ function firstDifference(original: readonly Entry[], rewritten: readonly Entry[]
   for (let index = 0; index < length; index += 1) {
     const before = original[index];
     const after = rewritten[index];
-    if (before?.description === after?.description && before?.depth === after?.depth) continue;
+    if (before?.description === after?.description && before?.depth === after?.depth) {
+      continue;
+    }
     return { ...(before && { original: before }), ...(after && { rewritten: after }) };
   }
   return undefined;
@@ -169,12 +185,16 @@ export function checkRewritesKeepTheTree(source: string, selected: readonly Rewr
     return [];
   }
   const original = massagedTree(source, parse);
-  if (!original) return [];
+  if (!original) {
+    return [];
+  }
   const locate = createOffsetLocator(source);
   const issues: OutputIssue[] = [];
   for (const rewrite of selected) {
     const rewritten = rewrite.apply(source, blocks);
-    if (rewritten === source) continue;
+    if (rewritten === source) {
+      continue;
+    }
     const tree = massagedTree(rewritten, parse);
     if (!tree) {
       issues.push({ check: `metamorphic: ${rewrite.name}: parses`, detail: 'the rewritten template no longer parses' });
@@ -182,7 +202,9 @@ export function checkRewritesKeepTheTree(source: string, selected: readonly Rewr
     }
     for (const part of ['html', 'twig'] as const) {
       const difference = firstDifference(original[part], tree[part]);
-      if (!difference) continue;
+      if (!difference) {
+        continue;
+      }
       const offset = difference.original?.offset ?? original[part].at(-1)?.offset ?? 0;
       issues.push({
         check: `metamorphic: ${rewrite.name}: ${part}`,

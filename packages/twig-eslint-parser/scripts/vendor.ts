@@ -65,7 +65,9 @@ function convertJestSnapshots(patchedRoot: string, vitest: string, configPath: s
   const testsBySnapshotFile = Map.groupBy(tests, (test) => join(dirname(test.file), '__snapshots__', `${basename(test.file)}.snap`));
 
   for (const [snapshotPath, testsInFile] of testsBySnapshotFile) {
-    if (!existsSync(snapshotPath)) continue;
+    if (!existsSync(snapshotPath)) {
+      continue;
+    }
     const testNames = testsInFile.map((test) => test.name);
     writeFileSync(snapshotPath, renameJestSnapshotKeys(readFileSync(snapshotPath, 'utf8'), testNames));
   }
@@ -111,7 +113,9 @@ function vendorRootOf(unit: VendoredUnit): string {
 
 function readPatchSeries(unit: VendoredUnit): string[] {
   const seriesPath = join(vendorRootOf(unit), 'patches', 'series');
-  if (!existsSync(seriesPath)) return [];
+  if (!existsSync(seriesPath)) {
+    return [];
+  }
   return readFileSync(seriesPath, 'utf8')
     .split('\n')
     .map((line) => line.trim())
@@ -120,17 +124,27 @@ function readPatchSeries(unit: VendoredUnit): string[] {
 
 function applyPatch(unit: VendoredUnit, patchName: string, targetDirectory: string): void {
   const patchPath = join(vendorRootOf(unit), 'patches', patchName);
-  if (!existsSync(patchPath)) throw new Error(`Patch "${patchName}" is listed in ${unit.name}/patches/series but ${patchPath} does not exist.`);
+  if (!existsSync(patchPath)) {
+    throw new Error(`Patch "${patchName}" is listed in ${unit.name}/patches/series but ${patchPath} does not exist.`);
+  }
   const result = spawnSync('git', ['apply', '--verbose', '--whitespace=error-all', patchPath], { cwd: targetDirectory, encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`Patch "${patchName}" no longer applies cleanly:\n${result.stderr}`);
-  if (result.stderr.includes('Skipped patch')) throw new Error(`git apply skipped part of patch "${patchName}":\n${result.stderr}`);
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(`Patch "${patchName}" no longer applies cleanly:\n${result.stderr}`);
+  }
+  if (result.stderr.includes('Skipped patch')) {
+    throw new Error(`git apply skipped part of patch "${patchName}":\n${result.stderr}`);
+  }
 }
 
 function materialisePatchedUpstream(unit: VendoredUnit, targetDirectory: string): void {
   cpSync(join(vendorRootOf(unit), 'pristine'), targetDirectory, { recursive: true });
   execFileSync('git', ['init', '-q'], { cwd: targetDirectory, stdio: 'pipe' });
-  for (const patchName of readPatchSeries(unit)) applyPatch(unit, patchName, targetDirectory);
+  for (const patchName of readPatchSeries(unit)) {
+    applyPatch(unit, patchName, targetDirectory);
+  }
 }
 
 function withPatchedUpstream<Result>(unit: VendoredUnit, work: (patchedRoot: string) => Result): Result {
@@ -181,7 +195,9 @@ function writeShipped(unit: VendoredUnit): void {
 }
 
 function createPatchWorkspace(unit: VendoredUnit, workspaceDirectory: string): void {
-  if (existsSync(workspaceDirectory)) throw new Error(`${workspaceDirectory} already exists; choose an empty path.`);
+  if (existsSync(workspaceDirectory)) {
+    throw new Error(`${workspaceDirectory} already exists; choose an empty path.`);
+  }
   materialisePatchedUpstream(unit, workspaceDirectory);
   const git = (...args: string[]) => execFileSync('git', args, { cwd: workspaceDirectory, stdio: 'pipe' });
   git('add', '-A');
@@ -191,10 +207,14 @@ function createPatchWorkspace(unit: VendoredUnit, workspaceDirectory: string): v
 }
 
 function selectUnits(names: readonly string[]): readonly VendoredUnit[] {
-  if (names.length === 0) return UNITS;
+  if (names.length === 0) {
+    return UNITS;
+  }
   return names.map((name) => {
     const unit = UNITS.find((candidate) => candidate.name === name);
-    if (!unit) throw new Error(`No vendored unit named ${name}. Known: ${UNITS.map((candidate) => candidate.name).join(', ')}.`);
+    if (!unit) {
+      throw new Error(`No vendored unit named ${name}. Known: ${UNITS.map((candidate) => candidate.name).join(', ')}.`);
+    }
     return unit;
   });
 }
@@ -214,9 +234,13 @@ switch (command) {
     break;
   case '--workspace': {
     const [name, directory] = rest;
-    if (!name || !directory) throw new Error(USAGE);
+    if (!name || !directory) {
+      throw new Error(USAGE);
+    }
     const [unit] = selectUnits([name]);
-    if (unit) createPatchWorkspace(unit, resolve(directory));
+    if (unit) {
+      createPatchWorkspace(unit, resolve(directory));
+    }
     break;
   }
   default:

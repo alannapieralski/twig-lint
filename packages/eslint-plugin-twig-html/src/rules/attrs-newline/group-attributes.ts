@@ -21,7 +21,9 @@ export function groupAttributes(tag: TagNode, attributes: TagNode['attributes'],
   }
 
   const lastAttribute = attributes.at(-1);
-  if (groupStart !== undefined && lastAttribute) groups.push([groupStart, lastAttribute.range[1]]);
+  if (groupStart !== undefined && lastAttribute) {
+    groups.push([groupStart, lastAttribute.range[1]]);
+  }
 
   return groups;
 }

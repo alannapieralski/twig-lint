@@ -13,8 +13,12 @@ export function requote(body: string, from: TwigQuote, to: TwigQuote): string | 
       continue;
     }
 
-    if (character === to) return undefined;
-    if (to === '"' && character === '#' && body[index + 1] === '{') return undefined;
+    if (character === to) {
+      return undefined;
+    }
+    if (to === '"' && character === '#' && body[index + 1] === '{') {
+      return undefined;
+    }
 
     requoted += character;
   }

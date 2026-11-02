@@ -16,7 +16,9 @@ function findVerbatimBodies(blocks: readonly TwigBlock[]): Range[] {
   const bodies: Range[] = [];
   let bodyStart: number | undefined;
   for (const block of blocks) {
-    if (block.tagName === 'verbatim') bodyStart = block.end;
+    if (block.tagName === 'verbatim') {
+      bodyStart = block.end;
+    }
     if (block.tagName === 'endverbatim' && bodyStart !== undefined) {
       bodies.push([bodyStart, block.start]);
       bodyStart = undefined;
@@ -32,7 +34,9 @@ export function maskVerbatimDelimiters(source: string, blocks: readonly TwigBloc
   for (const [start, end] of findVerbatimBodies(blocks)) {
     const body = source.slice(start, end);
     const masked = body.replace(TWIG_DELIMITERS, '  ');
-    if (masked === body) continue;
+    if (masked === body) {
+      continue;
+    }
     text = text.slice(0, start) + masked + text.slice(end);
     maskedRanges.push([start, end]);
   }
@@ -42,7 +46,9 @@ export function maskVerbatimDelimiters(source: string, blocks: readonly TwigBloc
 export function restoreVerbatimDelimiters(tree: unknown, source: string, maskedRanges: readonly Range[]): void {
   const visited = new Set<object>();
   const visit = (value: unknown): void => {
-    if (typeof value !== 'object' || value === null || visited.has(value)) return;
+    if (typeof value !== 'object' || value === null || visited.has(value)) {
+      return;
+    }
     visited.add(value);
     if (Array.isArray(value)) {
       value.forEach(visit);
@@ -54,7 +60,9 @@ export function restoreVerbatimDelimiters(tree: unknown, source: string, maskedR
       node['value'] = source.slice(...range);
     }
     for (const [key, child] of Object.entries(node)) {
-      if (key !== 'range' && key !== 'loc' && key !== 'parent') visit(child);
+      if (key !== 'range' && key !== 'loc' && key !== 'parent') {
+        visit(child);
+      }
     }
   };
   visit(tree);

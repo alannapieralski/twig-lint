@@ -40,7 +40,9 @@ function isPreformattedElement(node: Record<string, unknown>): boolean {
 }
 
 function collectLeaves(value: unknown, leaves: Leaf[] = [], seen = new Set<object>(), isPreformatted = false): Leaf[] {
-  if (typeof value !== 'object' || value === null || seen.has(value)) return leaves;
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return leaves;
+  }
   seen.add(value);
   if (Array.isArray(value)) {
     value.forEach((child) => collectLeaves(child, leaves, seen, isPreformatted));
@@ -52,7 +54,9 @@ function collectLeaves(value: unknown, leaves: Leaf[] = [], seen = new Set<objec
   }
   const isChildPreformatted = isPreformatted || isPreformattedElement(node);
   for (const [key, child] of Object.entries(node)) {
-    if (!KEYS_OUTSIDE_THE_HTML_TREE.has(key)) collectLeaves(child, leaves, seen, isChildPreformatted);
+    if (!KEYS_OUTSIDE_THE_HTML_TREE.has(key)) {
+      collectLeaves(child, leaves, seen, isChildPreformatted);
+    }
   }
   return leaves;
 }
@@ -61,7 +65,9 @@ function findOutermostRanges(ranges: readonly Range[]): Range[] {
   const outermost: Range[] = [];
   for (const range of ranges.toSorted((first, second) => first[0] - second[0])) {
     const previous = outermost.at(-1);
-    if (!previous || range[0] >= previous[1]) outermost.push(range);
+    if (!previous || range[0] >= previous[1]) {
+      outermost.push(range);
+    }
   }
   return outermost;
 }
@@ -81,8 +87,11 @@ function isInsideAny(ranges: readonly Range[], offset: number): boolean {
   let high = ranges.length;
   while (low < high) {
     const middle = (low + high) >> 1;
-    if ((ranges[middle]?.[0] ?? Infinity) <= offset) low = middle + 1;
-    else high = middle;
+    if ((ranges[middle]?.[0] ?? Infinity) <= offset) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
   }
   const lastRangeStartingBefore = ranges[low - 1];
   return lastRangeStartingBefore !== undefined && offset < lastRangeStartingBefore[1];
@@ -91,8 +100,12 @@ function isInsideAny(ranges: readonly Range[], offset: number): boolean {
 function withoutIndentation(code: string, range: Range, twig: TwigRanges, isMarkupIncluded: boolean): string {
   return code.slice(...range).replace(INDENTATION_AFTER_LINE_BREAK, (indented: string, lineBreak: string, offsetInRange: number) => {
     const offset = range[0] + offsetInRange;
-    if (isInsideAny(twig.keptAsWritten, offset)) return indented;
-    if (isInsideAny(twig.expressions, offset)) return lineBreak;
+    if (isInsideAny(twig.keptAsWritten, offset)) {
+      return indented;
+    }
+    if (isInsideAny(twig.expressions, offset)) {
+      return lineBreak;
+    }
     return isMarkupIncluded ? lineBreak : indented;
   });
 }
@@ -102,8 +115,12 @@ function isLayoutText(leaf: Leaf): boolean {
 }
 
 function layoutTextOf(leaf: Leaf, code: string, twig: TwigRanges): string {
-  if (isLayoutText(leaf)) return withoutIndentation(code, leaf.range, twig, true).trim();
-  if (LEAVES_WITH_LOOSE_EDGES.has(leaf.type)) return withoutIndentation(code, leaf.range, twig, false).trim();
+  if (isLayoutText(leaf)) {
+    return withoutIndentation(code, leaf.range, twig, true).trim();
+  }
+  if (LEAVES_WITH_LOOSE_EDGES.has(leaf.type)) {
+    return withoutIndentation(code, leaf.range, twig, false).trim();
+  }
   return withoutIndentation(code, leaf.range, twig, false);
 }
 
@@ -123,7 +140,9 @@ function twigBlockShapes(result: TwigParseResult): Token[] {
 function describeFirstDifference(before: readonly Token[], after: readonly Token[]): FixProblem | undefined {
   const length = Math.max(before.length, after.length);
   for (let index = 0; index < length; index += 1) {
-    if (before[index]?.text === after[index]?.text) continue;
+    if (before[index]?.text === after[index]?.text) {
+      continue;
+    }
     const show = (token: Token | undefined) => (token === undefined ? 'nothing' : JSON.stringify(token.text.slice(0, 50)));
     const offset = before[index]?.start ?? before.at(-1)?.start;
     return { message: `${show(before[index])} became ${show(after[index])}`, ...(offset !== undefined && { offset }) };
@@ -170,7 +189,9 @@ function sameSet(first: readonly string[], second: readonly string[]): boolean {
 
 function countEach(items: readonly string[]): Map<string, number> {
   const counts = new Map<string, number>();
-  for (const item of items) counts.set(item, (counts.get(item) ?? 0) + 1);
+  for (const item of items) {
+    counts.set(item, (counts.get(item) ?? 0) + 1);
+  }
   return counts;
 }
 
@@ -188,17 +209,23 @@ function reviewClassListFix(fix: AppliedFix, source: string, roles: ClassRuleRol
   const before = readClassList(fix.replaced);
   const after = readClassList(fix.replacement);
   const rule = fix.ruleId ?? 'a rule';
-  if (before.twig.join('\n') !== after.twig.join('\n')) return { problems: [`${rule} changes Twig inside a class list`], notes: [] };
+  if (before.twig.join('\n') !== after.twig.join('\n')) {
+    return { problems: [`${rule} changes Twig inside a class list`], notes: [] };
+  }
   if (before.delimiters !== after.delimiters) {
     return { problems: [`${rule} moves or removes class group delimiters:${before.delimiters || ' none'} became${after.delimiters || ' none'}`], notes: [] };
   }
   const beforeClasses = before.groups.flat();
   const afterClasses = after.groups.flat();
   const addedDuplicates = findAddedDuplicates(beforeClasses, afterClasses);
-  if (addedDuplicates.length > 0) return { problems: [`${rule} duplicates classes: ${addedDuplicates.join(' ')}`], notes: [] };
+  if (addedDuplicates.length > 0) {
+    return { problems: [`${rule} duplicates classes: ${addedDuplicates.join(' ')}`], notes: [] };
+  }
   const regroups = before.groups.some((group, index) => !sameSet(group, after.groups[index] ?? []));
   if (sameSet(beforeClasses, afterClasses)) {
-    if (regroups) return { problems: [`${rule} moves classes between the groups that [ ] and | delimit`], notes: [] };
+    if (regroups) {
+      return { problems: [`${rule} moves classes between the groups that [ ] and | delimit`], notes: [] };
+    }
     return { problems: [], notes: beforeClasses.length === afterClasses.length ? [] : [`${rule} removes duplicate classes`] };
   }
   const lost = withoutItems(beforeClasses, new Set(afterClasses));
@@ -207,7 +234,9 @@ function reviewClassListFix(fix: AppliedFix, source: string, roles: ClassRuleRol
     return { problems: [], notes: [`${rule} removes duplicate classes`] };
   }
   const mayRewrite = roles.rewritesClasses?.has(rule) === true || (lost.length === gained.length && !regroups);
-  if (mayRewrite) return { problems: [], notes: [`${rule} rewrites classes: ${lost.join(' ') || 'none'} became ${gained.join(' ') || 'none'}`] };
+  if (mayRewrite) {
+    return { problems: [], notes: [`${rule} rewrites classes: ${lost.join(' ') || 'none'} became ${gained.join(' ') || 'none'}`] };
+  }
   return { problems: [`${rule} changes the classes: removes ${lost.join(' ') || 'none'}, adds ${gained.join(' ') || 'none'}`], notes: [] };
 }
 
@@ -223,7 +252,9 @@ function describeAddedLineBreaks(source: string, fixed: string): FixProblem[] {
 }
 
 function collectOpenTags(value: unknown, tags: OpenTagRange[] = [], seen = new Set<object>()): OpenTagRange[] {
-  if (typeof value !== 'object' || value === null || seen.has(value)) return tags;
+  if (typeof value !== 'object' || value === null || seen.has(value)) {
+    return tags;
+  }
   seen.add(value);
   if (Array.isArray(value)) {
     value.forEach((child) => collectOpenTags(child, tags, seen));
@@ -232,9 +263,13 @@ function collectOpenTags(value: unknown, tags: OpenTagRange[] = [], seen = new S
   const node = value as Record<string, { range?: Range } | unknown>;
   const openStart = (node['openStart'] as { range?: Range } | undefined)?.range;
   const openEnd = (node['openEnd'] as { range?: Range } | undefined)?.range;
-  if (openStart && openEnd) tags.push({ start: openStart[0], attributesStart: openStart[1], closeBracketStart: openEnd[0] });
+  if (openStart && openEnd) {
+    tags.push({ start: openStart[0], attributesStart: openStart[1], closeBracketStart: openEnd[0] });
+  }
   for (const [key, child] of Object.entries(node)) {
-    if (!KEYS_OUTSIDE_THE_HTML_TREE.has(key)) collectOpenTags(child, tags, seen);
+    if (!KEYS_OUTSIDE_THE_HTML_TREE.has(key)) {
+      collectOpenTags(child, tags, seen);
+    }
   }
   return tags;
 }
@@ -269,28 +304,40 @@ function countUnderIndentedTagLines(code: string, result: TwigParseResult): numb
 
 function describeUnderIndentedTagLines(source: string, before: TwigParseResult, fixed: string, after: TwigParseResult): FixProblem[] {
   const added = countUnderIndentedTagLines(fixed, after) - countUnderIndentedTagLines(source, before);
-  if (added <= 0) return [];
+  if (added <= 0) {
+    return [];
+  }
   return [{ message: `the fix leaves ${added} more lines of opening tags less indented than the tag line` }];
 }
 
 export function reviewFix(source: string, fixed: string, fixKeeps: FixKeeps, applied: readonly AppliedFix[] = [], roles: ClassRuleRoles = {}): FixReview {
   const before = parse(source);
   const after = parse(fixed);
-  if ('error' in after) return { problems: [{ message: `the fixed template no longer parses: ${after.error}` }], notes: [] };
-  if ('error' in before) return { problems: [], notes: [] };
+  if ('error' in after) {
+    return { problems: [{ message: `the fixed template no longer parses: ${after.error}` }], notes: [] };
+  }
+  if ('error' in before) {
+    return { problems: [], notes: [] };
+  }
 
   const problems: FixProblem[] = [...describeAddedLineBreaks(source, fixed), ...describeUnderIndentedTagLines(source, before.result, fixed, after.result)];
   if (after.result.services.twig.diagnostics.length !== before.result.services.twig.diagnostics.length) {
     problems.push({ message: 'the fix changes how many parse problems the parser reports' });
   }
   const blockChange = describeFirstDifference(twigBlockShapes(before.result), twigBlockShapes(after.result));
-  if (blockChange) problems.push({ ...blockChange, message: `the fix changes the Twig blocks: ${blockChange.message}` });
+  if (blockChange) {
+    problems.push({ ...blockChange, message: `the fix changes the Twig blocks: ${blockChange.message}` });
+  }
 
   if (fixKeeps === 'layout') {
     const layoutChange = describeFirstDifference(layoutTokens(source, before.result), layoutTokens(fixed, after.result));
-    if (layoutChange) problems.push({ ...layoutChange, message: `the fix changes more than the whitespace between tokens: ${layoutChange.message}` });
+    if (layoutChange) {
+      problems.push({ ...layoutChange, message: `the fix changes more than the whitespace between tokens: ${layoutChange.message}` });
+    }
   }
-  if (fixKeeps !== 'class-tokens') return { problems, notes: [] };
+  if (fixKeeps !== 'class-tokens') {
+    return { problems, notes: [] };
+  }
 
   const located = (fix: AppliedFix, message: string): FixProblem => {
     const offset = offsetOfAppliedFix(source, fix);

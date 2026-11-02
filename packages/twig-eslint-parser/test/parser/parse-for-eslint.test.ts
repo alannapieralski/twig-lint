@@ -22,12 +22,18 @@ function collectNodes(value: unknown, predicate: (node: Node) => boolean, found:
     value.forEach((item) => collectNodes(item, predicate, found));
     return found;
   }
-  if (typeof value !== 'object' || value === null || typeof (value as Node).type !== 'string') return found;
+  if (typeof value !== 'object' || value === null || typeof (value as Node).type !== 'string') {
+    return found;
+  }
 
   const node = value as Node;
-  if (predicate(node)) found.push(node);
+  if (predicate(node)) {
+    found.push(node);
+  }
   for (const [key, child] of Object.entries(node)) {
-    if (key !== 'loc' && key !== 'range' && key !== 'parent') collectNodes(child, predicate, found);
+    if (key !== 'loc' && key !== 'range' && key !== 'parent') {
+      collectNodes(child, predicate, found);
+    }
   }
   return found;
 }
@@ -64,7 +70,9 @@ describe('fixtures', () => {
     expect(unconvertedSources).toEqual(blocksTwigItselfRejectsByFixture[fixtureName] ?? []);
 
     const literals = collectNodes(statements, (node) => node.type === 'Literal');
-    for (const literal of literals) expect(sourceOf(code, literal)).toBe(literal['raw']);
+    for (const literal of literals) {
+      expect(sourceOf(code, literal)).toBe(literal['raw']);
+    }
 
     const strings = collectNodes(statements, (node) => node.type === 'TemplateLiteral');
     for (const string of strings) {
@@ -643,7 +651,9 @@ describe('Twig tags and verbatim content inside markup', () => {
   ])('keeps the original text in the HTML nodes of %s', (code, attributeText) => {
     const [attribute] = tagsOf(code)[0]?.['attributes'] as Node[];
     const texts = collectNodes(attribute, () => true).filter((node) => typeof node['value'] === 'string').map((node) => [node['value'], sourceOf(code, node)]);
-    for (const [value, source] of texts) expect(value).toBe(source);
+    for (const [value, source] of texts) {
+      expect(value).toBe(source);
+    }
     expect(sourceOf(code, attribute as Node).endsWith(attributeText)).toBe(true);
   });
 });
