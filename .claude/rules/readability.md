@@ -28,8 +28,6 @@ open a helper to understand a line, fix the line or the helper's name.
 - **Split a line that holds more than one decision**: a `filter` with a compound condition, a chain
   of `filter`, `some` and `includes`, or a condition joined by more than two `&&` or `||`. Name each
   part as a predicate (`isOpenedOnSameLine`) or a collection (`outerPairsOpenedOnTheSameLine`).
-- **Brace every body on its own lines.** Every `if`, `else`, `for`, `while` and `do` body goes in
-  braces on its own lines, even when it is one statement. `npm run lint` enforces it.
 - **Leave simple lines alone.** `items.map((item) => item.name)` and an early return guarded by `!close`
   are already clear. So is a short chain of `&&` or `||` over named checks, such as
   `!isContinuation && !isChainLine(text, contentStart) && !findClosedPair(line)`. Do not name a value
