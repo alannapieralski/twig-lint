@@ -1,11 +1,15 @@
-import { repeatUnit } from './nesting.js';
 import { expectedInCloseTag, expectedInOpenTag } from './html/expected-html-indent.js';
+import { repeatUnit } from './options.js';
 import type { ResolvedOptions } from './options.js';
 import type { IndentLayout } from './types.js';
 
 export function isChecked(offset: number, layout: IndentLayout): boolean {
-  if (layout.skipped.covers(offset)) return false;
-  if (!layout.depthUnknown.covers(offset)) return true;
+  if (layout.skipped.covers(offset)) {
+    return false;
+  }
+  if (!layout.depthUnknown.covers(offset)) {
+    return true;
+  }
 
   return layout.findOpenTagAt(offset)?.lineIndentationAsWritten !== undefined;
 }

@@ -13,8 +13,11 @@ export function createAttributesOf(omittedAttributes: readonly OmittedAttribute[
   const omittedByOwner = new Map<object, OmittedAttribute[]>();
   for (const omitted of omittedAttributes) {
     const ownedSoFar = omittedByOwner.get(omitted.owner);
-    if (ownedSoFar) ownedSoFar.push(omitted);
-    else omittedByOwner.set(omitted.owner, [omitted]);
+    if (ownedSoFar) {
+      ownedSoFar.push(omitted);
+    } else {
+      omittedByOwner.set(omitted.owner, [omitted]);
+    }
   }
 
   return (tag) => {

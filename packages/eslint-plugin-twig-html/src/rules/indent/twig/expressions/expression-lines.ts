@@ -54,7 +54,9 @@ export function findExpressionLines(input: ExpressionLayoutInput): ExpressionLin
 
   for (const lineStart of findLineStartsWithin(text, block.range)) {
     const contentStart = contentStartOf(text, lineStart);
-    if (isBlankFrom(text, contentStart) || isInsideString(lineStart)) continue;
+    if (isBlankFrom(text, contentStart) || isInsideString(lineStart)) {
+      continue;
+    }
 
     const isContinuation = continuesPreviousLine(text, block, lineStart);
     const line: LineContext = { text, block, unitText, lineStart, contentStart, brackets, continuesPreviousLine: isContinuation, indentationOfLineAt, chainHeads };
