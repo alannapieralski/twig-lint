@@ -55,6 +55,7 @@ Codes without a prefix are the names the HTML specification gives the error. Cod
 
 | Code | Reported when | Example |
 |---|---|---|
+| `duplicate-attribute` | A tag sets an attribute name that an earlier attribute of the tag already has, ignoring case. Browsers keep the first. Attributes in a Twig branch and attributes with Twig in the name are never compared. | `<div class="a" class="b">` |
 | `eof-in-comment` | A comment has no `-->` before the end of the file. | `<!-- note` |
 | `eof-in-tag` | An open or closing tag has no `>` before the end of the file. | `<div class="a"`, `<p>a</p` |
 | `unexpected-character-in-attribute-name` | An attribute name holds a quote or `<`, usually because an earlier value was quoted wrongly or the `=` before a value is missing. | `<li class="a' data-x="y">`, `<button type"button">` |
@@ -66,7 +67,8 @@ Codes without a prefix are the names the HTML specification gives the error. Cod
 | `x-unparsed-twig` | A `{{ }}` or `{% %}` block holds an expression that is not valid Twig, such as two values in a row, a missing comma between array items or a comma outside brackets, or a `{% for %}` has no `in`. No other rule reads inside it. | `{{ title subtitle }}` |
 
 Each open tag gets at most one report, for the first problem in the order the tag is read: a stray
-character in an attribute comes before a `/` that does not end the tag. Each report names its code in
+character in an attribute comes before a `/` that does not end the tag. Duplicate attributes are
+reported only on a tag that was read cleanly, and once for each repeat. Each report names its code in
 brackets, so a code can be switched off by name.
 
 ### Working with other rules
@@ -111,7 +113,7 @@ brackets, so a code can be switched off by name.
 
 - **Markup problems inside `{% if %}`, `{% for %}` and the other branching blocks are not reported**,
   because the parser reads every branch as one document.
-- Duplicate attributes and a missing space between attributes are not reported.
+- A missing space between attributes is not reported.
 - `<<li` loses the attributes of the `li`, and nothing is reported.
 - A quote closed much later by another value's quote is only reported when it leaves a stray quote
   in an attribute name or an unquoted value.
@@ -122,6 +124,7 @@ brackets, so a code can be switched off by name.
 
 | Option | Default | Description |
 |---|---|---|
+| `duplicate-attribute` | `true` | Report an attribute whose name an earlier attribute of the tag already has. |
 | `eof-in-comment` | `true` | Report comments with no `-->` before the end of the file. |
 | `eof-in-tag` | `true` | Report tags with no `>` before the end of the file. |
 | `unexpected-character-in-attribute-name` | `true` | Report attribute names that hold a quote or `<`. |
@@ -145,7 +148,7 @@ export default [
 |---|---|
 | Reports HTML specification errors under the specification's names | The same names for the errors it reads |
 | One boolean option per code, on by default | The same |
-| Reports `duplicate-attribute` and `missing-whitespace-between-attributes` | Does not yet |
+| Reports `duplicate-attribute` and `missing-whitespace-between-attributes` | Reports `duplicate-attribute`, except in a Twig branch. Does not report `missing-whitespace-between-attributes` yet |
 | Does not report an unclosed element such as `<div><p>x` | Reports it as `x-unclosed-element`, except where HTML lets the end tag go or a Twig branch splits the element |
 | Reports the closing tag of a void element (`</br>`) as `x-invalid-end-tag` | Skips it, for RSS templates |
 | Reports errors in the expressions inside `{{ }}` | Reports them as `x-unparsed-twig`, and Twig tags that sit in the wrong place |

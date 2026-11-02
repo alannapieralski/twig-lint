@@ -1,6 +1,7 @@
 import type { Range } from './range.js';
 
 export const DIAGNOSTIC_CODES = [
+  'duplicate-attribute',
   'eof-in-comment',
   'eof-in-tag',
   'unexpected-character-in-attribute-name',

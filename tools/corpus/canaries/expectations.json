@@ -92,6 +92,12 @@
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
+  "broken/html-attribute-duplicate.html.twig": [
+    { "check": "twig-html/no-parse-errors", "reports": [2, 4], "clean": [3] },
+    { "check": "twig-html/attrs-newline", "noFailures": "all" },
+    { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
+    { "check": "twig-html/quotes", "noFailures": "all" }
+  ],
   "broken/html-attribute-unquoted.html.twig": [
     { "check": "twig-html/no-parse-errors", "clean": "all" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },

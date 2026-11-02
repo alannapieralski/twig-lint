@@ -77,6 +77,35 @@ describe('elements written as self-closing', () => {
   });
 });
 
+describe('duplicate-attribute', () => {
+  it('reports each later attribute with a name an earlier one has, on the attribute', () => {
+    const code = '<div class="a" id="b" class="c" ID="d">x</div>';
+    const diagnostics = diagnosticsOf(code);
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toEqual(['duplicate-attribute', 'duplicate-attribute']);
+    expect(diagnostics.map((diagnostic) => code.slice(...diagnostic.range))).toEqual(['class="c"', 'ID="d"']);
+    expect(diagnostics[0]?.message).toBe('The attribute "class" is already set on this tag. Browsers ignore every one after the first.');
+  });
+
+  it('compares names without regard to case, and attributes with no value', () => {
+    expect(codesOf('<input disabled DISABLED>')).toEqual(['duplicate-attribute']);
+  });
+
+  it.each([
+    '<div class="a" id="b">x</div>',
+    '<div {% if a %}class="a"{% else %}class="b"{% endif %}>x</div>',
+    '<div class="a" {% if b %}class="b"{% endif %}>x</div>',
+    '<div data-{{ a }}="x" data-{{ b }}="y" {{ attributes }} {{ more }}>x</div>',
+    '<div {{ attributes }} {{ attributes }}>x</div>',
+  ])('stays quiet when the repeat may not render together: %s', (code) => {
+    expect(codesOf(code)).toEqual([]);
+  });
+
+  it('is left to the tag problem when the tag could not be read cleanly', () => {
+    expect(codesOf('<li class="a\' data-x="y" class="z">x</li>')).toEqual(['unexpected-character-in-attribute-name']);
+  });
+});
+
 describe('unexpected-character-in-attribute-name', () => {
   it.each([
     '<li class="a\' data-x="y" id="z">x</li>',

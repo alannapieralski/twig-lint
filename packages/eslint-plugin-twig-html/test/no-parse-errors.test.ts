@@ -29,6 +29,8 @@ describe('twig-html/no-parse-errors', () => {
     ['<p>a</p>\n<!-- note', 'eof-in-comment', 2],
     ['<div class="a"', 'eof-in-tag', 1],
     ['<li class="a\' data-x="y">x</li>', 'unexpected-character-in-attribute-name', 1],
+    ['<button type"button">x</button>', 'unexpected-character-in-attribute-name', 1],
+    ['<div class="a" class="b">x</div>', 'duplicate-attribute', 1],
     ['<li id=b<span>x</span></li>', 'unexpected-character-in-unquoted-attribute-value', 1],
     ['<img src="a" / >', 'unexpected-solidus-in-tag', 1],
     ['<p>x</p>\n</div>', 'x-invalid-end-tag', 2],
