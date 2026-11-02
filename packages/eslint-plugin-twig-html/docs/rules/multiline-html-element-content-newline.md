@@ -99,6 +99,7 @@ that is never closed, moved content stays at the tag's indentation.
 | `pre` and `textarea`, and everything inside them | Their whitespace is content | Built in |
 | Tags whose name is Twig, such as `<{{ element }}>` | Twig may render them as an inline element | Built in |
 | Tags with no closing tag, such as `<img>` | They have no content | Built in |
+| The body of a Drupal `{% trans %}`, and of its `{% plural %}` section | Drupal builds the translation key from the text between the tags, so any change to its whitespace or quotes loses the stored translations. Only the whitespace at its two edges, which Drupal trims, is changed | Built in |
 
 ### Reported but not fixed
 

@@ -32,7 +32,7 @@ export const quotes: Rule.RuleModule = {
 
     return {
       Program: () => reportProblems(context, findTwigStringProblems(services.strings, source)),
-      ...tagListeners(checkTag, ['Tag']),
+      ...tagListeners(checkTag, ['Tag'], source),
     };
   },
 };

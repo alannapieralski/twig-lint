@@ -28,6 +28,6 @@ export const attrsNewline: Rule.RuleModule = {
 
     const checkTag = (tag: TagNode) => reportProblems(context, findAttributeProblems(tag, source, options));
 
-    return balancedTagListeners(checkTag, ['Tag'], services.blocks);
+    return balancedTagListeners(checkTag, ['Tag'], source);
   },
 };

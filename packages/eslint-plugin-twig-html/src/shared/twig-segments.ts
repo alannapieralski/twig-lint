@@ -1,6 +1,8 @@
 import { isClosingTag, isMiddleTag, isOpeningTag } from 'twig-eslint-parser';
 import type { TwigBlockSummary } from 'twig-eslint-parser';
-import type { TwigSegment } from './types.js';
+import type { Range } from './range.js';
+
+export type TwigSegment = { readonly range: Range; readonly extent: Range; readonly frameStart: number; readonly frameName: string };
 
 type OpenFrame = { readonly name: string; readonly frameStart: number; readonly segmentStart: number; readonly boundaryStart: number };
 

@@ -72,6 +72,7 @@ The rule never changes what a template renders. It does not report:
 | Attributes of `<script>` and `<style>` tags | The elements are left as written | Built in |
 | Quotes in text, comments, `<script>` and `<style>` content, and `<textarea>` and `<title>` text, and DOCTYPE identifiers | They have no meaning to HTML | Built in |
 | Strings in `{# #}` comments and `{% verbatim %}` | They are text to Twig | Built in |
+| The attributes of tags inside the body of a Drupal `{% trans %}`, or of its `{% plural %}` section | Drupal builds the translation key from the text between the tags, so changing a quote loses the stored translations | Built in |
 
 ### Reported but not fixed
 

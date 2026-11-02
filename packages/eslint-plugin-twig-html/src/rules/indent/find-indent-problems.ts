@@ -1,7 +1,7 @@
+import { findTwigSegments } from '../../shared/twig-segments.js';
 import { buildIndentLayout } from './layout.js';
 import { findNestingProblems } from './nesting-problems.js';
 import { findExpressionProblems } from './twig/expressions/find-expression-problems.js';
-import { findTwigSegments } from './twig/twig-frames.js';
 import type { TwigStringSummary } from 'twig-eslint-parser';
 import type { Problem } from '../../shared/problem.js';
 import type { MarkupNode } from './html/types.js';
