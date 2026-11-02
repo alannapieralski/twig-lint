@@ -145,6 +145,7 @@ These lines keep whatever indentation the author wrote:
 | The bodies of `{% verbatim %}` and `{% raw %}` | Twig prints them as written | Built in |
 | The body of a Drupal `{% trans %}`, and of its `{% plural %}` section | Drupal builds the translation key from the text between the tags, so any change to its whitespace or quotes loses the stored translations. The `{% trans %}`, `{% plural %}` and `{% endtrans %}` tags are still indented | Built in |
 | YAML front matter between `---` lines at the top of the file, as in Drupal help topics | It is not markup | Built in |
+| The whitespace before the first content of the file | A template prints it, so an include placed straight after text may rely on it | Built in |
 
 ### Not checked at all
 

@@ -6,6 +6,7 @@ import type { ResolvedOptions } from './options.js';
 import type { IndentLayout } from './types.js';
 
 export function findNestingProblems(layout: IndentLayout, text: string, options: ResolvedOptions): Problem[] {
-  const checkedLines = findLineStarts(text).filter((line) => isChecked(line.contentStart, layout));
+  const [, ...linesAfterFirstContent] = findLineStarts(text);
+  const checkedLines = linesAfterFirstContent.filter((line) => isChecked(line.contentStart, layout));
   return checkedLines.flatMap((line) => indentationProblem(line, expectedIndentAt(line.contentStart, layout, options), text, options));
 }
