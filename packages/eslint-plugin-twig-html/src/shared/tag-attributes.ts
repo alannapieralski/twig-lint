@@ -12,7 +12,12 @@ function byStart(first: RangedAttribute, second: RangedAttribute): number {
 export function createAttributesOf(omittedAttributes: readonly OmittedAttribute[]): AttributesOf {
   const omittedByOwner = new Map<object, OmittedAttribute[]>();
   for (const omitted of omittedAttributes) {
-    omittedByOwner.set(omitted.owner, [...(omittedByOwner.get(omitted.owner) ?? []), omitted]);
+    const ownedSoFar = omittedByOwner.get(omitted.owner);
+    if (ownedSoFar) {
+      ownedSoFar.push(omitted);
+    } else {
+      omittedByOwner.set(omitted.owner, [omitted]);
+    }
   }
 
   return (tag) => {

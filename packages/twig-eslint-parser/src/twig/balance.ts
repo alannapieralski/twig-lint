@@ -19,7 +19,7 @@ function findFirstIndexStartingFrom<Item>(items: readonly Item[], offset: number
   return low;
 }
 
-function* findBlocksWithin(range: Range, blocks: readonly TwigBlockSummary[]): Generator<TwigBlockSummary> {
+export function* findBlocksWithin(range: Range, blocks: readonly TwigBlockSummary[]): Generator<TwigBlockSummary> {
   for (let index = findFirstIndexStartingFrom(blocks, range[0], (block) => block.range[0]); index < blocks.length; index += 1) {
     const block = blocks[index];
     if (!block || block.range[1] > range[1]) return;

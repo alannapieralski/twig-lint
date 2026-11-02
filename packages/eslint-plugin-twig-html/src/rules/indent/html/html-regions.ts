@@ -4,9 +4,11 @@ import { elementNameSet } from '../../../shared/ignores.js';
 import { lineIndentationAt } from '../../../shared/line-text.js';
 import { isOpenTagUnreadable } from '../../../shared/unreadable-open-tags.js';
 import { elementNameOf } from '../../../shared/tag-node.js';
-import { bodyOf, flattenMarkup, interiorOf, isElement } from './html-elements.js';
+import { interiorOf } from '../range-lookup.js';
+import { bodyOf, flattenMarkup, isElement } from './html-elements.js';
 import type { Range } from '../../../shared/range.js';
 import type { TagSource } from '../../../shared/tag-source.js';
+import type { RangeCoverage } from '../range-lookup.js';
 import type { Element, MarkupNode, OpenTag } from './types.js';
 
 export type HtmlSource = Pick<TagSource, 'text' | 'attributesOf' | 'unreadableTagStarts'> & {
@@ -81,7 +83,7 @@ export function findHtmlRegions(document: MarkupNode, source: HtmlSource): HtmlR
   };
 }
 
-export function describeOpenTags(elements: readonly Element[], source: HtmlSource, depthUnknown: readonly Range[]): OpenTag[] {
+export function describeOpenTags(elements: readonly Element[], source: HtmlSource, depthUnknown: RangeCoverage): OpenTag[] {
   const { text, attributesOf } = source;
 
   return elements.flatMap((element): OpenTag[] => {
@@ -91,7 +93,7 @@ export function describeOpenTags(elements: readonly Element[], source: HtmlSourc
     const tagStart = element.openStart.range[0];
     const firstAttribute = attributes[0];
     const isFirstAttributeOnTagLine = firstAttribute !== undefined && !text.slice(tagStart, firstAttribute.range[0]).includes('\n');
-    const isDepthUnknown = depthUnknown.some((range) => range[0] <= tagStart && tagStart < range[1]);
+    const isDepthUnknown = depthUnknown.covers(tagStart);
 
     return [{
       start: tagStart,

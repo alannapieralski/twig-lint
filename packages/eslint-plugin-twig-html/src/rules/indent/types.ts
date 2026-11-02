@@ -1,12 +1,13 @@
 import type { Range } from '../../shared/range.js';
 import type { OpenTag } from './html/types.js';
+import type { RangeCoverage } from './range-lookup.js';
 
 export type IndentLayout = {
-  readonly nestings: readonly Range[];
-  readonly skipped: readonly Range[];
-  readonly depthUnknown: readonly Range[];
-  readonly openTags: readonly OpenTag[];
-  readonly closeTags: readonly Range[];
+  readonly nestings: RangeCoverage;
+  readonly skipped: RangeCoverage;
+  readonly depthUnknown: RangeCoverage;
+  readonly findOpenTagAt: (offset: number) => OpenTag | undefined;
+  readonly findCloseTagAt: (offset: number) => Range | undefined;
 };
 
 export type LineStart = { readonly lineStart: number; readonly contentStart: number };
