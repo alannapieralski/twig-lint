@@ -104,7 +104,8 @@ brackets, so a code can be switched off by name.
   next tag (`<div class="a"<p>`).
 - **An HTML element written as self-closing, such as `<div />`.** The parser reads `/>` as closing
   any element, as the XML templates Drupal renders (RSS, OPML) need, so a closing tag after it is
-  reported as `x-invalid-end-tag`, not the `/`.
+  reported as `x-invalid-end-tag`, not the `/`. When an earlier tag of that name ended with `/>`, the
+  message names it, because browsers ignore `/>` on such an element and keep it open.
 
 ### Known gaps
 

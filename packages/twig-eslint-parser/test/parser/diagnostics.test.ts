@@ -120,6 +120,11 @@ describe('x-invalid-end-tag', () => {
     expect(diagnosticsOf('<p>x</p></div>')[0]?.message).toBe('</div> closes nothing, because no element is open. Remove it or add the opening tag.');
   });
 
+  it('says when an earlier tag of the same name ended with "/>", which browsers ignore on that element', () => {
+    const [diagnostic] = diagnosticsOf('<div>\n  <button class="a" type="button" />\n  <span>x</span>\n</button>\n</div>');
+    expect(diagnostic?.message).toBe('</button> closes nothing, because the <button … /> before it already ended with "/>". Browsers ignore "/>" on this element, so remove the "/" there or remove this closing tag.');
+  });
+
   it('reports the closing tag only', () => {
     expect(diagnosticsOf('<p>x</p></div>')[0]?.range).toEqual([8, 14]);
   });

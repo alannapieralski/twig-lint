@@ -23,7 +23,19 @@ function findNamesClosedBy(element: MarkupElement, unclosedElements: readonly Ma
   return elementsClosed.map((closed) => closed.name ?? '');
 }
 
+function findLastSelfClosedElementNamed(name: string, endTag: SourceToken, elements: readonly MarkupElement[]): MarkupElement | undefined {
+  const isSelfClosedBefore = (element: MarkupElement) => element.selfClosing && element.range[1] <= endTag.range[0] && tagNameKey(element.name ?? '') === name;
+
+  return elements.filter(isSelfClosedBefore).at(-1);
+}
+
 function describeStrayEndTag(token: SourceToken, source: EndTagSource): string {
+  const selfClosedElement = findLastSelfClosedElementNamed(nameOfEndTag(token), token, source.elements);
+  if (selfClosedElement) {
+    const writtenTag = `${source.text.slice(...selfClosedElement.openStart.range)} … />`;
+    return `${token.value} closes nothing, because the ${writtenTag} before it already ended with "/>". Browsers ignore "/>" on this element, so remove the "/" there or remove this closing tag.`;
+  }
+
   const openElement = findInnermostOpenElement(source.document, token.range[0]);
   if (!openElement) {
     return `${token.value} closes nothing, because no element is open. Remove it or add the opening tag.`;
