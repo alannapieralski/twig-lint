@@ -35,6 +35,8 @@ describe('twig-html/no-parse-errors', () => {
     ['<div>\n<p>x</p>', 'x-unclosed-element', 1],
     ['{% block a %}\n{% else %}\n{% endblock %}', 'x-misplaced-twig-tag', 2],
     ['<p>{{ title subtitle }}</p>', 'x-unparsed-twig', 1],
+    ["{% set classes = ['a' 'b'] %}", 'x-unparsed-twig', 1],
+    ['<p>{{ title, subtitle }}</p>', 'x-unparsed-twig', 1],
   ])('reports %j as %s on line %i', async (code, diagnosticCode, line) => {
     const messages = await lint(code);
     expect(messages[0]).toMatchObject({ ruleId: 'twig-html/no-parse-errors', line });

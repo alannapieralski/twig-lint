@@ -11,6 +11,29 @@ export function isSignificant(token: TwigToken): boolean {
   return !NON_SIGNIFICANT_TYPES.has(token.type);
 }
 
+export function findTopLevelIndices(tokens: readonly TwigToken[]): Set<number> {
+  const topLevelIndices = new Set<number>();
+  let depth = 0;
+  tokens.forEach((token, index) => {
+    if (token.type === 'PUNCTUATION' && '([{'.includes(token.value)) {
+      depth += 1;
+    }
+    if (token.type === 'INTERPOLATION_START' || token.type === 'OPENING_QUOTE') {
+      depth += 1;
+    }
+    if (depth === 0) {
+      topLevelIndices.add(index);
+    }
+    if (token.type === 'PUNCTUATION' && ')]}'.includes(token.value)) {
+      depth -= 1;
+    }
+    if (token.type === 'INTERPOLATION_END' || token.type === 'CLOSING_QUOTE') {
+      depth -= 1;
+    }
+  });
+  return topLevelIndices;
+}
+
 export class TwigSyntaxError extends Error {
   readonly lineNumber: number;
   readonly column: number;

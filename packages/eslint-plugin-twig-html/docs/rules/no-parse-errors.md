@@ -63,7 +63,7 @@ Codes without a prefix are the names the HTML specification gives the error. Cod
 | `x-invalid-end-tag` | A closing tag matches no open element. The message names the element that is open there, if any. | `<p>a</p></div>` |
 | `x-unclosed-element` | An element that needs a closing tag never gets one, including a `<script>`, `<style>`, `<textarea>` or `<title>` that takes in the rest of the file. | `<div><p>a</p>` |
 | `x-misplaced-twig-tag` | `{% else %}`, `{% elseif %}` or `{% plural %}` sits where Twig rejects it: `else` outside `if`, `for` and `guard`, `elseif` outside `if`, `plural` outside `trans`, or `else` and `elseif` after an `else`. | `{% if a %}{% else %}{% elseif b %}{% endif %}` |
-| `x-unparsed-twig` | A `{{ }}` or `{% %}` block holds an expression that is not valid Twig, or a `{% for %}` has no `in`. No other rule reads inside it. | `{{ title subtitle }}` |
+| `x-unparsed-twig` | A `{{ }}` or `{% %}` block holds an expression that is not valid Twig, such as two values in a row, a missing comma between array items or a comma outside brackets, or a `{% for %}` has no `in`. No other rule reads inside it. | `{{ title subtitle }}` |
 
 Each open tag gets at most one report, for the first problem in the order the tag is read: a stray
 character in an attribute comes before a `/` that does not end the tag. Each report names its code in

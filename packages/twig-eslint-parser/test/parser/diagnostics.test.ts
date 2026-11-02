@@ -254,6 +254,35 @@ describe('x-unparsed-twig', () => {
   });
 });
 
+describe('x-unparsed-twig for constructs only JavaScript has', () => {
+  it.each([
+    ['a missing comma between array items', "{% set classes = ['a' 'b'] %}"],
+    ['a missing comma between hash values', "{{ { a: 'x' b: 'y' } }}"],
+    ['a string straight after a variable', "{{ title 'suffix' }}"],
+    ['a comma outside brackets', '{{ a, b }}'],
+    ['a comma outside brackets in a condition', '{% if a, b %}{% endif %}'],
+  ])('reports %s', (_name, code) => {
+    const [diagnostic] = diagnosticsOf(code);
+    expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig' });
+    expect(diagnostic?.range[0]).toBe(0);
+  });
+
+  it('names what is wrong', () => {
+    expect(diagnosticsOf("{{ a 'b' }}")[0]?.message).toContain('missing');
+    expect(diagnosticsOf('{{ a, b }}')[0]?.message).toContain('comma');
+  });
+
+  it.each([
+    ['commas between array items and arguments', "{% set a = ['a', 'b'] %}{{ f(1, 'x') }}"],
+    ['commas between hash entries and include parameters', "{% include 'x' with { a: 1, b: 2 } only %}"],
+    ['several set targets', '{% set a, b = 1, 2 %}'],
+    ['a loop with a condition', '{% for item in items if item.visible %}{% endfor %}'],
+    ['macro defaults', "{% macro input(name, value = '') %}{% endmacro %}"],
+  ])('stays quiet for %s', (_name, code) => {
+    expect(diagnosticsOf(code)).toEqual([]);
+  });
+});
+
 describe('diagnostics', () => {
   it('lists every problem in source order', () => {
     const code = '<div>{{ a b }}{% block x %}{% else %}{% endblock %}</span>';

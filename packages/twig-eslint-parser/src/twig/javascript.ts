@@ -10,7 +10,7 @@ import {
   TAGS_LEFT_UNCONVERTED,
   TWO_WORD_TESTS,
 } from './syntax.js';
-import { isSignificant } from './tokens.js';
+import { findTopLevelIndices, isSignificant } from './tokens.js';
 import type { TwigBlock } from './blocks.js';
 import type { TwigToken } from './tokens.js';
 
@@ -47,29 +47,6 @@ function findNextSignificant(tokens: readonly TwigToken[], afterIndex: number, t
     }
   }
   return undefined;
-}
-
-function findTopLevelIndices(tokens: readonly TwigToken[]): Set<number> {
-  const topLevelIndices = new Set<number>();
-  let depth = 0;
-  tokens.forEach((token, index) => {
-    if (token.type === 'PUNCTUATION' && '([{'.includes(token.value)) {
-      depth += 1;
-    }
-    if (token.type === 'INTERPOLATION_START' || token.type === 'OPENING_QUOTE') {
-      depth += 1;
-    }
-    if (depth === 0) {
-      topLevelIndices.add(index);
-    }
-    if (token.type === 'PUNCTUATION' && ')]}'.includes(token.value)) {
-      depth -= 1;
-    }
-    if (token.type === 'INTERPOLATION_END' || token.type === 'CLOSING_QUOTE') {
-      depth -= 1;
-    }
-  });
-  return topLevelIndices;
 }
 
 function indexAfterTagName(block: TwigBlock): number {

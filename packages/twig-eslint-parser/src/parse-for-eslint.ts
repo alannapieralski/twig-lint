@@ -9,6 +9,7 @@ import { createOffsetLocator } from './source-text.js';
 import { blockRangeOf, groupTwigBlocks, summariseTwigBlocks } from './twig/blocks.js';
 import { findMisplacedTwigTagDiagnostics } from './twig/misplaced-tag-diagnostics.js';
 import { findUnpairedTwigTag } from './twig/pairing.js';
+import { hasStrayComma, STRAY_COMMA_REASON } from './twig/stray-comma.js';
 import { toSameLengthJavaScript } from './twig/javascript.js';
 import { summariseTwigStrings } from './twig/strings.js';
 import { TwigSyntaxError, tokenizeTwig } from './twig/tokens.js';
@@ -44,6 +45,10 @@ type TwigExpressions = {
   readonly unparsedBlockDiagnostics: TwigDiagnostic[];
 };
 
+function describeUnparsedBlock(block: TwigBlock, reason: string): TwigDiagnostic {
+  return { code: 'x-unparsed-twig', message: `This Twig block could not be parsed (${reason}).`, range: blockRangeOf(block) };
+}
+
 function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number) => SourcePosition): TwigExpressions {
   const statements: EstreeNode[] = [];
   const unparsedBlockDiagnostics: TwigDiagnostic[] = [];
@@ -51,11 +56,16 @@ function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number
   let ignoredBlockCount = 0;
 
   for (const block of blocks) {
+    if (hasStrayComma(block)) {
+      unparsedBlockDiagnostics.push(describeUnparsedBlock(block, STRAY_COMMA_REASON));
+      continue;
+    }
+
     const javascript = toSameLengthJavaScript(block);
     if (javascript === undefined) {
       const isLoopWithoutIn = block.tagName === 'for';
       if (isLoopWithoutIn) {
-        unparsedBlockDiagnostics.push({ code: 'x-unparsed-twig', message: 'This Twig block could not be parsed (a {% for %} needs "in").', range: blockRangeOf(block) });
+        unparsedBlockDiagnostics.push(describeUnparsedBlock(block, 'a {% for %} needs "in"'));
       } else {
         ignoredBlockCount += 1;
       }
@@ -64,7 +74,7 @@ function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number
 
     const parsed = parseJavaScriptAt(javascript, block.start, locate);
     if (!parsed.isParsed) {
-      unparsedBlockDiagnostics.push({ code: 'x-unparsed-twig', message: `This Twig block could not be parsed (${parsed.reason}).`, range: blockRangeOf(block) });
+      unparsedBlockDiagnostics.push(describeUnparsedBlock(block, parsed.reason));
       continue;
     }
 
