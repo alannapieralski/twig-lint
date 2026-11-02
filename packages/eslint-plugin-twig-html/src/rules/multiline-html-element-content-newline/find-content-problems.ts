@@ -49,7 +49,7 @@ export function findContentProblems(tag: TagNode, source: TagSource, options: Re
     return [];
   }
 
-  const { text, blocks, isIgnored, unreadableTagStarts } = source;
+  const { text, blocks, isIgnored, isInsideUnclosedElement, unreadableTagStarts } = source;
   const contentRange: Range = [tag.openEnd.range[1], close.range[0]];
   const isSingleLine = lineStartOf(text, close.range[0]) <= tag.openStart.range[0];
   if (isSingleLine) {
@@ -62,7 +62,8 @@ export function findContentProblems(tag: TagNode, source: TagSource, options: Re
   }
 
   const isUnsafeToCheck = isOpenTagUnreadable(tag, unreadableTagStarts) || !isTwigBalancedWithin(contentRange, blocks) || isIgnored(tag);
-  if (isUnsafeToCheck) {
+  const isDepthUnknown = isInsideUnclosedElement(tag);
+  if (isUnsafeToCheck || isDepthUnknown) {
     return [];
   }
 

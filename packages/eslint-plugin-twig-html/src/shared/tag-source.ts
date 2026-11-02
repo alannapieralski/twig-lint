@@ -1,4 +1,5 @@
 import { createIgnoredInsideCheck } from './ignored-inside.js';
+import { createInsideUnclosedElementCheck } from './inside-unclosed-element.js';
 import { lineBreakUsedIn } from './line-ending.js';
 import { findUnreadableTagStarts } from './unreadable-open-tags.js';
 import { createAttributesOf } from './tag-attributes.js';
@@ -14,6 +15,7 @@ export type TagSource = {
   readonly blocks: readonly TwigBlockSummary[];
   readonly attributesOf: AttributesOf;
   readonly isIgnored: (tag: TagNode) => boolean;
+  readonly isInsideUnclosedElement: (tag: TagNode) => boolean;
   readonly isInsideTransBody: (offset: number) => boolean;
   readonly unreadableTagStarts: ReadonlySet<number>;
 };
@@ -27,6 +29,7 @@ export function createTagSource(sourceCode: SourceCode, services: TwigParserServ
     blocks: services.blocks,
     attributesOf: createAttributesOf(services.omittedAttributes),
     isIgnored: createIgnoredInsideCheck(sourceCode, ignores),
+    isInsideUnclosedElement: createInsideUnclosedElementCheck(sourceCode),
     isInsideTransBody: createTransBodyCheck(text, services.blocks),
     unreadableTagStarts: findUnreadableTagStarts(services.diagnostics),
   };

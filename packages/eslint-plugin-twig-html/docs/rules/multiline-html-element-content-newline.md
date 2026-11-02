@@ -82,8 +82,7 @@ Examples of **correct** code:
 ### Working with other rules
 
 [`twig-html/indent`](indent.md) indents the content on the next fix pass, so keep it on with this
-rule, as `configs.recommended` does. Where `indent` cannot know the depth, such as inside an element
-that is never closed, moved content stays at the tag's indentation.
+rule, as `configs.recommended` does.
 
 ## What it skips
 
@@ -109,6 +108,9 @@ that is never closed, moved content stays at the tag's indentation.
 
 ### Not checked at all
 
+- **An element inside an element that is never closed**, such as the `<div>` in `<p><div>…</div>`
+  with no `</p>`. [`twig-html/indent`](indent.md) cannot know the depth there and leaves the content
+  alone, so moving it would leave it at the tag's indentation.
 - **An element whose content starts or ends in a different Twig branch from the element**, such as a
   wrapper opened in `{% if wrap %}<div>{% endif %}` and closed in `{% if wrap %}</div>{% endif %}`.
   Moving the edges would move the Twig tags with them. Twig blocks that open and close inside the
