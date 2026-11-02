@@ -20,7 +20,9 @@ export function createProcessor(meta: { name: string; version: string }): Linter
       const spans = spansByFilename.get(filename);
       spansByFilename.delete(filename);
       const fileMessages = messages.flat();
-      if (!spans) return fileMessages;
+      if (!spans) {
+        return fileMessages;
+      }
 
       return fileMessages.filter((message) => !isSilencedMessage(message, spans));
     },

@@ -109,7 +109,9 @@ export const MUTATORS: readonly Mutator[] = [
 // Blanks everything a close or open tag pattern must not match: Twig, HTML comments, and script, style, textarea and title content.
 export function markupForMutation(source: string, blocks: readonly TwigBlock[]): string {
   let markup = source;
-  for (const block of blocks) markup = markup.slice(0, block.start) + blankPreservingLineBreaks(markup.slice(block.start, block.end)) + markup.slice(block.end);
+  for (const block of blocks) {
+    markup = markup.slice(0, block.start) + blankPreservingLineBreaks(markup.slice(block.start, block.end)) + markup.slice(block.end);
+  }
   return markup.replace(HTML_COMMENT, blankPreservingLineBreaks).replace(ELEMENTS_WITH_OWN_CONTENT_MODEL, blankPreservingLineBreaks);
 }
 
@@ -123,7 +125,9 @@ function pickEdit(edits: readonly Edit[], seed: number): Edit | undefined {
 
 export function seedFrom(text: string): number {
   let hash = 2166136261;
-  for (const character of text) hash = Math.imul(hash ^ character.codePointAt(0)!, 16777619) >>> 0;
+  for (const character of text) {
+    hash = Math.imul(hash ^ character.codePointAt(0)!, 16777619) >>> 0;
+  }
   return hash;
 }
 
@@ -152,7 +156,9 @@ export function runMutations(source: string, seed: number): MutationOutcome[] {
   const lineOf = createOffsetLocator(source);
   return MUTATORS.flatMap((mutator): MutationOutcome[] => {
     const edit = pickEdit(mutator.editsFor(source, markup, blocks), seed + seedFrom(mutator.name));
-    if (!edit) return [];
+    if (!edit) {
+      return [];
+    }
     const line = lineOf(edit.start).line;
     const added = newSpansOf(measureMutant(applyEdit(source, edit)), originalSpans);
     return [{

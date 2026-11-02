@@ -19,17 +19,23 @@ function withoutQuoting(code: string): string {
   const { strings } = parseForESLint(code).services.twig;
   const delimiters = new Set(strings.flatMap(({ range }) => [range[0], range[1] - 1]));
   const isInsideString = new Uint8Array(code.length);
-  for (const { range } of strings) isInsideString.fill(1, range[0] + 1, range[1] - 1);
+  for (const { range } of strings) {
+    isInsideString.fill(1, range[0] + 1, range[1] - 1);
+  }
 
   let view = '';
   for (let index = 0; index < code.length; index += 1) {
     const character = code[index] as string;
     const isQuote = character === "'" || character === '"';
-    if (delimiters.has(index)) view += '§';
-    else if (!isInsideString[index]) view += isQuote ? '' : character;
-    else if (character !== '\\') view += character;
-    else if (code[index + 1] === "'" || code[index + 1] === '"') continue;
-    else {
+    if (delimiters.has(index)) {
+      view += '§';
+    } else if (!isInsideString[index]) {
+      view += isQuote ? '' : character;
+    } else if (character !== '\\') {
+      view += character;
+    } else if (code[index + 1] === "'" || code[index + 1] === '"') {
+      continue;
+    } else {
       view += code.slice(index, index + 2);
       index += 1;
     }

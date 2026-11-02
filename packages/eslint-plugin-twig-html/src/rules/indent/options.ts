@@ -48,12 +48,16 @@ export const optionsSchema = {
 } as const;
 
 function resolveUnit(indentSize: IndentSize | undefined): IndentUnit {
-  if (indentSize === 'tab') return { text: '\t', name: 'tab' };
+  if (indentSize === 'tab') {
+    return { text: '\t', name: 'tab' };
+  }
   return { text: ' '.repeat(indentSize ?? DEFAULT_INDENT_SIZE), name: 'space' };
 }
 
 function resolveCloseBracket(closeBracket: Options['closeBracket']): Required<CloseBracketOffsets> {
-  if (typeof closeBracket === 'number') return { startTag: closeBracket, endTag: closeBracket, selfClosingTag: closeBracket };
+  if (typeof closeBracket === 'number') {
+    return { startTag: closeBracket, endTag: closeBracket, selfClosingTag: closeBracket };
+  }
   return { startTag: 0, endTag: 0, selfClosingTag: 0, ...closeBracket };
 }
 

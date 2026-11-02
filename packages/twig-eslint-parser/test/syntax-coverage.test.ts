@@ -69,9 +69,15 @@ function numberSources(code: string, tokens: readonly GoldenToken[]): string[] {
 function innermostOpener(tokens: readonly GoldenToken[], index: number): string | undefined {
   const stack: string[] = [];
   for (const token of tokens.slice(0, index)) {
-    if (STATEMENT_STARTS.has(token.type)) stack.length = 0;
-    if (OPENERS.has(String(token.value))) stack.push(String(token.value));
-    if ([')', ']', '}'].includes(String(token.value))) stack.pop();
+    if (STATEMENT_STARTS.has(token.type)) {
+      stack.length = 0;
+    }
+    if (OPENERS.has(String(token.value))) {
+      stack.push(String(token.value));
+    }
+    if ([')', ']', '}'].includes(String(token.value))) {
+      stack.pop();
+    }
   }
   return stack.at(-1);
 }
@@ -96,26 +102,42 @@ function significantTokens(fixture: Fixture): GoldenToken[] {
 function featuresUsedIn(fixture: Fixture): Set<string> {
   const features = new Set<string>();
   const tokens = significantTokens(fixture);
-  for (const token of fixture.tokens) features.add(`token: ${token.type}`);
+  for (const token of fixture.tokens) {
+    features.add(`token: ${token.type}`);
+  }
   tokens.forEach((token, index) => {
     const value = String(token.value).replace(/\s+/g, ' ');
     const previous = tokens[index - 1];
-    if (previous?.type === 'begin of statement block' && token.type === 'name') features.add(`tag: ${value}`);
-    if (token.type === 'punctuation' || (token.type === 'operator' && inventory.punctuation.includes(value))) features.add(`punctuation: ${value}`);
-    if (token.type === 'operator') features.add(`${isPrefixPosition(tokens, index) ? 'prefix' : 'infix'}: ${value}`);
-    if (token.type === 'string' || token.type === 'number') features.add('prefix: literal');
+    if (previous?.type === 'begin of statement block' && token.type === 'name') {
+      features.add(`tag: ${value}`);
+    }
+    if (token.type === 'punctuation' || (token.type === 'operator' && inventory.punctuation.includes(value))) {
+      features.add(`punctuation: ${value}`);
+    }
+    if (token.type === 'operator') {
+      features.add(`${isPrefixPosition(tokens, index) ? 'prefix' : 'infix'}: ${value}`);
+    }
+    if (token.type === 'string' || token.type === 'number') {
+      features.add('prefix: literal');
+    }
     if (token.type === 'operator' && (value === 'is' || value === 'is not')) {
       const first = tokens[index + 1];
       const second = tokens[index + 2];
       const twoWords = `${String(first?.value)} ${String(second?.value)}`;
-      if (first?.type === 'name') features.add(`test: ${second?.type === 'name' && inventory.tests.includes(twoWords) ? twoWords : String(first.value)}`);
+      if (first?.type === 'name') {
+        features.add(`test: ${second?.type === 'name' && inventory.tests.includes(twoWords) ? twoWords : String(first.value)}`);
+      }
     }
   });
   for (const tag of inventory.lexerTags) {
-    if (new RegExp(`\\{%[-~]?\\s*${tag}\\b`).test(fixture.code)) features.add(`tag: ${tag}`);
+    if (new RegExp(`\\{%[-~]?\\s*${tag}\\b`).test(fixture.code)) {
+      features.add(`tag: ${tag}`);
+    }
   }
   for (const [form, isUsed] of Object.entries(syntaxForms)) {
-    if (isUsed(fixture, tokens)) features.add(`form: ${form}`);
+    if (isUsed(fixture, tokens)) {
+      features.add(`form: ${form}`);
+    }
   }
   return features;
 }

@@ -6,11 +6,15 @@ import type { QuoteSource } from './types.js';
 
 function findStringProblem(string: TwigStringSummary, source: QuoteSource): Problem[] {
   const { text, twigQuote } = source;
-  if (string.quote === twigQuote || string.isInterpolated) return [];
+  if (string.quote === twigQuote || string.isInterpolated) {
+    return [];
+  }
 
   const body = text.slice(string.range[0] + 1, string.range[1] - 1);
   const requoted = requote(body, string.quote, twigQuote);
-  if (requoted === undefined) return [];
+  if (requoted === undefined) {
+    return [];
+  }
 
   return [{
     range: string.range,

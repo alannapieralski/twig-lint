@@ -38,7 +38,9 @@ function isInsideString(lineStart: number, strings: readonly TwigStringSummary[]
 function findFirstIndentation(rules: readonly LineRule[], line: LineContext): string | undefined {
   for (const rule of rules) {
     const indentation = rule(line);
-    if (indentation !== undefined) return indentation;
+    if (indentation !== undefined) {
+      return indentation;
+    }
   }
   return undefined;
 }
@@ -57,7 +59,9 @@ export function findExpressionLines(input: ExpressionLayoutInput): ExpressionLin
 
   for (const lineStart of findLineStartsWithin(text, block.range)) {
     const contentStart = contentStartOf(text, lineStart);
-    if (isBlankFrom(text, contentStart) || isInsideString(lineStart, strings)) continue;
+    if (isBlankFrom(text, contentStart) || isInsideString(lineStart, strings)) {
+      continue;
+    }
 
     const isContinuation = continuesPreviousLine(text, block, lineStart);
     const line: LineContext = { text, block, unitText, lineStart, contentStart, continuesPreviousLine: isContinuation, indentationOfLineAt, chainHeads };
@@ -69,7 +73,9 @@ export function findExpressionLines(input: ExpressionLayoutInput): ExpressionLin
     }
 
     const startsElement = !isContinuation && !isChainLine(text, contentStart) && !findClosedPair(line);
-    if (startsElement) chainHeads.set(bracketLevelOf(line), lineStart);
+    if (startsElement) {
+      chainHeads.set(bracketLevelOf(line), lineStart);
+    }
   }
 
   return expressionLines;

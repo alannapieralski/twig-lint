@@ -13,9 +13,13 @@ function findLastCodeOffsetBefore(text: string, block: TwigBlockSummary, lineSta
 
   while (index >= 0) {
     const comment = inlineCommentAt(block, index);
-    if (comment) index = comment[0] - 1;
-    else if (WHITESPACE.test(text[index] ?? '')) index -= 1;
-    else return index;
+    if (comment) {
+      index = comment[0] - 1;
+    } else if (WHITESPACE.test(text[index] ?? '')) {
+      index -= 1;
+    } else {
+      return index;
+    }
   }
 
   return index;
@@ -24,7 +28,9 @@ function findLastCodeOffsetBefore(text: string, block: TwigBlockSummary, lineSta
 function findOpenerEnd(text: string, block: TwigBlockSummary): number {
   const afterBraces = block.range[0] + 2;
   const delimiterEnd = WHITESPACE_CONTROL.test(text[afterBraces] ?? '') ? afterBraces + 1 : afterBraces;
-  if (block.kind !== 'tag' || !block.tagName) return delimiterEnd;
+  if (block.kind !== 'tag' || !block.tagName) {
+    return delimiterEnd;
+  }
 
   const nameStart = text.indexOf(block.tagName, delimiterEnd);
   return nameStart + block.tagName.length;
@@ -34,7 +40,9 @@ export function continuesPreviousLine(text: string, block: TwigBlockSummary, lin
   const lastCodeOffset = findLastCodeOffsetBefore(text, block, lineStart);
   const openerEnd = findOpenerEnd(text, block);
   const isFirstLineAfterOpener = lastCodeOffset < openerEnd;
-  if (isFirstLineAfterOpener) return false;
+  if (isFirstLineAfterOpener) {
+    return false;
+  }
 
   const isNewElementExpected = CHARACTERS_BEFORE_NEW_ELEMENT.has(text[lastCodeOffset] ?? '');
   return !isNewElementExpected;

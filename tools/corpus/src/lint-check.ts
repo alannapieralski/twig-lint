@@ -30,7 +30,9 @@ function describeError(error: unknown, template: Template): string {
 
 async function lintMessages(linter: ESLint, template: Template, source: string): Promise<readonly Linter.LintMessage[]> {
   const [result] = await linter.lintText(source, { filePath: template.path });
-  if (!result) throw new Error('ESLint returned no result.');
+  if (!result) {
+    throw new Error('ESLint returned no result.');
+  }
   return result.messages;
 }
 
@@ -55,7 +57,9 @@ function firstChangedLine(before: string, after: string): number | undefined {
   const beforeLines = before.split('\n');
   const afterLines = after.split('\n');
   const index = beforeLines.findIndex((text, lineIndex) => text !== afterLines[lineIndex]);
-  if (index !== -1) return index + 1;
+  if (index !== -1) {
+    return index + 1;
+  }
   return beforeLines.length === afterLines.length ? undefined : beforeLines.length;
 }
 
@@ -69,7 +73,9 @@ async function inspectTemplate(template: Template, target: LintTarget, linter: E
 
   const ownMessages = messages.filter(target.isOwnMessage);
   const reports = ownMessages.map((message) => reportOf(target, template, message));
-  if (!ownMessages.some((message) => message.fix)) return { isParseable: true, reports, failures: [], notes: [], passes: 0 };
+  if (!ownMessages.some((message) => message.fix)) {
+    return { isParseable: true, reports, failures: [], notes: [], passes: 0 };
+  }
 
   const lintOwn = async (code: string) => (await lintMessages(linter, template, code)).filter(target.isOwnMessage);
   const run = await fixUntilSettled(template.source, ownMessages, lintOwn);
@@ -118,13 +124,23 @@ export async function runLintCheck(
         continue;
       }
       const inspection = await inspectTemplate(template, target, rootLinter.linter);
-      if (!inspection.isParseable) stats.unparseable += 1;
-      if (inspection.reports.length > 0) stats.withReports += 1;
-      if (inspection.passes > 1) stats.multiPassFixes += 1;
+      if (!inspection.isParseable) {
+        stats.unparseable += 1;
+      }
+      if (inspection.reports.length > 0) {
+        stats.withReports += 1;
+      }
+      if (inspection.passes > 1) {
+        stats.multiPassFixes += 1;
+      }
       stats.reports += inspection.reports.length;
       findings.push(...inspection.reports, ...inspection.notes, ...inspection.failures);
-      if (inspection.skipped) findings.push(inspection.skipped);
-      if (!inspection.change) continue;
+      if (inspection.skipped) {
+        findings.push(inspection.skipped);
+      }
+      if (!inspection.change) {
+        continue;
+      }
       stats.fixed += 1;
       changes.push(inspection.change);
     } catch (error) {

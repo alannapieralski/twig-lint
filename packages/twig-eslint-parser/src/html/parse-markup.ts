@@ -25,10 +25,14 @@ export function parseMarkup(source: string, blocks: readonly TwigBlock[], rawCon
   try {
     result = { ast: parseHtmlProgram(verbatim.text, parseOptions), visitorKeys };
   } catch (error) {
-    if (!isPositionedSyntaxError(error)) throw error;
+    if (!isPositionedSyntaxError(error)) {
+      throw error;
+    }
     const position = createOffsetLocator(source)(error.pos);
     throw new HtmlSyntaxError(error.message.replace(/ \(\d+:\d+\)$/, ''), position.line, position.column + 1);
   }
-  if (verbatim.maskedRanges.length > 0) restoreVerbatimDelimiters(result.ast, source, verbatim.maskedRanges);
+  if (verbatim.maskedRanges.length > 0) {
+    restoreVerbatimDelimiters(result.ast, source, verbatim.maskedRanges);
+  }
   return result;
 }

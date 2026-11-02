@@ -8,7 +8,9 @@ export function isChainLine(text: string, contentStart: number): boolean {
 }
 
 export const chainRule: LineRule = (line) => {
-  if (!isChainLine(line.text, line.contentStart)) return undefined;
+  if (!isChainLine(line.text, line.contentStart)) {
+    return undefined;
+  }
 
   const headLineStart = line.chainHeads.get(bracketLevelOf(line));
   return headLineStart === undefined ? undefined : `${line.indentationOfLineAt(headLineStart)}${line.unitText}`;

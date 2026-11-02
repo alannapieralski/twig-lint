@@ -17,7 +17,9 @@ const historyPath = resolve(repositoryRoot, 'corpus.previous-run.json');
 
 function readOptions(): CorpusOptions {
   const raw = process.env['CORPUS_OPTIONS'];
-  if (raw === undefined) throw new Error('Run the corpus with npm run corpus, which passes the options.');
+  if (raw === undefined) {
+    throw new Error('Run the corpus with npm run corpus, which passes the options.');
+  }
   return JSON.parse(raw) as CorpusOptions;
 }
 
@@ -50,7 +52,9 @@ describe.skipIf(options.list)('corpus', () => {
     expect(templates.length, 'no templates found in the corpus roots').toBeGreaterThan(0);
     const countsByRoot = Map.groupBy(templates, (template) => template.root);
     reporter.phase(`config: ${countsByRoot.size} roots, ${templates.length} templates, ${selectedChecks.length} checks`);
-    for (const [root, rootTemplates] of countsByRoot) reporter.phase(`  ${rootTemplates.length} templates in ${root}`);
+    for (const [root, rootTemplates] of countsByRoot) {
+      reporter.phase(`  ${rootTemplates.length} templates in ${root}`);
+    }
   });
 
   const numberedChecks = selectedChecks.map((selected, index) => ({ ...selected, position: `${index + 1}/${selectedChecks.length}` }));
@@ -72,7 +76,9 @@ describe.skipIf(options.list)('corpus', () => {
       ...(options.updateBaseline || report.newFailures.length === 0 ? [] : [`${report.newFailures.length} failures are not in the baseline.`]),
       ...canaries.missed,
     ];
-    if (problems.length > 0) throw new Error(`${problems.join('\n')}\nSee corpus-report/summary.md.`);
+    if (problems.length > 0) {
+      throw new Error(`${problems.join('\n')}\nSee corpus-report/summary.md.`);
+    }
   });
 
   afterAll(() => {

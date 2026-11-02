@@ -8,7 +8,9 @@ export function flattenMarkup(nodes: readonly MarkupNode[]): MarkupNode[] {
 
   for (let node = toVisit.pop(); node; node = toVisit.pop()) {
     flattened.push(node);
-    for (const child of [...(node.children ?? [])].reverse()) toVisit.push(child);
+    for (const child of [...(node.children ?? [])].reverse()) {
+      toVisit.push(child);
+    }
   }
 
   return flattened;
@@ -23,7 +25,9 @@ export function interiorOf(range: Range): Range {
 }
 
 export function bodyOf(element: Element): Range | undefined {
-  if (!element.openEnd || !element.close) return undefined;
+  if (!element.openEnd || !element.close) {
+    return undefined;
+  }
   return [element.openEnd.range[1], element.close.range[0]];
 }
 

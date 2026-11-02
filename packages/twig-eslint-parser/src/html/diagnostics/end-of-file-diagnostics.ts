@@ -32,7 +32,9 @@ export function findEndOfFileDiagnostics(document: MarkupTreeNode, text: string)
   }
 
   const tagStart = findCutOffTagStart(document, lastNode, text);
-  if (tagStart === undefined) return [];
+  if (tagStart === undefined) {
+    return [];
+  }
 
   return [{ code: 'eof-in-tag', message: 'This tag never ends with ">", so the markup after it is read as part of the tag. Add the ">".', range: [tagStart, text.trimEnd().length] }];
 }

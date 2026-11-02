@@ -3,8 +3,12 @@ import type { AttributeValue } from './types.js';
 const TWIG_THAT_PRINTS_NOTHING = /^(?:\{#|\{%[-~]?\s*(?:if|elseif|else|endif|for|endfor)\b)/;
 
 export function htmlTextOf(value: AttributeValue | undefined): string {
-  if (!value) return '';
-  if (!value.parts?.length) return value.value;
+  if (!value) {
+    return '';
+  }
+  if (!value.parts?.length) {
+    return value.value;
+  }
 
   return value.parts.filter((part) => part.type === 'Part').map((part) => part.value).join('');
 }

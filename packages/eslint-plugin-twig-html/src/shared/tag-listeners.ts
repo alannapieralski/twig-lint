@@ -13,7 +13,9 @@ export function balancedTagListeners(check: (tag: TagNode) => void, nodeTypes: r
   const isSameOnEveryBranch = (tag: TagNode) => isTwigBalancedWithin([tag.openStart.range[0], tag.openEnd.range[1]], blocks);
 
   const checkBalancedTag = (tag: ParsedTag) => {
-    if (isTerminated(tag) && isSameOnEveryBranch(tag)) check(tag);
+    if (isTerminated(tag) && isSameOnEveryBranch(tag)) {
+      check(tag);
+    }
   };
 
   return tagListeners(checkBalancedTag, nodeTypes);

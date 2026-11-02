@@ -14,8 +14,11 @@ export function createOffsetLocator(source: string): (offset: number) => SourceP
     let highestLine = lineStartOffsets.length - 1;
     while (lowestLine < highestLine) {
       const middleLine = (lowestLine + highestLine + 1) >> 1;
-      if ((lineStartOffsets[middleLine] ?? 0) <= offset) lowestLine = middleLine;
-      else highestLine = middleLine - 1;
+      if ((lineStartOffsets[middleLine] ?? 0) <= offset) {
+        lowestLine = middleLine;
+      } else {
+        highestLine = middleLine - 1;
+      }
     }
     return { line: lowestLine + 1, column: offset - (lineStartOffsets[lowestLine] ?? 0) };
   };

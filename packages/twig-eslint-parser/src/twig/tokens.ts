@@ -27,7 +27,9 @@ function lexTwig(source: string): ReturnType<Lexer['tokenize']> {
   try {
     return new Lexer(3).tokenize(source);
   } catch (error) {
-    if (error instanceof TwigLexerSyntaxError) throw new TwigSyntaxError(error.message, error.line, error.column);
+    if (error instanceof TwigLexerSyntaxError) {
+      throw new TwigSyntaxError(error.message, error.line, error.column);
+    }
     throw error;
   }
 }

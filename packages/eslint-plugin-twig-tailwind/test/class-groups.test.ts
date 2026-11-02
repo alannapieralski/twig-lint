@@ -26,7 +26,9 @@ describe('the recommended config on class lists with [ ] and | groups', () => {
       overrideConfig: [createConfig(), { files: ['**/*.twig'], settings: { 'better-tailwindcss': { entryPoint: 'tailwind/theme.css' } } }],
     });
     const [result] = await eslint.lintText(code, { filePath: 'template.html.twig' });
-    if (!result) throw new Error('ESLint returned no result.');
+    if (!result) {
+      throw new Error('ESLint returned no result.');
+    }
     return result;
   }
 

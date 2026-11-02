@@ -18,7 +18,9 @@ async function loadBetterTailwindcss(): Promise<BetterTailwindcss> {
     ]);
     return { plugin: pluginModule.default, getDefaultSelectors: defaultsModule.getDefaultSelectors };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ERR_MODULE_NOT_FOUND') throw error;
+    if ((error as NodeJS.ErrnoException).code !== 'ERR_MODULE_NOT_FOUND') {
+      throw error;
+    }
     throw new Error(
       `eslint-plugin-twig-tailwind could not load eslint-plugin-better-tailwindcss, which it needs as a peer dependency. Install it with: npm install --save-dev "eslint-plugin-better-tailwindcss@${supportedVersions}"`,
       { cause: error },

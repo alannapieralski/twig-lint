@@ -10,8 +10,12 @@ const END_OF_UNQUOTED_VALUE = /^(\s|>|$)/;
 
 function findWrappedProblems(attribute: AttributeNode, startWrapper: AttributeWrapper, endWrapper: AttributeWrapper, isFixable: boolean, source: QuoteSource): Problem[] {
   const { htmlQuote } = source;
-  if (startWrapper.value !== endWrapper.value || startWrapper.value === htmlQuote) return [];
-  if (htmlTextOf(attribute.value).includes(htmlQuote)) return [];
+  if (startWrapper.value !== endWrapper.value || startWrapper.value === htmlQuote) {
+    return [];
+  }
+  if (htmlTextOf(attribute.value).includes(htmlQuote)) {
+    return [];
+  }
 
   const isSafeToSwap = isFixable && !printsTwigOutput(attribute.value);
 
@@ -29,8 +33,12 @@ function findWrappedProblems(attribute: AttributeNode, startWrapper: AttributeWr
 }
 
 function isSafeToWrap(attribute: AttributeNode, value: AttributeValue, isFixable: boolean, text: string): boolean {
-  if (!isFixable || containsTwig(attribute)) return false;
-  if (CHARACTER_THAT_NEEDS_QUOTES.test(htmlTextOf(value))) return false;
+  if (!isFixable || containsTwig(attribute)) {
+    return false;
+  }
+  if (CHARACTER_THAT_NEEDS_QUOTES.test(htmlTextOf(value))) {
+    return false;
+  }
 
   return END_OF_UNQUOTED_VALUE.test(text.charAt(value.range[1]));
 }
@@ -56,8 +64,12 @@ export function findAttributeProblems(attribute: AttributeNode, isInReadableTag:
   const { value, startWrapper, endWrapper } = attribute;
   const isFixable = isInReadableTag && (value === undefined || depthChangeWithin(value.range, source.blocks) === 0);
 
-  if (startWrapper && endWrapper) return findWrappedProblems(attribute, startWrapper, endWrapper, isFixable, source);
-  if (startWrapper || endWrapper || !value || value.value === '') return [];
+  if (startWrapper && endWrapper) {
+    return findWrappedProblems(attribute, startWrapper, endWrapper, isFixable, source);
+  }
+  if (startWrapper || endWrapper || !value || value.value === '') {
+    return [];
+  }
 
   return findUnquotedProblems(attribute, value, isFixable, source);
 }

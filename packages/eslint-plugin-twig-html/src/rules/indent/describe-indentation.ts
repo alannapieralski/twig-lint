@@ -1,9 +1,15 @@
 import type { IndentUnit } from './options.js';
 
 function unitNameOf(indentation: string, fallback: IndentUnit['name']): string {
-  if (indentation === '') return fallback;
-  if (/^\t+$/.test(indentation)) return 'tab';
-  if (/^ +$/.test(indentation)) return 'space';
+  if (indentation === '') {
+    return fallback;
+  }
+  if (/^\t+$/.test(indentation)) {
+    return 'tab';
+  }
+  if (/^ +$/.test(indentation)) {
+    return 'space';
+  }
   return 'character';
 }
 

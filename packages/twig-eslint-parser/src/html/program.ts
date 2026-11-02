@@ -27,7 +27,9 @@ function visit<Visited extends { type: string }>(node: Visited, keysByType: Read
   for (const key of childKeys) {
     const child = (node as Record<string, unknown>)[key];
     for (const value of Array.isArray(child) ? child : [child]) {
-      if (typeof value === 'object' && value !== null && 'type' in value) visit(value as Visited, keysByType, typeOf, visitor);
+      if (typeof value === 'object' && value !== null && 'type' in value) {
+        visit(value as Visited, keysByType, typeOf, visitor);
+      }
     }
   }
 }
@@ -42,7 +44,9 @@ function parseStylesheet(content: Node): CssNodePlain {
   }));
   visit(stylesheet as unknown as CssNode, cssVisitorKeys, (node) => `Css${node.type}`, (node) => {
     node.type = `Css${node.type}`;
-    if (!node.loc) return;
+    if (!node.loc) {
+      return;
+    }
     node.range = [node.loc.start.offset, node.loc.end.offset];
     node.loc.start.column -= 1;
     node.loc.end.column -= 1;
@@ -59,8 +63,12 @@ export function parseHtmlProgram(text: string, options: HtmlParseOptions): HtmlP
   const document = ast as unknown as Node;
   const comments: Comment[] = [];
   visit(document, htmlVisitorKeys, (node) => node.type, (node) => {
-    if (node.type === 'CommentContent') comments.push({ type: node.type, range: node.range, loc: node.loc, value: node['value'] });
-    if (node.type === 'StyleTagContent') node['stylesheet'] = parseStylesheet(node);
+    if (node.type === 'CommentContent') {
+      comments.push({ type: node.type, range: node.range, loc: node.loc, value: node['value'] });
+    }
+    if (node.type === 'StyleTagContent') {
+      node['stylesheet'] = parseStylesheet(node);
+    }
   });
   return {
     type: 'Program',

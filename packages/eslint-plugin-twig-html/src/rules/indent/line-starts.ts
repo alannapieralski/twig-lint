@@ -14,7 +14,9 @@ export function findLineStarts(text: string): LineStart[] {
     const indentationLength = indentationOf(line).length;
     const contentStart = lineStart + indentationLength;
 
-    if (!isBlankFrom(text, contentStart)) lineStarts.push({ lineStart, contentStart });
+    if (!isBlankFrom(text, contentStart)) {
+      lineStarts.push({ lineStart, contentStart });
+    }
 
     lineStart += line.length + 1;
   }

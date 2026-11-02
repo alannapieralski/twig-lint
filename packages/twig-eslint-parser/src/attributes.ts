@@ -24,25 +24,33 @@ export function containsTwig(attribute: AttributeNode): boolean {
 }
 
 export function omitInterpolatedAttributes(root: unknown, attributeNames: ReadonlySet<string>): OmittedAttribute[] {
-  if (attributeNames.size === 0) return [];
+  if (attributeNames.size === 0) {
+    return [];
+  }
 
   const omitted: OmittedAttribute[] = [];
   const visited = new WeakSet<object>();
   const shouldOmit = (attribute: AttributeNode) => attributeNames.has(attribute.key.value.toLowerCase()) && containsTwig(attribute);
 
   const visit = (value: unknown): void => {
-    if (typeof value !== 'object' || value === null || visited.has(value)) return;
+    if (typeof value !== 'object' || value === null || visited.has(value)) {
+      return;
+    }
     visited.add(value);
 
     const node = value as Record<string, unknown>;
     const attributes = node['attributes'];
     if (Array.isArray(attributes) && attributes.every(isAttributeNode)) {
       const owner = node as unknown as AttributeOwner;
-      for (const attribute of attributes.filter(shouldOmit)) omitted.push({ name: attribute.key.value, range: attribute.range, attribute, owner });
+      for (const attribute of attributes.filter(shouldOmit)) {
+        omitted.push({ name: attribute.key.value, range: attribute.range, attribute, owner });
+      }
       node['attributes'] = attributes.filter((attribute) => !shouldOmit(attribute));
     }
     for (const [key, child] of Object.entries(node)) {
-      if (key !== 'parent') visit(child);
+      if (key !== 'parent') {
+        visit(child);
+      }
     }
   };
 

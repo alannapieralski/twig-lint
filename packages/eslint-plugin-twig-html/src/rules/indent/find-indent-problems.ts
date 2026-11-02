@@ -15,7 +15,9 @@ export type IndentSource = Omit<LayoutSource, 'ignores'> & { readonly strings: r
 export function findIndentProblems(program: MarkupProgram, source: IndentSource, options: ResolvedOptions): Problem[] {
   const { text, blocks, attributesOf, rawContentTags, strings, unreadableTagStarts } = source;
   const [document] = program.body;
-  if (!document) return [];
+  if (!document) {
+    return [];
+  }
 
   const segments = findTwigSegments(blocks);
   const layout = buildIndentLayout(document, segments, { text, blocks, attributesOf, ignores: options.ignores, rawContentTags, unreadableTagStarts });

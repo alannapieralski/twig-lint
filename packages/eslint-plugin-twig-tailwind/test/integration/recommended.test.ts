@@ -30,7 +30,9 @@ function linterOptions({ parserOptions, selectors, extraSelectors = [], rules = 
 
 async function lint(code: string, setup: LintSetup = {}) {
   const [result] = await new ESLint(linterOptions(setup)).lintText(code, { filePath: `${fixturesDirectory}/template.html.twig` });
-  if (!result) throw new Error('ESLint returned no result.');
+  if (!result) {
+    throw new Error('ESLint returned no result.');
+  }
   return result;
 }
 

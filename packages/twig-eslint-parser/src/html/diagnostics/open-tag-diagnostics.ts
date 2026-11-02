@@ -38,21 +38,29 @@ function textWithoutTwig(text: string, range: Range, blocks: readonly TwigBlockS
 
 function describeStrayCharacter(attribute: AttributeNode, text: string, blocks: readonly TwigBlockSummary[]): StrayCharacterDiagnostic | undefined {
   const withoutQuotedValues = textWithoutTwig(text, attribute.range, blocks).replace(QUOTED_VALUE, '');
-  if (!CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(withoutQuotedValues)) return undefined;
+  if (!CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(withoutQuotedValues)) {
+    return undefined;
+  }
 
   const [name = ''] = withoutQuotedValues.split('=');
   return CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(name) ? STRAY_CHARACTER_IN_NAME : STRAY_CHARACTER_IN_VALUE;
 }
 
 function findOpenTagDiagnostic(element: MarkupElement, text: string, blocks: readonly TwigBlockSummary[]): TwigDiagnostic | undefined {
-  if (!element.openEnd) return undefined;
+  if (!element.openEnd) {
+    return undefined;
+  }
 
   const openTagRange = openTagRangeOf(element);
   const strayCharacter = element.attributes.map((attribute) => describeStrayCharacter(attribute, text, blocks)).find((description) => description !== undefined);
-  if (strayCharacter) return { ...strayCharacter, range: openTagRange };
+  if (strayCharacter) {
+    return { ...strayCharacter, range: openTagRange };
+  }
 
   const hasStraySolidus = !OPEN_TAG_ENDINGS.has(element.openEnd.value);
-  if (!hasStraySolidus) return undefined;
+  if (!hasStraySolidus) {
+    return undefined;
+  }
 
   return { code: 'unexpected-solidus-in-tag', message: 'A "/" in this tag is not followed by ">", so the attributes after it are not read. Remove the "/", or add ">" after it if the tag ends there.', range: openTagRange };
 }

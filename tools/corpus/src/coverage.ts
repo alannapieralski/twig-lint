@@ -57,7 +57,9 @@ export function renderCoverage(id: string, coverage: readonly TemplateCoverage[]
     lines.push(`| ${root} | ${rootTotals.templates} | ${rootTotals.lines} | ${rootTotals.uncovered} | ${rootTotals.excused} | ${formatScore(rootTotals.score)} |`);
   }
   const worst = scored.filter((entry) => entry.uncovered > 0).sort((first, second) => second.uncovered - first.uncovered).slice(0, MAX_LISTED_TEMPLATES);
-  if (worst.length > 0) lines.push('', `Templates with the most lines not read (first ${MAX_LISTED_TEMPLATES}):`, '', ...worst.map(describeTemplate));
+  if (worst.length > 0) {
+    lines.push('', `Templates with the most lines not read (first ${MAX_LISTED_TEMPLATES}):`, '', ...worst.map(describeTemplate));
+  }
   return `${lines.join('\n')}\n`;
 }
 

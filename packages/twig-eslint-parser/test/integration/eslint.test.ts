@@ -8,7 +8,9 @@ async function lint(code: string) {
     overrideConfig: [{ files: ['**/*.twig'], languageOptions: { parser: twigParser } }],
   });
   const [result] = await eslint.lintText(code, { filePath: 'template.html.twig' });
-  if (!result) throw new Error('ESLint returned no result.');
+  if (!result) {
+    throw new Error('ESLint returned no result.');
+  }
   return result;
 }
 

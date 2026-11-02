@@ -23,7 +23,9 @@ function createLinterPool(configs: readonly Linter.Config[]): (template: Templat
   const lintersByRoot = new Map<string, ESLint>();
   return ({ root }) => {
     const existing = lintersByRoot.get(root);
-    if (existing) return { linter: existing };
+    if (existing) {
+      return { linter: existing };
+    }
     const linter = new ESLint({ cwd: root, overrideConfigFile: true, fix: false, overrideConfig: [...configs] });
     lintersByRoot.set(root, linter);
     return { linter };
@@ -53,7 +55,9 @@ export function ruleChecks(definition: {
 }): Check[] {
   const { plugin, prefix, rules = {}, variant } = definition;
   const unknownRules = Object.keys(rules).filter((ruleName) => !(ruleName in plugin.rules));
-  if (unknownRules.length > 0) throw new Error(`Corpus settings name rules that ${prefix} does not have: ${unknownRules.join(', ')}`);
+  if (unknownRules.length > 0) {
+    throw new Error(`Corpus settings name rules that ${prefix} does not have: ${unknownRules.join(', ')}`);
+  }
   const fixableWithoutPromise = Object.entries(plugin.rules).filter(([ruleName, rule]) => rule.meta?.fixable !== undefined && rules[ruleName]?.fixKeeps === undefined).map(([ruleName]) => ruleName);
   if (fixableWithoutPromise.length > 0) {
     throw new Error(`${prefix} rules ${fixableWithoutPromise.join(', ')} are fixable, so their corpus settings must say what a fix keeps: fixKeeps 'layout', 'class-tokens' or 'code'.`);

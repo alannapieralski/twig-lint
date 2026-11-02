@@ -12,8 +12,11 @@ function findFirstIndexStartingFrom<Item>(items: readonly Item[], offset: number
     const middleItem = items[middle];
     const middleStart = middleItem === undefined ? Infinity : startOf(middleItem);
 
-    if (middleStart < offset) low = middle + 1;
-    else high = middle;
+    if (middleStart < offset) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
   }
 
   return low;
@@ -22,7 +25,9 @@ function findFirstIndexStartingFrom<Item>(items: readonly Item[], offset: number
 function* findBlocksWithin(range: Range, blocks: readonly TwigBlockSummary[]): Generator<TwigBlockSummary> {
   for (let index = findFirstIndexStartingFrom(blocks, range[0], (block) => block.range[0]); index < blocks.length; index += 1) {
     const block = blocks[index];
-    if (!block || block.range[1] > range[1]) return;
+    if (!block || block.range[1] > range[1]) {
+      return;
+    }
     yield block;
   }
 }
@@ -30,7 +35,9 @@ function* findBlocksWithin(range: Range, blocks: readonly TwigBlockSummary[]): G
 export function depthChangeWithin(range: Range, blocks: readonly TwigBlockSummary[]): number {
   let depth = 0;
 
-  for (const block of findBlocksWithin(range, blocks)) depth += block.depthChange;
+  for (const block of findBlocksWithin(range, blocks)) {
+    depth += block.depthChange;
+  }
 
   return depth;
 }
@@ -40,10 +47,14 @@ export function isTwigBalancedWithin(range: Range, blocks: readonly TwigBlockSum
 
   for (const block of findBlocksWithin(range, blocks)) {
     const isMiddleTagAtTopLevel = depth === 0 && isMiddleTag(block);
-    if (isMiddleTagAtTopLevel) return false;
+    if (isMiddleTagAtTopLevel) {
+      return false;
+    }
 
     depth += block.depthChange;
-    if (depth < 0) return false;
+    if (depth < 0) {
+      return false;
+    }
   }
 
   return depth === 0;
@@ -63,15 +74,27 @@ export function isSameOnEveryTwigBranch(range: Range, blocks: readonly TwigBlock
 
   for (const block of findBlocksWithin(range, blocks)) {
     const isInTagOpenedBefore = depth === 0;
-    if (isMiddleTag(block) && isInTagOpenedBefore) return false;
-    if (isClosingTag(block) && isInTagOpenedBefore && closesVaryingMarkup(block)) return false;
+    if (isMiddleTag(block) && isInTagOpenedBefore) {
+      return false;
+    }
+    if (isClosingTag(block) && isInTagOpenedBefore && closesVaryingMarkup(block)) {
+      return false;
+    }
 
-    if (isOpeningTag(block)) depth += 1;
-    if (opensVaryingMarkup(block)) branchDepth += 1;
-    if (!isClosingTag(block) || isInTagOpenedBefore) continue;
+    if (isOpeningTag(block)) {
+      depth += 1;
+    }
+    if (opensVaryingMarkup(block)) {
+      branchDepth += 1;
+    }
+    if (!isClosingTag(block) || isInTagOpenedBefore) {
+      continue;
+    }
 
     depth -= 1;
-    if (closesVaryingMarkup(block)) branchDepth -= 1;
+    if (closesVaryingMarkup(block)) {
+      branchDepth -= 1;
+    }
   }
 
   return branchDepth === 0;
@@ -83,12 +106,20 @@ export function findTwigBranchSpans(blocks: readonly TwigBlockSummary[]): Range[
   let spanStart = 0;
 
   for (const block of blocks) {
-    if (opensVaryingMarkup(block) && branchDepth === 0) spanStart = block.range[0];
-    if (opensVaryingMarkup(block)) branchDepth += 1;
-    if (!closesVaryingMarkup(block)) continue;
+    if (opensVaryingMarkup(block) && branchDepth === 0) {
+      spanStart = block.range[0];
+    }
+    if (opensVaryingMarkup(block)) {
+      branchDepth += 1;
+    }
+    if (!closesVaryingMarkup(block)) {
+      continue;
+    }
 
     branchDepth -= 1;
-    if (branchDepth === 0) spans.push([spanStart, block.range[1]]);
+    if (branchDepth === 0) {
+      spans.push([spanStart, block.range[1]]);
+    }
   }
 
   return spans;

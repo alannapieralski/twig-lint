@@ -4,7 +4,9 @@ export type TwigParserOptions = {
 };
 
 function parseNames(optionName: string, nameKind: string, value: unknown): ReadonlySet<string> {
-  if (value === undefined) return new Set();
+  if (value === undefined) {
+    return new Set();
+  }
   if (!Array.isArray(value) || !value.every((name) => typeof name === 'string' && name !== '')) {
     throw new TypeError(`twig-eslint-parser: parserOptions.${optionName} must be an array of ${nameKind}, received ${JSON.stringify(value)}.`);
   }

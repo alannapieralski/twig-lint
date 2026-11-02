@@ -17,7 +17,9 @@ function findInterpolatedStringsOrNone(text: string): readonly Range[] {
   try {
     return findInterpolatedStrings(text);
   } catch (error) {
-    if (error instanceof TwigSyntaxError) return [];
+    if (error instanceof TwigSyntaxError) {
+      return [];
+    }
     throw error;
   }
 }

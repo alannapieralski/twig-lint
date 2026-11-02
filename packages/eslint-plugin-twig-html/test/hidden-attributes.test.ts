@@ -17,7 +17,9 @@ async function lint(code: string, ruleId: string, fix = true) {
   const rules = { ...everyRuleOff, [ruleId]: 'warn' as const };
   const eslint = new ESLint({ overrideConfigFile: true, fix, overrideConfig: [twigHtml.configs.recommended, hideInterpolatedClasses, { files: ['**/*.twig'], rules }] });
   const [result] = await eslint.lintText(code, { filePath: 'template.html.twig' });
-  if (!result) throw new Error('ESLint returned no result.');
+  if (!result) {
+    throw new Error('ESLint returned no result.');
+  }
   return { output: result.output ?? code, messages: result.messages };
 }
 
