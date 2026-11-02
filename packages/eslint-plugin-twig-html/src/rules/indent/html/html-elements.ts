@@ -20,10 +20,6 @@ export function isElement(node: MarkupNode): node is Element {
   return ELEMENT_NODE_TYPES.includes(node.type) && node.openStart !== undefined;
 }
 
-export function interiorOf(range: Range): Range {
-  return [range[0] + 1, range[1]];
-}
-
 export function bodyOf(element: Element): Range | undefined {
   if (!element.openEnd || !element.close) {
     return undefined;

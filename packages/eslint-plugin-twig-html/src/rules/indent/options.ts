@@ -54,6 +54,10 @@ function resolveUnit(indentSize: IndentSize | undefined): IndentUnit {
   return { text: ' '.repeat(indentSize ?? DEFAULT_INDENT_SIZE), name: 'space' };
 }
 
+export function repeatUnit(unit: IndentUnit, depth: number): string {
+  return unit.text.repeat(Math.max(depth, 0));
+}
+
 function resolveCloseBracket(closeBracket: Options['closeBracket']): Required<CloseBracketOffsets> {
   if (typeof closeBracket === 'number') {
     return { startTag: closeBracket, endTag: closeBracket, selfClosingTag: closeBracket };

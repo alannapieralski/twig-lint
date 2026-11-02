@@ -63,6 +63,24 @@ return {
 - **These are fine:** an arrow passed straight to an array method, and the members of a returned
   object literal (see Returns).
 
+## Comments
+
+- **Most code has no comment.** The names say what it is and does.
+- **A function a reader cannot follow from its name and signature gets a TSDoc block**, such as a
+  binary search or a lookup built once and queried many times. Up to three lines say what it does,
+  then one line for each `@param` and one for `@returns`.
+- **No comment says why a change was made** or walks through the code line by line.
+
+```ts
+/**
+ * Builds a lookup that finds the item with the latest start at or before an offset.
+ *
+ * @param items - The items to search, in any order.
+ * @param startOf - Reads the offset an item starts at.
+ * @returns A function from an offset to the last item started at or before it, or `undefined` when none has.
+ */
+```
+
 ## Constants and repeats
 
 - **A value, regular expression or helper that is defined in more than two places is extracted** to

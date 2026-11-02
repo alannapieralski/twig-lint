@@ -1,34 +1,31 @@
-import { contains, depthAt, repeatUnit } from './nesting.js';
-import { expectedInCloseTag, expectedInOpenTag, findCloseTagAt, findOpenTagAt } from './html/expected-html-indent.js';
+import { expectedInCloseTag, expectedInOpenTag } from './html/expected-html-indent.js';
+import { repeatUnit } from './options.js';
 import type { ResolvedOptions } from './options.js';
 import type { IndentLayout } from './types.js';
 
 export function isChecked(offset: number, layout: IndentLayout): boolean {
-  const isSkipped = layout.skipped.some((range) => contains(range, offset));
-  if (isSkipped) {
+  if (layout.skipped.covers(offset)) {
     return false;
   }
-
-  const isDepthUnknown = layout.depthUnknown.some((range) => contains(range, offset));
-  if (!isDepthUnknown) {
+  if (!layout.depthUnknown.covers(offset)) {
     return true;
   }
 
-  return findOpenTagAt(offset, layout)?.lineIndentationAsWritten !== undefined;
+  return layout.findOpenTagAt(offset)?.lineIndentationAsWritten !== undefined;
 }
 
 export function expectedIndentAt(offset: number, layout: IndentLayout, options: ResolvedOptions): string {
   const { nestings } = layout;
 
-  const openTag = findOpenTagAt(offset, layout);
+  const openTag = layout.findOpenTagAt(offset);
   if (openTag) {
     return expectedInOpenTag(openTag, offset, nestings, options);
   }
 
-  const closeTag = findCloseTagAt(offset, layout);
+  const closeTag = layout.findCloseTagAt(offset);
   if (closeTag) {
     return expectedInCloseTag(closeTag, nestings, options);
   }
 
-  return repeatUnit(options.unit, depthAt(offset, nestings));
+  return repeatUnit(options.unit, nestings.countAt(offset));
 }
