@@ -7,8 +7,7 @@ import { parseMarkup } from './html/parse-markup.js';
 import { parseTwigParserOptions } from './options.js';
 import { createOffsetLocator } from './source-text.js';
 import { blockRangeOf, groupTwigBlocks, summariseTwigBlocks } from './twig/blocks.js';
-import { findMisplacedTwigTagDiagnostics } from './twig/misplaced-tag-diagnostics.js';
-import { findUnpairedTwigTag } from './twig/pairing.js';
+import { readTwigTagStructure } from './twig/tag-structure.js';
 import { hasStrayComma, STRAY_COMMA_REASON } from './twig/stray-comma.js';
 import { toSameLengthJavaScript } from './twig/javascript.js';
 import { summariseTwigStrings } from './twig/strings.js';
@@ -101,7 +100,7 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   const tokens = tokenizeTwig(code);
   const blocks = groupTwigBlocks(tokens);
   const blockSummaries = summariseTwigBlocks(blocks);
-  const unpairedTag = findUnpairedTwigTag(blockSummaries);
+  const { unpairedTag, misplacedTagDiagnostics } = readTwigTagStructure(blockSummaries);
   if (unpairedTag) {
     const { line, column } = createOffsetLocator(code)(unpairedTag.block.range[0]);
     throw new TwigSyntaxError(unpairedTag.message, line, column + 1);
@@ -111,7 +110,7 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   const markupDiagnostics = findMarkupDiagnostics({ document: markup.ast.body[0] as MarkupTreeNode, tokens: markup.ast.tokens as SourceToken[], text: code, blocks: blockSummaries });
   const omittedAttributes = omitInterpolatedAttributes(markup.ast, ignoreInterpolatedAttributes);
   const { statements, unparsedBlockDiagnostics, ...blockCounts } = convertTwigBlocks(blocks, createOffsetLocator(code));
-  const diagnostics = [...markupDiagnostics, ...findMisplacedTwigTagDiagnostics(blockSummaries), ...unparsedBlockDiagnostics].sort(compareDiagnostics);
+  const diagnostics = [...markupDiagnostics, ...misplacedTagDiagnostics, ...unparsedBlockDiagnostics].sort(compareDiagnostics);
   const visitorKeys = unionWith(markup.visitorKeys);
   const ast = { ...markup.ast, twigBody: statements } as unknown as TwigParseResult['ast'];
 
