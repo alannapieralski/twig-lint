@@ -1,11 +1,12 @@
 import { isTwigBalancedWithin } from 'twig-eslint-parser';
+import { isInsideTransBody } from './trans-bodies.js';
 import type { Rule } from 'eslint';
 import type { ParsedTag, TagNode } from './tag-node.js';
 import type { TagSource } from './tag-source.js';
 
 export function tagListeners<Tag extends ParsedTag>(check: (tag: Tag) => void, nodeTypes: readonly string[], source: TagSource): Rule.RuleListener {
   const checkOutsideTransBodies = (tag: Tag) => {
-    if (!source.isInsideTransBody(tag.openStart.range[0])) {
+    if (!isInsideTransBody(tag.openStart.range[0], source.transBodies)) {
       check(tag);
     }
   };

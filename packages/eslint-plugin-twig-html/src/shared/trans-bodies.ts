@@ -12,8 +12,6 @@ export function findTransBodies(text: string, blocks: readonly TwigBlockSummary[
   });
 }
 
-export function createTransBodyCheck(text: string, blocks: readonly TwigBlockSummary[]): (offset: number) => boolean {
-  const bodies = findTransBodies(text, blocks);
-
-  return (offset) => bodies.some(([start, end]) => start <= offset && offset < end);
+export function isInsideTransBody(offset: number, transBodies: readonly Range[]): boolean {
+  return transBodies.some(([start, end]) => start <= offset && offset < end);
 }

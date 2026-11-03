@@ -1,6 +1,7 @@
 import { isTwigBalancedWithin } from 'twig-eslint-parser';
 import { ELEMENTS_WITH_UNRENDERED_EDGE_WHITESPACE } from '../../shared/html-elements.js';
 import { lineIndentationAt, lineStartOf } from '../../shared/line-text.js';
+import { isInsideUnclosedElement } from '../../shared/inside-unclosed-element.js';
 import { isOpenTagUnreadable } from '../../shared/unreadable-open-tags.js';
 import { abbreviateTwigInTag } from './abbreviate-twig-in-tag.js';
 import { findContentEdges } from './find-content-edges.js';
@@ -49,7 +50,7 @@ export function findContentProblems(tag: TagNode, source: TagSource, options: Re
     return [];
   }
 
-  const { text, blocks, isIgnored, isInsideUnclosedElement, unreadableTagStarts } = source;
+  const { text, blocks, isIgnored, unreadableTagStarts } = source;
   const contentRange: Range = [tag.openEnd.range[1], close.range[0]];
   const isSingleLine = lineStartOf(text, close.range[0]) <= tag.openStart.range[0];
   if (isSingleLine) {

@@ -1,14 +1,14 @@
 import { ELEMENT_NODE_TYPES } from 'twig-eslint-parser';
-import type { SourceCode } from 'eslint';
-import type { ParsedTag } from './tag-node.js';
 
-type EslintNode = Parameters<SourceCode['getAncestors']>[0];
+type EnclosedNode = { readonly type?: string; readonly close?: unknown; readonly parent?: EnclosedNode | null };
 
-export function createInsideUnclosedElementCheck(sourceCode: SourceCode): (tag: ParsedTag) => boolean {
-  return (tag) => {
-    const enclosingNodes = sourceCode.getAncestors(tag as unknown as EslintNode) as unknown as ParsedTag[];
-    const enclosingElements = enclosingNodes.filter((node) => ELEMENT_NODE_TYPES.includes(node.type ?? ''));
+export function isInsideUnclosedElement(node: EnclosedNode): boolean {
+  for (let enclosing = node.parent; enclosing; enclosing = enclosing.parent) {
+    const isElement = ELEMENT_NODE_TYPES.includes(enclosing.type ?? '');
+    if (isElement && !enclosing.close) {
+      return true;
+    }
+  }
 
-    return enclosingElements.some((element) => !element.close);
-  };
+  return false;
 }
