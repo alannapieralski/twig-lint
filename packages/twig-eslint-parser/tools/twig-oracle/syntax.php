@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use Twig\Environment;
+use Twig\ExpressionParser\InfixExpressionParserInterface;
 use Twig\ExpressionParser\PrefixExpressionParserInterface;
 use Twig\Extension\SandboxExtension;
 use Twig\Lexer;
@@ -13,7 +14,7 @@ use Twig\Sandbox\SecurityPolicy;
 use Twig\Token;
 
 const USAGE = "Usage: php tools/twig-oracle/syntax.php <output json file>\n"
-    . "  Writes every tag, lexer-level tag, test, expression parser, token type and punctuation character\n"
+    . "  Writes every tag, lexer-level tag, test, expression parser with its precedence, token type and punctuation character\n"
     . "  that the installed Twig version defines.\n";
 
 const LEXER_TAGS = ['line', 'verbatim'];
@@ -46,12 +47,15 @@ foreach ($environment->getExpressionParsers() as $parser) {
         'parser' => shortClassName($parser),
         'name' => $parser->getName(),
         'aliases' => array_values($parser->getAliases()),
+        'precedence' => $parser->getPrecedence(),
+        'associativity' => $parser instanceof InfixExpressionParserInterface ? strtolower($parser->getAssociativity()->name) : null,
     ];
 }
 usort($expressions, fn (array $a, array $b) => [$a['type'], $a['parser'], $a['name']] <=> [$b['type'], $b['parser'], $b['name']]);
 
 $tests = array_keys($environment->getTests());
 sort($tests);
+$testsWithOneMandatoryArgument = array_values(array_filter($tests, fn (string $name) => $environment->getTest($name)->hasOneMandatoryArgument()));
 
 $tokenTypes = [];
 foreach ((new ReflectionClass(Token::class))->getReflectionConstants() as $constant) {
@@ -67,6 +71,7 @@ $inventory = [
     'tags' => $tags,
     'lexerTags' => LEXER_TAGS,
     'tests' => $tests,
+    'testsWithOneMandatoryArgument' => $testsWithOneMandatoryArgument,
     'expressions' => $expressions,
     'tokenTypes' => $tokenTypes,
     'punctuation' => str_split(Lexer::PUNCTUATION),

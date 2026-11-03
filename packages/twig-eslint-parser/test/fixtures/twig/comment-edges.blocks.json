@@ -1,0 +1,25 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ value }}",
+            "error": null
+        },
+        {
+            "source": "{{ value # inline comment with 'quotes' and }}\n}}",
+            "error": null
+        },
+        {
+            "source": "{% if value # inline comment with %} and }}\n%}",
+            "error": null
+        },
+        {
+            "source": "{{ [\n  1, # a\n  2 # b\n]|length }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"string # with hash\" # and then a comment\n}}",
+            "error": null
+        }
+    ]
+}

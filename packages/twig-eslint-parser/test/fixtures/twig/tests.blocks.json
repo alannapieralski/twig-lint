@@ -1,0 +1,125 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ a is constant('PHP_EOL') }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not constant('PHP_EOL') }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is defined }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not defined }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is divisible by(3) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not divisible by(3) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is divisible  by(3) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is empty }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not empty }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is even }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not even }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is iterable }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not iterable }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is mapping }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not mapping }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is none }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not none }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is null }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not null }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is odd }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not odd }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is same as(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not same as(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is same  as(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is sequence }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not sequence }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is true }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not true }}",
+            "error": null
+        },
+        {
+            "source": "{% if a is empty and b is not null %}",
+            "error": null
+        },
+        {
+            "source": "{{ (a is odd) ? 'odd' : 'even' }}",
+            "error": null
+        }
+    ]
+}

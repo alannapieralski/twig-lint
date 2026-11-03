@@ -1,0 +1,137 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ '{{' }}",
+            "error": null
+        },
+        {
+            "source": "{{ '}}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ '{%' }}",
+            "error": null
+        },
+        {
+            "source": "{{ '%}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ '{#' }}",
+            "error": null
+        },
+        {
+            "source": "{{ '#}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"{{\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"}}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"{%\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"%}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"{#\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"open #} close #{ name ~ '#}' } end\" }}",
+            "error": null
+        },
+        {
+            "source": "{% set label = '{% endset %}' %}",
+            "error": null
+        },
+        {
+            "source": "{{ 'x }} y' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"-}}\" ~ '~%}' ~ '-#}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'spans\ntwo {{ lines }}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"also\ntwo {% lines %}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'it\\'s' }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'a \\'quoted\\' word' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"say \\\"hi\\\"\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'double \"inside\" single' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"single 'inside' double\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'ends in a backslash \\\\' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"ends in a backslash \\\\\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'backslash then quote \\\\\\'' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"escaped \\#{not interpolated}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"hex \\x41\\x4a\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'tab\\there' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#{ '}}' }\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#{ \"#}\" }\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"a#b\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#\" }}",
+            "error": null
+        }
+    ]
+}

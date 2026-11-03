@@ -1,7 +1,7 @@
 {% apply upper %}text{% endapply %}
 {% autoescape 'html' %}{{ x }}{% endautoescape %}
 {% block title %}t{% endblock %} {% block short 'value' %}
-{% deprecated 'use x instead' package 'numiko/x' version '1.0' %}
+{% deprecated 'use x instead' package='numiko/x' version='1.0' %}
 {% do 1 + 2 %}
 {% embed 'card.twig' with {classes: ['a']} only %}{% block body %}b{% endblock %}{% endembed %}
 {% extends 'base.twig' %}

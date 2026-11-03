@@ -1,0 +1,77 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ true }}",
+            "error": null
+        },
+        {
+            "source": "{{ false }}",
+            "error": null
+        },
+        {
+            "source": "{{ null }}",
+            "error": null
+        },
+        {
+            "source": "{{ none }}",
+            "error": null
+        },
+        {
+            "source": "{{ TRUE }}",
+            "error": null
+        },
+        {
+            "source": "{{ Null }}",
+            "error": null
+        },
+        {
+            "source": "{{ [] }}",
+            "error": null
+        },
+        {
+            "source": "{{ [1, 2, 3] }}",
+            "error": null
+        },
+        {
+            "source": "{{ ['a', \"b\", c] }}",
+            "error": null
+        },
+        {
+            "source": "{{ [[1], [2, [3]]] }}",
+            "error": null
+        },
+        {
+            "source": "{{ [1, 2,] }}",
+            "error": null
+        },
+        {
+            "source": "{{ {} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {a: 1} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {'a': 1, \"b\": 2} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {(a ~ 'x'): 1} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {1: 'one', 2: 'two'} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {a, b} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {a: {b: {c: 1}}} }}",
+            "error": null
+        }
+    ]
+}

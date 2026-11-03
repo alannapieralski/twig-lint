@@ -1,0 +1,21 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ foo # inline comment\n}}",
+            "error": null
+        },
+        {
+            "source": "{{ foo # inline comment with }} inside\n}}",
+            "error": null
+        },
+        {
+            "source": "{% set x = 1 # inline comment in a block\n%}",
+            "error": null
+        },
+        {
+            "source": "{{ [\n  'a', # first\n  'b', # second\n] }}",
+            "error": null
+        }
+    ]
+}

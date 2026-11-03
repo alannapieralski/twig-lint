@@ -43,7 +43,7 @@
     "typecheck": "tsc -b tsconfig.lexer.json tsconfig.es-html-parser.json && tsc -p tsconfig.json",
     "test": "vitest run",
     "test:upstream": "node scripts/vendor.ts --test",
-    "golden:twig": "php tools/twig-oracle/tokenize.php test/fixtures/twig",
+    "golden:twig": "php tools/twig-oracle/tokenize.php test/fixtures/twig && php tools/twig-oracle/parse.php test/fixtures/twig",
     "syntax:twig": "php tools/twig-oracle/syntax.php test/fixtures/twig/twig-syntax.json",
     "vendor:check": "node scripts/vendor.ts --check",
     "vendor:write": "node scripts/vendor.ts --write",

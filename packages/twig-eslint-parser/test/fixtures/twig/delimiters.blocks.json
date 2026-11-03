@@ -1,0 +1,57 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ foo }}",
+            "error": null
+        },
+        {
+            "source": "{{foo}}",
+            "error": null
+        },
+        {
+            "source": "{{\n  foo\n}}",
+            "error": null
+        },
+        {
+            "source": "{% if foo %}",
+            "error": null
+        },
+        {
+            "source": "{{- foo -}}",
+            "error": null
+        },
+        {
+            "source": "{%- if foo -%}",
+            "error": null
+        },
+        {
+            "source": "{{~ foo ~}}",
+            "error": null
+        },
+        {
+            "source": "{%~ if foo ~%}",
+            "error": null
+        },
+        {
+            "source": "{{ '}}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"%}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ {a: {b: 1}} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {'a': [1, {b: 2}]}|length }}",
+            "error": null
+        },
+        {
+            "source": "{{ after_line }}",
+            "error": null
+        }
+    ]
+}

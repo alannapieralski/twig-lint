@@ -1,5 +1,5 @@
 {
-    "twig": "3.28.0",
+    "twig": "3.30.0",
     "tokens": [
         {
             "type": "begin of statement block",
@@ -231,6 +231,13 @@
             "end": 182
         },
         {
+            "type": "operator",
+            "value": "=",
+            "line": 4,
+            "offset": 182,
+            "end": 183
+        },
+        {
             "type": "string",
             "value": "numiko/x",
             "line": 4,
@@ -242,6 +249,13 @@
             "line": 4,
             "offset": 194,
             "end": 201
+        },
+        {
+            "type": "operator",
+            "value": "=",
+            "line": 4,
+            "offset": 201,
+            "end": 202
         },
         {
             "type": "string",

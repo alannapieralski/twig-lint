@@ -1,0 +1,65 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ 'single' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"double\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ '' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'it\\'s' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"say \\\"hi\\\"\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'back\\\\slash' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"tab\\tnew\\nline\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'escaped \\\nnewline' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"escaped \\\nnewline\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"a-#{b}-c\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#{ a ~ \"nested #{b}\" }\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"hash # without brace\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#{a}#{b}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'no #{interpolation} in single quotes' }}",
+            "error": null
+        }
+    ]
+}

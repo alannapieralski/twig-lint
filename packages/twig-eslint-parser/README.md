@@ -19,7 +19,7 @@ expressions:
 ## How it works
 
 1. **Twig** is tokenised by a fork of [twig-lexer](https://gitlab.com/nightlycommit/twig-lexer)
-   brought up to Twig 3.28 (see [the vendored code](#vendored-code)).
+   brought up to Twig 3.30 (see [the vendored code](#vendored-code)).
 2. **Markup** is read by a fork of [es-html-parser](https://github.com/yeonjuan/es-html-parser), the
    parser behind [html-eslint](https://html-eslint.org), so the tree has the shape html-eslint
    rules and better-tailwindcss expect. The lexer's Twig blocks are handed to it as template
@@ -180,17 +180,20 @@ Rules import these instead of keeping their own copies.
 
 ## Supported Twig
 
-Twig 3.x syntax up to 3.28, verified against real Twig:
+Twig 3.x syntax up to 3.30, verified against real Twig:
 
 - `test/fixtures/twig/twig-syntax.json` lists every tag, test, operator, expression form, token
-  type and punctuation character Twig 3.28 defines, read from Twig's own registries by
+  type and punctuation character Twig 3.30 defines, read from Twig's own registries by
   `tools/twig-oracle/syntax.php`. `test/syntax-coverage.test.ts` fails if the fixture templates
   do not use every one of them, or a hand-kept list of forms the registries do not name (string
   and number forms, hash keys, named arguments, whitespace control, comments, and Twig inside
   markup), or if the parser cannot convert every operator and test.
-- Every fixture matches Twig 3.28.0's own tokens exactly, and its output passes the node-by-node
+- Every fixture matches Twig 3.30.0's own tokens exactly, and its output passes the node-by-node
   checks in `test/support/output-checks.ts`: ranges, locations and text match the source, every
   string appears once, every tag and attribute is read, and every element closes.
+- The parser rejects exactly the fixture blocks Twig rejects. `tools/twig-oracle/parse.php` records
+  Twig's verdict on every block in `<name>.blocks.json`, and `test/parser/twig-block-verdicts.test.ts`
+  compares it with ours.
 - On real templates (Drupal core, contributed modules and themes) the lexer matches
   Twig on every token and the output passes the same checks, apart from elements opened or closed
   in different Twig branches and a few templates with invalid HTML.
@@ -200,13 +203,15 @@ Twig 3.x syntax up to 3.28, verified against real Twig:
 Run these from `packages/twig-eslint-parser`.
 
 1. Set the new version in `tools/twig-oracle/composer.json` and run `composer update` there.
+   Dependabot opens a pull request with this step done when Twig releases.
 2. `npm run syntax:twig` rewrites `twig-syntax.json`. Its diff is the list of new syntax.
-3. `npm run golden:twig` rewrites the fixtures' golden token files.
+3. `npm run golden:twig` rewrites the fixtures' golden token and block verdict files.
 4. `npm test`. Each failure names what to change:
    - **Syntax coverage:** add the new syntax to a fixture in `test/fixtures/twig`, then rerun
      step 3.
    - **Lexer parity:** the lexer tokenises something differently from Twig. Add a patch to
      `third_party/twig-lexer` (see its `UPSTREAM.md`).
+   - **Block verdicts:** the parser accepts or rejects a block differently from Twig.
    - **Operators, tests and tags:** every Twig-specific table lives in `src/twig/syntax.ts`:
      operators and their JavaScript stand-ins, two-word tests, and which tags are converted or
      deliberately left unconverted.
@@ -222,7 +227,7 @@ Two upstream projects are kept as forks, each the same way: the upstream files b
 and both upstream test suites, on every pull request.
 
 - **twig-lexer 1.0.0** (`src/lexer`), a TypeScript port of Twig's lexer that has not been released
-  since April 2024, brought up to Twig 3.28. See
+  since April 2024, brought up to Twig 3.30. See
   [`third_party/twig-lexer/UPSTREAM.md`](third_party/twig-lexer/UPSTREAM.md).
 - **es-html-parser 0.3.2** (`src/es-html-parser`), the HTML parser behind html-eslint, taught to
   treat Twig blocks by kind and position and to close back to an open element as browsers do. See

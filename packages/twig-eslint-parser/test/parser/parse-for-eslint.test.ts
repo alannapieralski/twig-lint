@@ -53,38 +53,15 @@ function expressionOf(code: string): Node {
   return onlyStatement(code)['expression'] as Node;
 }
 
-const blocksTwigItselfRejectsByFixture: Record<string, string[]> = {
-  'operators.twig': ['{{ foo.is not }}'],
-  'operator-edges.twig': [
-    '{{ foo.is not null }}', '{{ x|starts with }}', '{{ a or"b" }}', '{{ (a and)b }}', '{{ a isnot b }}', '{{ b-and }}',
-  ],
-  'whitespace-edges.twig': [
-    '{{ a or\u00a0b }}', '{{ a or\ufeffb }}', '{{ a or\u2028b }}', '{{ a not\u00a0in b }}', '{{ a is\u00a0not b }}',
-  ],
-};
-
-const blocksTheJavaScriptTranslationCannotReadByFixture: Record<string, string[]> = {
-  'operator-edges.twig': ['{{ foo.\r\nand }}', '{{ foo.  and }}', '{{ xor }}', '{{ in }}', '{{ matches }}', '{{ a ~ xor }}'],
-  'whitespace-edges.twig': ['{{ a\u00a0b }}'],
-};
-
-const unconvertedBlocksOf = (fixtureName: string) => [
-  ...blocksTwigItselfRejectsByFixture[fixtureName] ?? [],
-  ...blocksTheJavaScriptTranslationCannotReadByFixture[fixtureName] ?? [],
-];
-
 const tagsOf = (code: string) => collectNodes(parse(code).result.ast.body, (node) => node.type === 'Tag');
 const namedTag = (code: string, name: string) => tagsOf(code).find((tag) => tag['name'] === name) as Node;
 
 describe('fixtures', () => {
   const fixtureNames = readdirSync(fixturesDirectory).filter((name) => name.endsWith('.twig'));
 
-  it.each(fixtureNames)('%s converts every block Twig accepts and keeps every literal at its real source position', (fixtureName) => {
+  it.each(fixtureNames)('%s keeps every literal at its real source position', (fixtureName) => {
     const code = readFileSync(new URL(fixtureName, fixturesDirectory), 'utf8');
-    const { statements, services } = parse(code);
-    const unconvertedSources = unparsedTwig(services).map((block) => code.slice(...block.range));
-    expect(unconvertedSources.sort()).toEqual(unconvertedBlocksOf(fixtureName).sort());
-
+    const { statements } = parse(code);
     const literals = collectNodes(statements, (node) => node.type === 'Literal');
     for (const literal of literals) {
       expect(sourceOf(code, literal)).toBe(literal['raw']);
@@ -100,7 +77,7 @@ describe('fixtures', () => {
 
   it.each(fixtureNames)('%s produces output that matches the source node by node', (fixtureName) => {
     const code = readFileSync(new URL(fixtureName, fixturesDirectory), 'utf8');
-    const unconvertedBlocks = unconvertedBlocksOf(fixtureName);
+    const unconvertedBlocks = unparsedTwig(parse(code).services).map((block) => code.slice(...block.range));
     const issues = checkParserOutput(code).filter((issue) => !unconvertedBlocks.some((source) => issue.detail.startsWith(source)));
     expect(issues).toEqual([]);
   });

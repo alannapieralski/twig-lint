@@ -5,31 +5,26 @@ import { evenlySpaced } from '../../../tools/corpus/src/index.js';
 import { parseForESLint } from '../src/index.js';
 import { createOffsetLocator } from '../src/source-text.js';
 import { findParityMismatches } from './lexer/parity.js';
+import { compareBlockVerdictsWithTwig } from './support/block-verdicts.js';
 import { BRANCH_PAIRED_END_TAG_CHECK, compareWithHtmlOracle, twigRangesFromOracle } from './support/html-oracle.js';
 import { measureLineCoverage, statusOfDamage } from './support/line-coverage.js';
 import { checkRewritesKeepTheTree } from './support/metamorphic.js';
 import { MUTATORS, runMutations, seedFrom } from './support/mutations.js';
 import { TEMPLATE_DEFECT_CHECKS, checkParserOutput } from './support/output-checks.js';
 import type { Check, CheckOutcome, Finding, PackageCorpus, Template, TemplateCoverage } from '../../../tools/corpus/src/index.js';
-import type { TwigDiagnostic } from '../src/index.js';
 import type { Golden } from './lexer/parity.js';
+import type { TwigBlockVerdict } from './support/block-verdicts.js';
 import type { LineCoverage, TwigReading } from './support/line-coverage.js';
 import type { MutationOutcome } from './support/mutations.js';
 import type { OutputIssue } from './support/output-checks.js';
 
 type OracleResult = Partial<Golden> & { path: string; twig: string; error?: string; line?: number };
+type ParseOracleResult = { path: string; twig: string; blocks?: TwigBlockVerdict[]; error?: string };
 
 const oracleDirectory = resolve(import.meta.dirname, '../tools/twig-oracle');
-const oracleScript = resolve(oracleDirectory, 'tokenize.php');
+const tokenizeScript = resolve(oracleDirectory, 'tokenize.php');
+const parseScript = resolve(oracleDirectory, 'parse.php');
 const ORACLE_CHUNK_SIZE = 500;
-
-function unparsedTwigOf(source: string): readonly TwigDiagnostic[] | undefined {
-  try {
-    return parseForESLint(source).services.twig.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig');
-  } catch {
-    return undefined;
-  }
-}
 
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -45,13 +40,13 @@ function oracleUnavailableReason(): string | undefined {
   return undefined;
 }
 
-function tokenizeWithTwig(templates: readonly Template[]): OracleResult[] {
-  const output = execFileSync('php', [oracleScript, '--stdin'], {
+function runTwigOracle<Result>(script: string, templates: readonly Template[]): Result[] {
+  const output = execFileSync('php', [script, '--stdin'], {
     input: templates.map((template) => template.path).join('\n'),
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 1024,
   });
-  return output.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as OracleResult);
+  return output.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as Result);
 }
 
 const oracleResultsByPath = new Map<string, OracleResult>();
@@ -60,10 +55,24 @@ function* oracleResultsFor(templates: readonly Template[]): Generator<OracleResu
   yield* templates.flatMap((template) => oracleResultsByPath.get(template.path) ?? []);
   const uncached = templates.filter((template) => !oracleResultsByPath.has(template.path));
   for (let start = 0; start < uncached.length; start += ORACLE_CHUNK_SIZE) {
-    for (const result of tokenizeWithTwig(uncached.slice(start, start + ORACLE_CHUNK_SIZE))) {
+    for (const result of runTwigOracle<OracleResult>(tokenizeScript, uncached.slice(start, start + ORACLE_CHUNK_SIZE))) {
       oracleResultsByPath.set(result.path, result);
       yield result;
     }
+  }
+}
+
+function* parseOracleResultsFor(templates: readonly Template[]): Generator<ParseOracleResult> {
+  for (let start = 0; start < templates.length; start += ORACLE_CHUNK_SIZE) {
+    yield* runTwigOracle<ParseOracleResult>(parseScript, templates.slice(start, start + ORACLE_CHUNK_SIZE));
+  }
+}
+
+function compareBlockVerdictsOf(template: Template, verdicts: readonly TwigBlockVerdict[]): ReturnType<typeof compareBlockVerdictsWithTwig> | undefined {
+  try {
+    return compareBlockVerdictsWithTwig(template.source, verdicts);
+  } catch {
+    return undefined;
   }
 }
 
@@ -110,24 +119,44 @@ const lexerParity: Check = {
   },
 };
 
-const convertsEveryBlock: Check = {
-  id: 'parser/converts-every-block',
+const blockVerdicts: Check = {
+  id: 'parser/block-verdicts',
   run(templates, context): CheckOutcome {
+    const skipped = oracleUnavailableReason();
+    if (skipped !== undefined) {
+      return { findings: [], stats: {}, skipped };
+    }
+
+    const templatesByPath = new Map(templates.map((template) => [template.path, template]));
     const findings: Finding[] = [];
-    let notParsed = 0;
-    for (const [index, template] of templates.entries()) {
-      context.progress(index, { failures: findings.length });
-      const blocks = unparsedTwigOf(template.source);
-      if (blocks === undefined) {
-        notParsed += 1;
+    const stats = { templates: templates.length, rejectedByTwig: 0, notParsed: 0, blocksRejectedByBoth: 0 };
+    let index = 0;
+    for (const result of parseOracleResultsFor(templates)) {
+      context.progress(index, { failures: findings.filter((finding) => finding.severity === 'failure').length });
+      index += 1;
+      const template = templatesByPath.get(result.path);
+      if (!template) {
+        throw new Error(`The Twig oracle returned a template that was not sent: ${result.path}`);
+      }
+      if (result.blocks === undefined) {
+        stats.rejectedByTwig += 1;
+        continue;
+      }
+      const comparison = compareBlockVerdictsOf(template, result.blocks);
+      if (comparison === undefined) {
+        stats.notParsed += 1;
         continue;
       }
       const locate = createOffsetLocator(template.source);
-      for (const block of blocks) {
-        findings.push({ check: 'parser/converts-every-block', severity: 'failure', template, message: `${template.source.slice(...block.range)} (${block.message})`, line: locate(block.range[0]).line });
+      stats.blocksRejectedByBoth += comparison.rejectedByBoth.length;
+      for (const block of comparison.rejectedByBoth) {
+        findings.push({ check: 'parser/block-verdicts', severity: 'report', template, message: `Twig rejects it too: ${block.twigError}`, line: locate(block.range[0]).line });
+      }
+      for (const disagreement of comparison.disagreements) {
+        findings.push({ check: 'parser/block-verdicts', severity: 'failure', template, message: disagreement.description, line: locate(disagreement.range[0]).line });
       }
     }
-    return { findings, stats: { templates: templates.length, notParsed } };
+    return { findings, stats };
   },
 };
 
@@ -314,4 +343,4 @@ const mutationRecall: Check = {
   },
 };
 
-export default { package: 'twig-eslint-parser', checks: [lexerParity, convertsEveryBlock, outputMatchesSource, metamorphic, htmlOracle, lineCoverage, mutationRecall] } satisfies PackageCorpus;
+export default { package: 'twig-eslint-parser', checks: [lexerParity, blockVerdicts, outputMatchesSource, metamorphic, htmlOracle, lineCoverage, mutationRecall] } satisfies PackageCorpus;
