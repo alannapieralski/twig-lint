@@ -1,4 +1,4 @@
-import { Lexer } from '../../src/lexer/Lexer.js';
+import { TwigLexer } from '../../src/twig/tokens.js';
 import type { Token } from '../../src/lexer/Token.js';
 import type { TokenType } from '../../src/lexer/TokenType.js';
 
@@ -506,7 +506,7 @@ function findTextTwigDoesNotHave(template: Template, twigTexts: Range[]): string
 }
 
 function prepareTemplate(source: string): Template {
-  const ours = positionTokens(new Lexer(3).tokenize(source));
+  const ours = positionTokens(new TwigLexer().tokenize(source));
   const lineStarts = findLineStarts(source);
   const tagsConsumedByTwigLexer = findTagsConsumedByTwigLexer(ours);
   return {

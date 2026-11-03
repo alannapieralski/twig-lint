@@ -1,5 +1,6 @@
 import { Lexer } from '../lexer/Lexer.js';
 import { SyntaxError as TwigLexerSyntaxError } from '../lexer/SyntaxError.js';
+import { TWIG_OPERATORS } from './operators.js';
 import type { TokenType } from '../lexer/TokenType.js';
 
 export type TwigTokenType = TokenType;
@@ -46,9 +47,16 @@ export class TwigSyntaxError extends Error {
   }
 }
 
+export class TwigLexer extends Lexer {
+  constructor() {
+    super(3);
+    this.operators = [...TWIG_OPERATORS];
+  }
+}
+
 function lexTwig(source: string): ReturnType<Lexer['tokenize']> {
   try {
-    return new Lexer(3).tokenize(source);
+    return new TwigLexer().tokenize(source);
   } catch (error) {
     if (error instanceof TwigLexerSyntaxError) {
       throw new TwigSyntaxError(error.message, error.line, error.column);
@@ -61,6 +69,9 @@ export function tokenizeTwig(source: string): TwigToken[] {
   let start = 0;
   const tokens = lexTwig(source).map((token): TwigToken => {
     const value = token.value === null || token.value === undefined ? '' : String(token.value);
+    if (!source.startsWith(value, start)) {
+      throw new Error(`The Twig lexer read "${value}" at offset ${start}, where the template has different text.`);
+    }
     const positioned = { type: token.type, value, start, end: start + value.length };
     start = positioned.end;
     return positioned;

@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parseForESLint } from '../src/index.js';
 import { CONVERTED_TAGS, TAGS_LEFT_UNCONVERTED, TWO_WORD_TESTS } from '../src/twig/syntax.js';
+import { TWIG_OPERATORS } from '../src/twig/operators.js';
 import { tokenizeTwig } from '../src/twig/tokens.js';
 import { checkParserOutput } from './support/output-checks.js';
 
@@ -173,6 +174,14 @@ describe(`Twig ${inventory.twig} syntax coverage`, () => {
   it('knows the second word of every two-word test', () => {
     const twoWordTestNames = inventory.tests.filter((test) => test.includes(' '));
     expect(Object.entries(TWO_WORD_TESTS).map(([first, second]) => `${first} ${second}`).sort(), 'Update TWO_WORD_TESTS in src/twig/syntax.ts').toEqual(twoWordTestNames.sort());
+  });
+
+  it('lexes every operator Twig lexes as one', () => {
+    const lexedOtherwise = new Set(['=>', '...', 'is', 'is not', '(', '[', '.', '|', '?', 'literal']);
+    const twigOperators = inventory.expressions
+      .flatMap((expression) => [expression.name, ...expression.aliases])
+      .filter((operator) => !lexedOtherwise.has(operator));
+    expect([...TWIG_OPERATORS].sort(), 'Update TWIG_OPERATORS in src/twig/operators.ts').toEqual([...new Set(twigOperators)].sort());
   });
 
   const binaryOperators = inventory.expressions

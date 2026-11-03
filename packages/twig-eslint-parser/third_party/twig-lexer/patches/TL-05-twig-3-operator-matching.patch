@@ -1,0 +1,95 @@
+Description: Match operators as Twig 3's Lexer::getOperatorRegex does
+ Twig builds one pattern per operator: spaces inside it match any run of
+ whitespace, an operator ending in a letter must be followed by whitespace,
+ "(", ")", "[" or "{", and an operator starting with a letter is not one
+ right after "." or "|", nor after "." or "|" and one whitespace character.
+ twig-lexer 1.0.0 had only the lookahead, with "(" alone, and matched on the
+ text after the cursor, where a lookbehind sees nothing. The patterns are
+ now matched at the cursor against the whole source (sticky flag), so the
+ lookbehind is written into the pattern as Twig writes it. Whitespace is
+ PCRE's (TL-02), so "a or<NBSP>b" is one name, as in Twig. The comparator
+ sorting operators by length is made consistent. The operator list itself
+ is not changed here: this package passes Twig's list through the
+ protected operators field (src/twig/operators.ts).
+Author: Numiko
+Origin: other, https://github.com/twigphp/Twig/blob/v3.28.0/src/Lexer.php
+Forwarded: not-needed
+Twig-Reference: 3.1.0 (lookahead and lookbehind), 3.24.0 (lookbehind with whitespace)
+Test: test/fixtures/twig/operators.twig and operator-edges.twig (parity with Twig); npm run test:upstream
+Last-Update: 2026-11-03
+---
+diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts
+index 87dbff2..444b28c 100644
+--- a/src/main/lib/Lexer.ts
++++ b/src/main/lib/Lexer.ts
+@@ -222,27 +222,27 @@ export class Lexer {
+             let patterns: Array<string> = [];
+ 
+             operators.sort(function (a, b) {
+-                return a.length > b.length ? -1 : 1;
++                return b.length - a.length;
+             });
+ 
+             for (let operator of operators) {
+-                let length: number = operator.length;
+-                let pattern: string = escapeRegularExpressionPattern(operator);
++                // a space within an operator can be any amount of whitespaces
++                let pattern: string = escapeRegularExpressionPattern(operator).replace(/ +/g, pcreWhitespace + '+');
+ 
+-                // an operator that ends with a character must be followed by a whitespace or an opening parenthesis
+-                if (new RegExp('[A-Za-z]').test(operator[length - 1])) {
+-                    pattern += '(?=[\\s(])';
++                // an operator that ends with a letter must be followed by a whitespace, a parenthesis, a bracket or a brace
++                if (/[A-Za-z]$/.test(operator)) {
++                    pattern += '(?=' + pcreWhitespace + '|[()\\[{])';
+                 }
+ 
+-                // a space within an operator can be any amount of whitespaces
+-                pattern = pattern.replace(/\s+/, '\\s+');
++                // an operator that starts with a letter is a name right after "." or "|"
++                if (/^[A-Za-z]/.test(operator)) {
++                    pattern = '(?<![.|]' + pcreWhitespace + '|[^\\n][.|])' + pattern;
++                }
+ 
+                 patterns.push(pattern);
+             }
+ 
+-            let pattern: string = `^(${patterns.join('|')})`;
+-
+-            return new RegExp(pattern);
++            return new RegExp(patterns.join('|'), 'y');
+         };
+ 
+         // init regular expressions
+@@ -437,15 +437,15 @@ export class Lexer {
+             this.pushToken("SPREAD_OPERATOR", '...');
+         }
+         // test operator
+-        else if ((match = this.testOperatorRegExp.exec(candidate)) !== null) {
++        else if ((match = this.matchAtCursor(this.testOperatorRegExp)) !== null) {
+             this.pushToken("TEST_OPERATOR", match[0]);
+         }
+         // arrow
+-        else if ((match = this.arrowOperatorRegExp.exec(candidate)) !== null) {
++        else if ((match = this.matchAtCursor(this.arrowOperatorRegExp)) !== null) {
+             this.pushToken("ARROW", match[0]);
+         }
+         // operator
+-        else if ((match = this.operatorRegExp.exec(candidate)) !== null) {
++        else if ((match = this.matchAtCursor(this.operatorRegExp)) !== null) {
+             this.pushToken("OPERATOR", match[0]);
+         }
+         // name
+@@ -635,6 +635,12 @@ export class Lexer {
+         }
+     }
+ 
++    private matchAtCursor(regExp: RegExp): RegExpExecArray | null {
++        regExp.lastIndex = this.cursor;
++
++        return regExp.exec(this.source);
++    }
++
+     private moveCoordinates(text: string) {
+         this.cursor += text.length;
+         this.column += text.length;

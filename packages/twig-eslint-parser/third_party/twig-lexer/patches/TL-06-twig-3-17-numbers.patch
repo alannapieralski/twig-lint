@@ -2,7 +2,7 @@ Description: Lex Twig 3.17 number literals with "_" and exponents
  Twig 3.17 accepts digit separators ("1_000", "1_000.500_1") and exponents
  with an optional sign ("1e3", "1.5e-3", "2.5E+10"). twig-lexer 1.0.0 uses
  Twig 2's "[0-9]+(?:\.[0-9]+)?", so "1_000" became NUMBER "1" plus NAME
- "_000" and "1e3" became NUMBER "1" plus NAME "e3". Level 3 now uses a
+ "_000" and "1e3" became NUMBER "1" plus NAME "e3". numberPattern is now a
  JavaScript form of Twig's REGEX_NUMBER (LNUM, FRAC and EXPONENT). Token
  values stay as written in the source, so the lexer remains lossless.
  Twig 3.0 to 3.16 required a sign in the exponent; 3.17 made it optional.
@@ -11,27 +11,18 @@ Origin: other, https://github.com/twigphp/Twig/blob/v3.17.0/src/Lexer.php
 Forwarded: not-needed
 Twig-Reference: 3.17.0 ("Support underscores in number literals")
 Test: test/fixtures/twig/numbers.twig (parity with Twig 3.28.0); npm run test:upstream
-Last-Update: 2026-09-23
+Last-Update: 2026-11-03
 ---
 diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts
-index 07fcd17..4b61057 100644
+index 444b28c..81114d8 100644
 --- a/src/main/lib/Lexer.ts
 +++ b/src/main/lib/Lexer.ts
-@@ -46,6 +46,8 @@ export const namePattern: string = '[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*
+@@ -44,7 +44,7 @@ export const namePattern: string = '[a-zA-Z_\\x7f-\\uffff][a-zA-Z0-9_\\x7f-\\uff
+ /**
+  * The regular expression pattern used to identify a number.
   */
- export const numberPattern: string = '[0-9]+(?:\\.[0-9]+)?';
+-export const numberPattern: string = '[0-9]+(?:\\.[0-9]+)?';
++export const numberPattern: string = '[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?(?:[eE][+-]?[0-9]+(?:_[0-9]+)*)?';
  
-+export const twig3NumberPattern: string = '[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?(?:[eE][+-]?[0-9]+(?:_[0-9]+)*)?';
-+
  /**
   * The regular expression pattern used to identify a punctuation.
-  */
-@@ -302,7 +304,7 @@ export class Lexer {
-         this.doubleQuotedStringContentRegExp = new RegExp('^' + doubleQuotedStringContentPattern);
-         this.doubleQuotedStringDelimiterRegExp = new RegExp('^' + doubleQuotedStringDelimiterPattern);
-         this.nameRegExp = new RegExp('^' + namePattern);
--        this.numberRegExp = new RegExp('^' + numberPattern);
-+        this.numberRegExp = new RegExp('^' + (this.level === 3 ? twig3NumberPattern : numberPattern));
-         this.openingBracketRegExp = new RegExp(openingBracketPattern);
-         this.punctuationRegExp = new RegExp(punctuationPattern);
-         this.stringRegExp = new RegExp('^' + stringPattern);

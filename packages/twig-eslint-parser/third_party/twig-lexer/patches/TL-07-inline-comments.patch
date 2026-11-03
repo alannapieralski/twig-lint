@@ -2,29 +2,32 @@ Description: Lex Twig 3.15 inline comments inside expressions
  Twig 3.15 allows "# comment" inside {{ }} and {% %} up to the end of the
  line, including any }} or %} on that line. twig-lexer 1.0.0 throws
  "Unexpected character #". The comment is kept as an INLINE_COMMENT token so
- the lexer stays lossless; Twig itself discards it. Only enabled at level 3.
+ the lexer stays lossless; Twig itself discards it.
  Pattern mirrors Twig's Lexer::REGEX_RAW_INLINE_COMMENT, /#[^\r\n]*/A.
 Author: Numiko
 Origin: other, https://github.com/twigphp/Twig/blob/v3.28.0/src/Lexer.php
 Forwarded: not-needed
 Twig-Reference: 3.15.0 ("Add support for inline comments")
 Test: test/fixtures/twig/comments.twig (parity with Twig 3.28.0); npm run test:upstream
-Last-Update: 2026-09-23
+Last-Update: 2026-11-03
 ---
 diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts
-index 5934ea7..a00919c 100644
+index 81114d8..8e15a51 100644
 --- a/src/main/lib/Lexer.ts
 +++ b/src/main/lib/Lexer.ts
-@@ -61,6 +61,8 @@ export const stringPattern: string = '(")([^#"\\\\]*(?:\\\\.[^#"\\\\]*)*)(")|^(\
+@@ -61,6 +61,11 @@ export const stringPattern: string = '(")([^#"\\\\]*(?:\\\\[\\s\\S][^#"\\\\]*)*)
   */
  export const whitespacePattern: string = '[ \\r\\n\\t\\f\\v]+';
  
++/**
++ * The regular expression pattern used to identify an inline comment.
++ */
 +export const inlineCommentPattern: string = '#[^\\r\\n]*';
 +
- let openingBrackets = [];
- let closingBrackets = [];
- 
-@@ -109,6 +111,7 @@ export class Lexer {
+ /**
+  * The characters PCRE's \s matches without the u flag, which Twig's patterns rely on.
+  */
+@@ -114,6 +119,7 @@ export class Lexer {
      private stringRegExp: RegExp;
      private testOperatorRegExp: RegExp;
      private arrowOperatorRegExp: RegExp;
@@ -32,7 +35,7 @@ index 5934ea7..a00919c 100644
      private tokens: Token[];
      private trimmingModifier: string = '-';
      private variableEndRegExp: RegExp;
-@@ -299,6 +302,7 @@ export class Lexer {
+@@ -304,6 +310,7 @@ export class Lexer {
          this.punctuationRegExp = new RegExp(punctuationPattern);
          this.stringRegExp = new RegExp('^' + stringPattern);
          this.whitespaceRegExp = new RegExp('^' + whitespacePattern);
@@ -40,11 +43,12 @@ index 5934ea7..a00919c 100644
  
          while (this.cursor < this.end) {
              // dispatch to the lexing functions depending on the current state
-@@ -495,6 +499,9 @@ export class Lexer {
+@@ -500,6 +507,10 @@ export class Lexer {
              this.pushToken("OPENING_QUOTE", value);
              this.pushState(LexerState.DOUBLE_QUOTED_STRING);
          }
-+        else if (this.level === 3 && (match = this.inlineCommentRegExp.exec(candidate)) !== null) {
++        // inline comment
++        else if ((match = this.inlineCommentRegExp.exec(candidate)) !== null) {
 +            this.pushToken("INLINE_COMMENT", match[0]);
 +        }
          // unlexable

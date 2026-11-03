@@ -14,7 +14,7 @@ Test: test/fixtures/twig/names.twig (parity with Twig 3.28.0); npm run test:upst
 Last-Update: 2026-09-23
 ---
 diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts
-index 4b61057..4c088d2 100644
+index df90d25..229757b 100644
 --- a/src/main/lib/Lexer.ts
 +++ b/src/main/lib/Lexer.ts
 @@ -39,7 +39,7 @@ export const lineSeparators: string[] = ['\\r\\n', '\\r', '\\n'];

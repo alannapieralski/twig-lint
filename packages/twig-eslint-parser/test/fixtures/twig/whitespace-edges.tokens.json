@@ -1,0 +1,346 @@
+{
+    "twig": "3.28.0",
+    "tokens": [
+        {
+            "type": "text",
+            "value": "b\n",
+            "line": 1,
+            "offset": 8
+        },
+        {
+            "type": "text",
+            "value": "b\n",
+            "line": 2,
+            "offset": 18
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 3,
+            "offset": 20
+        },
+        {
+            "type": "begin of string interpolation",
+            "value": "",
+            "line": 3,
+            "offset": 24
+        },
+        {
+            "type": "name",
+            "value": "a ",
+            "line": 3,
+            "offset": 26,
+            "end": 29
+        },
+        {
+            "type": "end of string interpolation",
+            "value": "",
+            "line": 3,
+            "offset": 29
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 3,
+            "offset": 32
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 3,
+            "offset": 34
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 4,
+            "offset": 35
+        },
+        {
+            "type": "begin of string interpolation",
+            "value": "",
+            "line": 4,
+            "offset": 39
+        },
+        {
+            "type": "name",
+            "value": " a",
+            "line": 4,
+            "offset": 41,
+            "end": 44
+        },
+        {
+            "type": "end of string interpolation",
+            "value": "",
+            "line": 4,
+            "offset": 44
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 4,
+            "offset": 47
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 4,
+            "offset": 49
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 5,
+            "offset": 50
+        },
+        {
+            "type": "name",
+            "value": "line 3",
+            "line": 5,
+            "offset": 53,
+            "end": 60
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 5,
+            "offset": 61
+        },
+        {
+            "type": "text",
+            "value": "x\n",
+            "line": 5,
+            "offset": 63
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 6,
+            "offset": 65
+        },
+        {
+            "type": "name",
+            "value": "verbatim ",
+            "line": 6,
+            "offset": 68,
+            "end": 78
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 6,
+            "offset": 78
+        },
+        {
+            "type": "text",
+            "value": "x\n",
+            "line": 6,
+            "offset": 80
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 7,
+            "offset": 82
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 7,
+            "offset": 85,
+            "end": 86
+        },
+        {
+            "type": "name",
+            "value": "or b",
+            "line": 7,
+            "offset": 87,
+            "end": 92
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 7,
+            "offset": 93
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 7,
+            "offset": 95
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 8,
+            "offset": 96
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 8,
+            "offset": 99,
+            "end": 100
+        },
+        {
+            "type": "name",
+            "value": "or﻿b",
+            "line": 8,
+            "offset": 101,
+            "end": 107
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 8,
+            "offset": 108
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 8,
+            "offset": 110
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 9,
+            "offset": 111
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 9,
+            "offset": 114,
+            "end": 115
+        },
+        {
+            "type": "name",
+            "value": "or\u2028b",
+            "line": 9,
+            "offset": 116,
+            "end": 122
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 9,
+            "offset": 123
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 9,
+            "offset": 125
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 10,
+            "offset": 126
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 10,
+            "offset": 129,
+            "end": 130
+        },
+        {
+            "type": "name",
+            "value": "not in",
+            "line": 10,
+            "offset": 131,
+            "end": 138
+        },
+        {
+            "type": "name",
+            "value": "b",
+            "line": 10,
+            "offset": 139,
+            "end": 140
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 10,
+            "offset": 141
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 10,
+            "offset": 143
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 11,
+            "offset": 144
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 11,
+            "offset": 147,
+            "end": 148
+        },
+        {
+            "type": "name",
+            "value": "is not",
+            "line": 11,
+            "offset": 149,
+            "end": 156
+        },
+        {
+            "type": "name",
+            "value": "b",
+            "line": 11,
+            "offset": 157,
+            "end": 158
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 11,
+            "offset": 159
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 11,
+            "offset": 161
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 12,
+            "offset": 162
+        },
+        {
+            "type": "name",
+            "value": "a b",
+            "line": 12,
+            "offset": 165,
+            "end": 169
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 12,
+            "offset": 170
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 12,
+            "offset": 172
+        },
+        {
+            "type": "end of template",
+            "value": "",
+            "line": 13,
+            "offset": 173
+        }
+    ]
+}
