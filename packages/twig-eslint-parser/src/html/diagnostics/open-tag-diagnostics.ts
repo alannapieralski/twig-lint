@@ -1,6 +1,7 @@
 import { findBlocksWithin, findTwigBranchSpans, isInsideTwigBranch } from '../../twig/balance.js';
+import { isNamedAttribute } from '../../attributes.js';
 import { openTagRangeOf } from './markup-elements.js';
-import type { AttributeNode } from '../../attributes.js';
+import type { AttributeNode, NamedAttributeNode } from '../../attributes.js';
 import type { TwigDiagnostic } from '../../diagnostics.js';
 import type { Range } from '../../range.js';
 import type { TwigBlockSummary } from '../../twig/blocks.js';
@@ -47,7 +48,7 @@ function describeStrayCharacter(attribute: AttributeNode, text: string, blocks: 
 
 function findDuplicateAttributeDiagnostics(element: MarkupElement, branchSpans: readonly Range[]): TwigDiagnostic[] {
   const namesSeen = new Set<string>();
-  const isComparable = (attribute: AttributeNode) => !attribute.key.value.includes('{') && !isInsideTwigBranch(attribute.range[0], branchSpans);
+  const isComparable = (attribute: AttributeNode): attribute is NamedAttributeNode => isNamedAttribute(attribute) && !attribute.key.value.includes('{') && !isInsideTwigBranch(attribute.range[0], branchSpans);
 
   return element.attributes.filter(isComparable).flatMap((attribute): TwigDiagnostic[] => {
     const name = attribute.key.value.toLowerCase();

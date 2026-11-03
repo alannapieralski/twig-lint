@@ -1,15 +1,18 @@
 import type { Range } from './range.js';
 
 type AttributeWrapper = { readonly value: string; readonly range: Range };
+type AttributeKey = { readonly value: string };
 
 export type AttributeNode = {
   readonly type: 'Attribute';
   readonly range: [number, number];
-  readonly key: { readonly value: string };
+  readonly key?: AttributeKey;
   readonly value?: { readonly value: string; readonly range: Range; readonly parts?: readonly { readonly type: string; readonly value: string }[] };
   readonly startWrapper?: AttributeWrapper;
   readonly endWrapper?: AttributeWrapper;
 };
+
+export type NamedAttributeNode = AttributeNode & { readonly key: AttributeKey };
 
 export type AttributeOwner = { readonly type: string; readonly attributes: readonly AttributeNode[] };
 
@@ -17,6 +20,10 @@ export type OmittedAttribute = { readonly name: string; readonly range: Range; r
 
 export function isAttributeNode(value: unknown): value is AttributeNode {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'Attribute';
+}
+
+export function isNamedAttribute(attribute: AttributeNode): attribute is NamedAttributeNode {
+  return attribute.key !== undefined;
 }
 
 export function containsTwig(attribute: AttributeNode): boolean {
@@ -30,7 +37,7 @@ export function omitInterpolatedAttributes(root: unknown, attributeNames: Readon
 
   const omitted: OmittedAttribute[] = [];
   const visited = new WeakSet<object>();
-  const shouldOmit = (attribute: AttributeNode) => attributeNames.has(attribute.key.value.toLowerCase()) && containsTwig(attribute);
+  const shouldOmit = (attribute: AttributeNode): attribute is NamedAttributeNode => isNamedAttribute(attribute) && attributeNames.has(attribute.key.value.toLowerCase()) && containsTwig(attribute);
 
   const visit = (value: unknown): void => {
     if (typeof value !== 'object' || value === null || visited.has(value)) {

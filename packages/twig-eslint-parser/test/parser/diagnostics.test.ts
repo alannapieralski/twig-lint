@@ -104,6 +104,10 @@ describe('duplicate-attribute', () => {
   it('is left to the tag problem when the tag could not be read cleanly', () => {
     expect(codesOf('<li class="a\' data-x="y" class="z">x</li>')).toEqual(['unexpected-character-in-attribute-name']);
   });
+
+  it('never compares an attribute with a value but no name', () => {
+    expect(codesOf('<div class="a" =b =b>x</div>')).toEqual([]);
+  });
 });
 
 describe('unexpected-character-in-attribute-name', () => {
