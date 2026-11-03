@@ -82,8 +82,7 @@ Examples of **correct** code:
 ### Working with other rules
 
 [`twig-html/indent`](indent.md) indents the content on the next fix pass, so keep it on with this
-rule, as `configs.recommended` does. Where `indent` cannot know the depth, such as inside an element
-that is never closed, moved content stays at the tag's indentation.
+rule, as `configs.recommended` does.
 
 ## What it skips
 
@@ -99,6 +98,7 @@ that is never closed, moved content stays at the tag's indentation.
 | `pre` and `textarea`, and everything inside them | Their whitespace is content | Built in |
 | Tags whose name is Twig, such as `<{{ element }}>` | Twig may render them as an inline element | Built in |
 | Tags with no closing tag, such as `<img>` | They have no content | Built in |
+| The body of a Drupal `{% trans %}`, and of its `{% plural %}` section | Drupal builds the translation key from the text between the tags, so any change to its whitespace or quotes loses the stored translations. Only the whitespace at its two edges, which Drupal trims, is changed | Built in |
 
 ### Reported but not fixed
 
@@ -108,6 +108,9 @@ that is never closed, moved content stays at the tag's indentation.
 
 ### Not checked at all
 
+- **An element inside an element that is never closed**, such as the `<div>` in `<p><div>…</div>`
+  with no `</p>`. [`twig-html/indent`](indent.md) cannot know the depth there and leaves the content
+  alone, so moving it would leave it at the tag's indentation.
 - **An element whose content starts or ends in a different Twig branch from the element**, such as a
   wrapper opened in `{% if wrap %}<div>{% endif %}` and closed in `{% if wrap %}</div>{% endif %}`.
   Moving the edges would move the Twig tags with them. Twig blocks that open and close inside the

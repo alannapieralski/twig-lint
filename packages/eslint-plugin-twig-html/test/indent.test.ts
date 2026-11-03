@@ -55,7 +55,12 @@ describe('twig-html/indent', () => {
     });
 
     it('removes indentation from top-level content', async () => {
-      expect(await fixed('  <p>a</p>\n    <p>b</p>')).toBe('<p>a</p>\n<p>b</p>');
+      expect(await fixed('<p>a</p>\n    <p>b</p>')).toBe('<p>a</p>\n<p>b</p>');
+    });
+
+    it('keeps the whitespace before the first content of the file, which a template prints', async () => {
+      expect(await fixed('  <p>a</p>\n    <p>b</p>')).toBe('  <p>a</p>\n<p>b</p>');
+      expect(await fixed("\n {% include 'icon.twig' %}\n   <p>b</p>")).toBe("\n {% include 'icon.twig' %}\n<p>b</p>");
     });
 
     it('indents every line of multi-line text at the child indent', async () => {
@@ -238,7 +243,7 @@ describe('twig-html/indent', () => {
     });
 
     it('indents attributes one step from the tag when the first one is on its own line', async () => {
-      expect(await fixed('  <div>\n<input\nclass="a"\n        id="b"\n>\n  </div>')).toBe('<div>\n  <input\n    class="a"\n    id="b"\n  >\n</div>');
+      expect(await fixed('<div>\n<input\nclass="a"\n        id="b"\n>\n  </div>')).toBe('<div>\n  <input\n    class="a"\n    id="b"\n  >\n</div>');
     });
 
     it('indents attributes one step from the tag when only Twig glued to the tag name is on the tag line', async () => {

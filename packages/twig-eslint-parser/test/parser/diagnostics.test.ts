@@ -77,6 +77,39 @@ describe('elements written as self-closing', () => {
   });
 });
 
+describe('duplicate-attribute', () => {
+  it('reports each later attribute with a name an earlier one has, on the attribute', () => {
+    const code = '<div class="a" id="b" class="c" ID="d">x</div>';
+    const diagnostics = diagnosticsOf(code);
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toEqual(['duplicate-attribute', 'duplicate-attribute']);
+    expect(diagnostics.map((diagnostic) => code.slice(...diagnostic.range))).toEqual(['class="c"', 'ID="d"']);
+    expect(diagnostics[0]?.message).toBe('The attribute "class" is already set on this tag. Browsers ignore every one after the first.');
+  });
+
+  it('compares names without regard to case, and attributes with no value', () => {
+    expect(codesOf('<input disabled DISABLED>')).toEqual(['duplicate-attribute']);
+  });
+
+  it.each([
+    '<div class="a" id="b">x</div>',
+    '<div {% if a %}class="a"{% else %}class="b"{% endif %}>x</div>',
+    '<div class="a" {% if b %}class="b"{% endif %}>x</div>',
+    '<div data-{{ a }}="x" data-{{ b }}="y" {{ attributes }} {{ more }}>x</div>',
+    '<div {{ attributes }} {{ attributes }}>x</div>',
+  ])('stays quiet when the repeat may not render together: %s', (code) => {
+    expect(codesOf(code)).toEqual([]);
+  });
+
+  it('is left to the tag problem when the tag could not be read cleanly', () => {
+    expect(codesOf('<li class="a\' data-x="y" class="z">x</li>')).toEqual(['unexpected-character-in-attribute-name']);
+  });
+
+  it('never compares an attribute with a value but no name', () => {
+    expect(codesOf('<div class="a" =b =b>x</div>')).toEqual([]);
+  });
+});
+
 describe('unexpected-character-in-attribute-name', () => {
   it.each([
     '<li class="a\' data-x="y" id="z">x</li>',
@@ -84,6 +117,14 @@ describe('unexpected-character-in-attribute-name', () => {
   ])('reports an attribute that holds a quote left over from a mis-quoted value: %s', (code) => {
     const [diagnostic] = diagnosticsOf(code);
     expect(diagnostic).toMatchObject({ code: 'unexpected-character-in-attribute-name', range: [0, code.indexOf('>') + 1] });
+  });
+
+  it.each([
+    '<button type"button" class="a">x</button>',
+    '<button class="a" type"button">x</button>',
+    "<button type'button'>x</button>",
+  ])('reports a quoted value whose = is missing: %s', (code) => {
+    expect(codesOf(code)).toEqual(['unexpected-character-in-attribute-name']);
   });
 
   it('reports the < before a / when a missing > lets the tag take in the next closing tag', () => {
@@ -118,6 +159,11 @@ describe('x-invalid-end-tag', () => {
   it('names the element that is open where the closing tag stands', () => {
     expect(diagnosticsOf('<div>\n  </span>\n</div>')[0]?.message).toBe('</span> does not match the open <div>. Remove it or correct its name.');
     expect(diagnosticsOf('<p>x</p></div>')[0]?.message).toBe('</div> closes nothing, because no element is open. Remove it or add the opening tag.');
+  });
+
+  it('says when an earlier tag of the same name ended with "/>", which browsers ignore on that element', () => {
+    const [diagnostic] = diagnosticsOf('<div>\n  <button class="a" type="button" />\n  <span>x</span>\n</button>\n</div>');
+    expect(diagnostic?.message).toBe('</button> closes nothing, because the <button … /> before it already ended with "/>". Browsers ignore "/>" on this element, so remove the "/" there or remove this closing tag.');
   });
 
   it('reports the closing tag only', () => {
@@ -251,6 +297,35 @@ describe('x-unparsed-twig', () => {
     const [diagnostic] = diagnosticsOf('<p>{{ title subtitle }}</p>');
     expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig', range: [3, 23] });
     expect(diagnostic?.message).toContain('Unexpected token subtitle');
+  });
+});
+
+describe('x-unparsed-twig for constructs only JavaScript has', () => {
+  it.each([
+    ['a missing comma between array items', "{% set classes = ['a' 'b'] %}"],
+    ['a missing comma between hash values', "{{ { a: 'x' b: 'y' } }}"],
+    ['a string straight after a variable', "{{ title 'suffix' }}"],
+    ['a comma outside brackets', '{{ a, b }}'],
+    ['a comma outside brackets in a condition', '{% if a, b %}{% endif %}'],
+  ])('reports %s', (_name, code) => {
+    const [diagnostic] = diagnosticsOf(code);
+    expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig' });
+    expect(diagnostic?.range[0]).toBe(0);
+  });
+
+  it('names what is wrong', () => {
+    expect(diagnosticsOf("{{ a 'b' }}")[0]?.message).toContain('missing');
+    expect(diagnosticsOf('{{ a, b }}')[0]?.message).toContain('comma');
+  });
+
+  it.each([
+    ['commas between array items and arguments', "{% set a = ['a', 'b'] %}{{ f(1, 'x') }}"],
+    ['commas between hash entries and include parameters', "{% include 'x' with { a: 1, b: 2 } only %}"],
+    ['several set targets', '{% set a, b = 1, 2 %}'],
+    ['a loop with a condition', '{% for item in items if item.visible %}{% endfor %}'],
+    ['macro defaults', "{% macro input(name, value = '') %}{% endmacro %}"],
+  ])('stays quiet for %s', (_name, code) => {
+    expect(diagnosticsOf(code)).toEqual([]);
   });
 });
 

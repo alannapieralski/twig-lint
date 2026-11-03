@@ -62,7 +62,7 @@ Examples of **correct** code:
 ### Twig blocks
 
 - **Body of a block:** one step in from the opening tag, for `if`, `for`, `block`, `embed`, `macro`,
-  `apply`, block-form `set`, Drupal's `trans` and any other tag closed by `end<name>`.
+  `apply`, block-form `set` and any other tag closed by `end<name>`, except Drupal's `trans` (see What it skips).
 - **Branches and the end tag:** `else`, `elseif`, `plural` (in a Drupal `trans`) and the `end` tag are
   in line with the opening tag.
 - **Short forms:** an inline `set` and the short `{% block title page_title %}` have no body, so they
@@ -143,7 +143,9 @@ These lines keep whatever indentation the author wrote:
 | Lines of a multi-line `{{ }}` or `{% %}` that continue the line before them, inside brackets or not, such as a `?`, `:` or `\|filter` line, the second line of a long condition or the closing `%}`, and lines outside any bracket that are not a method chain | How to wrap the rest of an expression is left to the author | Built in |
 | Inner lines of Twig that starts inside a skipped region, such as a multi-line attribute value | The region owns its layout | Built in |
 | The bodies of `{% verbatim %}` and `{% raw %}` | Twig prints them as written | Built in |
+| The body of a Drupal `{% trans %}`, and of its `{% plural %}` section | Drupal builds the translation key from the text between the tags, so any change to its whitespace or quotes loses the stored translations. The `{% trans %}`, `{% plural %}` and `{% endtrans %}` tags are still indented | Built in |
 | YAML front matter between `---` lines at the top of the file, as in Drupal help topics | It is not markup | Built in |
+| The whitespace before the first content of the file | A template prints it, so an include placed straight after text may rely on it | Built in |
 
 ### Not checked at all
 

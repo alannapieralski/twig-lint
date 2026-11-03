@@ -1,5 +1,5 @@
-import { containsTwig, isAttributeNode } from 'twig-eslint-parser';
-import type { AttributeNode, OmittedAttribute, TwigStringSummary } from 'twig-eslint-parser';
+import { containsTwig, isAttributeNode, isNamedAttribute } from 'twig-eslint-parser';
+import type { AttributeNode, NamedAttributeNode, OmittedAttribute, TwigStringSummary } from 'twig-eslint-parser';
 import type { Problem } from '../../shared/problem.js';
 import type { Range } from '../../shared/range.js';
 import type { ResolvedOptions } from './options.js';
@@ -11,7 +11,7 @@ function describeProblem(name: string, range: Range): Problem {
 
 export function findInterpolatedAttributeProblems(tag: TagWithAttributes, options: ResolvedOptions): Problem[] {
   const attributes = (tag.attributes ?? []).filter(isAttributeNode);
-  const isInterpolated = (attribute: AttributeNode) => options.restrictedNames.has(attribute.key.value.toLowerCase()) && containsTwig(attribute);
+  const isInterpolated = (attribute: AttributeNode): attribute is NamedAttributeNode => isNamedAttribute(attribute) && options.restrictedNames.has(attribute.key.value.toLowerCase()) && containsTwig(attribute);
   const interpolatedAttributes = attributes.filter(isInterpolated);
 
   return interpolatedAttributes.map((attribute) => describeProblem(attribute.key.value, attribute.range));

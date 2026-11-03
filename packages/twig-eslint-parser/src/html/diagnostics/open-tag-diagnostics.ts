@@ -1,6 +1,7 @@
-import { findBlocksWithin } from '../../twig/balance.js';
+import { findBlocksWithin, findTwigBranchSpans, isInsideTwigBranch } from '../../twig/balance.js';
+import { isNamedAttribute } from '../../attributes.js';
 import { openTagRangeOf } from './markup-elements.js';
-import type { AttributeNode } from '../../attributes.js';
+import type { AttributeNode, NamedAttributeNode } from '../../attributes.js';
 import type { TwigDiagnostic } from '../../diagnostics.js';
 import type { Range } from '../../range.js';
 import type { TwigBlockSummary } from '../../twig/blocks.js';
@@ -36,16 +37,41 @@ function textWithoutTwig(text: string, range: Range, blocks: readonly TwigBlockS
 }
 
 function describeStrayCharacter(attribute: AttributeNode, text: string, blocks: readonly TwigBlockSummary[]): StrayCharacterDiagnostic | undefined {
-  const withoutQuotedValues = textWithoutTwig(text, attribute.range, blocks).replace(QUOTED_VALUE, '');
-  if (!CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(withoutQuotedValues)) {
-    return undefined;
+  const [name = '', ...valueParts] = textWithoutTwig(text, attribute.range, blocks).split('=');
+  if (CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(name)) {
+    return STRAY_CHARACTER_IN_NAME;
   }
 
-  const [name = ''] = withoutQuotedValues.split('=');
-  return CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(name) ? STRAY_CHARACTER_IN_NAME : STRAY_CHARACTER_IN_VALUE;
+  const valueWithoutQuotedParts = valueParts.join('=').replace(QUOTED_VALUE, '');
+  return CHARACTER_THAT_BREAKS_AN_ATTRIBUTE.test(valueWithoutQuotedParts) ? STRAY_CHARACTER_IN_VALUE : undefined;
 }
 
-function findOpenTagDiagnostic(element: MarkupElement, text: string, blocks: readonly TwigBlockSummary[]): TwigDiagnostic | undefined {
+function findDuplicateAttributeDiagnostics(element: MarkupElement, branchSpans: readonly Range[]): TwigDiagnostic[] {
+  const namesSeen = new Set<string>();
+  const isComparable = (attribute: AttributeNode): attribute is NamedAttributeNode => isNamedAttribute(attribute) && !attribute.key.value.includes('{') && !isInsideTwigBranch(attribute.range[0], branchSpans);
+
+  return element.attributes.filter(isComparable).flatMap((attribute): TwigDiagnostic[] => {
+    const name = attribute.key.value.toLowerCase();
+    if (!namesSeen.has(name)) {
+      namesSeen.add(name);
+      return [];
+    }
+
+    const message = `The attribute "${name}" is already set on this tag. Browsers ignore every one after the first.`;
+    return [{ code: 'duplicate-attribute', message, range: attribute.range }];
+  });
+}
+
+function findDiagnosticsOfOpenTag(element: MarkupElement, text: string, blocks: readonly TwigBlockSummary[], branchSpans: readonly Range[]): TwigDiagnostic[] {
+  const malformedTagDiagnostic = findMalformedTagDiagnostic(element, text, blocks);
+  if (malformedTagDiagnostic) {
+    return [malformedTagDiagnostic];
+  }
+
+  return findDuplicateAttributeDiagnostics(element, branchSpans);
+}
+
+function findMalformedTagDiagnostic(element: MarkupElement, text: string, blocks: readonly TwigBlockSummary[]): TwigDiagnostic | undefined {
   if (!element.openEnd) {
     return undefined;
   }
@@ -65,5 +91,7 @@ function findOpenTagDiagnostic(element: MarkupElement, text: string, blocks: rea
 }
 
 export function findOpenTagDiagnostics(elements: readonly MarkupElement[], text: string, blocks: readonly TwigBlockSummary[]): TwigDiagnostic[] {
-  return elements.map((element) => findOpenTagDiagnostic(element, text, blocks)).filter((diagnostic) => diagnostic !== undefined);
+  const branchSpans = findTwigBranchSpans(blocks);
+
+  return elements.flatMap((element) => findDiagnosticsOfOpenTag(element, text, blocks, branchSpans));
 }

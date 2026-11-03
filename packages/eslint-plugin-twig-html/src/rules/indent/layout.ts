@@ -7,14 +7,14 @@ import { findYamlFrontMatter } from './yaml-front-matter.js';
 import type { TwigBlockSummary } from 'twig-eslint-parser';
 import type { HtmlSource } from './html/html-regions.js';
 import type { MarkupNode } from './html/types.js';
-import type { TwigSegment } from './twig/types.js';
+import type { TwigSegment } from '../../shared/twig-segments.js';
 import type { IndentLayout } from './types.js';
 
 export type LayoutSource = HtmlSource & { readonly blocks: readonly TwigBlockSummary[] };
 
 export function buildIndentLayout(document: MarkupNode, segments: readonly TwigSegment[], source: LayoutSource): IndentLayout {
   const html = findHtmlRegions(document, source);
-  const twig = findTwigRegions(segments, source.blocks);
+  const twig = findTwigRegions(source.text, segments, source.blocks);
   const seams = findSeams(html.elements, segments);
   const depthUnknown = createRangeCoverage([...seams.branchSplitContent, ...html.unclosedContent]);
   const openTags = describeOpenTags(html.elements, source, depthUnknown);

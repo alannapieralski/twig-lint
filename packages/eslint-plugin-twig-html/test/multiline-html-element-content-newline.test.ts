@@ -222,9 +222,14 @@ describe('twig-html/multiline-html-element-content-newline', () => {
     expect(await fixed(code, { ignoreInlineElements: false })).toBe('<svg\n  class="icon"\n  viewBox="0 0 1 1"\n>\n  <path d="M0 0"/>\n</svg>');
   });
 
-  it('keeps content it moves at the tag line indentation where twig-html/indent cannot know the depth', async () => {
+  it('leaves the content of an element alone inside an element that is never closed, where twig-html/indent cannot know the depth', async () => {
     const code = '<head>\n  <p>\n  <div\n    class="a"\n    id="b"\n  >{# note #}\n  </div>\n</head>';
-    expect(await fixed(code)).toBe('<head>\n  <p>\n  <div\n    class="a"\n    id="b"\n  >\n  {# note #}\n  </div>\n</head>');
+    expect(await fixed(code)).toBe(code);
+  });
+
+  it('moves the content of the same element once its parent is closed', async () => {
+    const code = '<head>\n  <p>\n  <div\n    class="a"\n    id="b"\n  >{# note #}\n  </div></p>\n</head>';
+    expect(await fixedAlone(code)).toBe('<head>\n  <p>\n  <div\n    class="a"\n    id="b"\n  >\n  {# note #}\n  </div>\n  </p>\n</head>');
   });
 
   it('moves child tags onto their own lines, and twig-html/indent indents them', async () => {

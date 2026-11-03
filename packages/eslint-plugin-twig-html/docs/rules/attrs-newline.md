@@ -81,6 +81,7 @@ at the tag's own indentation.
 | Elements in `ignores`, and every tag inside them | Inline SVG puts many short tags on one line, and one attribute per line would make it much longer for no gain | `ignores`, default `['svg']` |
 | `<script>` and `<style>` elements | The whole element is left as written | Built in |
 | `textarea` and `title` content | It is text, so the rule never reads markup there | Built in |
+| The body of a Drupal `{% trans %}`, and of its `{% plural %}` section | Drupal builds the translation key from the text between the tags, so any change to its whitespace or quotes loses the stored translations. Only the whitespace at its two edges, which Drupal trims, is changed | Built in |
 
 ### Reported but not fixed
 

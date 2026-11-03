@@ -28,6 +28,6 @@ export const multilineHtmlElementContentNewline: Rule.RuleModule = {
 
     const checkTag = (tag: TagNode) => reportProblems(context, findContentProblems(tag, source, options));
 
-    return balancedTagListeners(checkTag, ['Tag'], services.blocks);
+    return balancedTagListeners(checkTag, ['Tag'], source);
   },
 };

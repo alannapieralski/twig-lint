@@ -43,6 +43,23 @@ function relocateTree(value: unknown, offset: number, locate: (offset: number) =
   }
 }
 
+const MISSING_SEPARATOR_REASON = 'a string follows an expression directly, so a comma or an operator is missing';
+
+function containsTaggedTemplate(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(containsTaggedTemplate);
+  }
+  if (!isNode(value)) {
+    return false;
+  }
+  if (value.type === 'TaggedTemplateExpression') {
+    return true;
+  }
+
+  const children = Object.entries(value).filter(([key]) => key !== 'loc' && key !== 'range').map(([, child]) => child);
+  return containsTaggedTemplate(children);
+}
+
 export function parseJavaScriptAt(code: string, offset: number, locate: (offset: number) => SourcePosition): ParsedJavaScript {
   let program: { body: unknown[] };
   try {
@@ -52,6 +69,10 @@ export function parseJavaScriptAt(code: string, offset: number, locate: (offset:
   }
 
   const statements = program.body.filter(isNode);
+  if (containsTaggedTemplate(statements)) {
+    return { isParsed: false, reason: MISSING_SEPARATOR_REASON };
+  }
+
   relocateTree(statements, offset, locate);
   return { isParsed: true, statements };
 }
