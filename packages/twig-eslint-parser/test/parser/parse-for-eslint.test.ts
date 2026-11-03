@@ -213,7 +213,7 @@ describe('operators', () => {
   it.each([
     ["{{ a ? 'b' }}", '&&'],
     ["{{ a ?'b' }}", '&&'],
-    ["{{ a?'b' }}", '&'],
+    ["{{ a?'b' }}", '&&'],
     ["{{ a ?\n  'b' }}", '&&'],
   ])('turns the short ternary in %s into %s, keeping the value on the right', (code, operator) => {
     expect(expressionOf(code)).toMatchObject({ operator, right: { type: 'TemplateLiteral' } });
@@ -236,14 +236,14 @@ describe('operators', () => {
   it.each([
     ['{{ a and b ?? c }}', { operator: '&&', right: { operator: '??' } }],
     ['{{ not a ?? b }}', { type: 'UnaryExpression', argument: { operator: '??' } }],
-    ['{{ x or a ?? b ?? c }}', { operator: '||', right: { operator: '??', left: { operator: '??' } } }],
+    ['{{ x or a ?? b ?? c }}', { operator: '||', right: { operator: '??', right: { operator: '??' } } }],
   ])('groups the ?? chain in %s as Twig does', (code, shape) => {
     expect(expressionOf(code)).toMatchObject(shape);
     expect(checkParserOutput(code)).toEqual([]);
   });
 
-  it('reads ?? as || when there is no space for brackets around it', () => {
-    expect(expressionOf('{{ f(a??b and c) }}')).toMatchObject({ arguments: [{ operator: '||', right: { operator: '&&' } }] });
+  it('groups ?? tighter than and inside call arguments, as Twig does', () => {
+    expect(expressionOf('{{ f(a??b and c) }}')).toMatchObject({ arguments: [{ operator: '&&', left: { operator: '??' } }] });
   });
 
   it('parses arrow functions, spreads and dynamic macro calls', () => {
@@ -252,8 +252,8 @@ describe('operators', () => {
     expect(onlyStatement('{{ macros.(name)(args) }}')).toBeDefined();
   });
 
-  it('renames JavaScript reserved words used as Twig variables', () => {
-    expect(expressionOf('{{ class }}')).toMatchObject({ type: 'Identifier', name: '_lass' });
+  it('keeps a Twig variable named like a JavaScript reserved word', () => {
+    expect(expressionOf('{{ class }}')).toMatchObject({ type: 'Identifier', name: 'class' });
   });
 });
 
@@ -282,7 +282,7 @@ describe('tags', () => {
 
   it('supports {% set %} capture blocks and destructuring', () => {
     expect(onlyStatement('{% set c %}{% endset %}')).toMatchObject({ type: 'VariableDeclaration' });
-    expect(onlyStatement('{% set [a, b] = x %}')).toMatchObject({ type: 'VariableDeclaration' });
+    expect(onlyStatement('{% set a, b = x, y %}')).toMatchObject({ type: 'VariableDeclaration', declarations: [{ id: { type: 'ArrayPattern' } }] });
     expect(expressionOf('{% do {name: userName} = user %}')).toMatchObject({ type: 'AssignmentExpression' });
   });
 
@@ -295,9 +295,8 @@ describe('tags', () => {
     expect(expressionOf("{% embed 'card' ignore missing with { a: 1 } %}{% endembed %}")).toMatchObject({ type: 'CallExpression', callee: { name: 'embed' } });
   });
 
-  it('parses the iterated expression of {% for %}, including the Twig 2 if filter', () => {
+  it('parses the iterated expression of {% for %}', () => {
     expect(expressionOf('{% for key, item in items %}{% endfor %}')).toMatchObject({ type: 'Identifier', name: 'items' });
-    expect(expressionOf("{% for item in items if item != '' %}{% endfor %}")).toMatchObject({ type: 'SequenceExpression' });
   });
 
   it.each(['{% if a and b %}{% endif %}', '{% do x = 1 %}', '{% with { a: 1 } only %}{% endwith %}', "{% macro input(classes = ['a']) %}{% endmacro %}", "{% block title 'value' %}"])(
@@ -821,8 +820,9 @@ describe('unquoted attribute values', () => {
 describe('tags without optional whitespace', () => {
   it('still parses {%include%} written without a space after the tag name', () => {
     expect(expressionOf("{%include'card'with{classes:['a']}%}")).toMatchObject({
-      type: 'SequenceExpression',
-      expressions: [{ type: 'TemplateLiteral', quasis: [{ value: { cooked: 'card' } }] }, { type: 'ObjectExpression' }],
+      type: 'CallExpression',
+      callee: { name: 'include' },
+      arguments: [{ type: 'TemplateLiteral', quasis: [{ value: { cooked: 'card' } }] }, { type: 'ObjectExpression' }],
     });
   });
 });

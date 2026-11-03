@@ -25,17 +25,18 @@ expressions:
    rules and better-tailwindcss expect. The lexer's Twig blocks are handed to it as template
    ranges, and the markup reader treats each one according to where it sits (see
    [Markup](#markup)).
-3. Every `{{ }}` and `{% %}` block is rewritten as **JavaScript of exactly the same length**
-   (`set` becomes `var`, `~` becomes `+`, `|filter` becomes `.filter`, `and` becomes `&&`, and so
-   on) and parsed with [espree](https://github.com/eslint/js/tree/main/packages/espree), ESLint's
-   own parser. Because the lengths match, every string literal keeps the source range it has in
-   the template, so rule reports and autofixes land on the right characters.
+3. Every `{{ }}` and `{% %}` block is read by **a grammar that follows Twig's own parser**: the
+   same operators, precedence and associativity, the same tag syntax and the same error messages.
+   It builds ESTree nodes as it reads (`set` becomes a `var` declaration, `~` becomes `+`,
+   `|filter` becomes `.filter`, `and` becomes `&&`, and so on). Every node keeps the source range
+   it has in the template, so rule reports and autofixes land on the right characters. A block
+   Twig would reject is reported as `x-unparsed-twig` with Twig's message.
 4. Both trees are combined into one `Program`: the HTML in `body`, the Twig expressions in
    `twigBody`.
 
-The JavaScript is only a vehicle for positions and structure. It does not mean what the Twig
-means (`a ~ b` looks like `a + b`), so run rules that read strings and structure on `.twig`
-files, not general JavaScript rules such as `no-undef`.
+The ESTree is only a vehicle for positions and structure. It does not mean what the Twig means
+(`a ~ b` looks like `a + b`), so run rules that read strings and structure on `.twig` files, not
+general JavaScript rules such as `no-undef`.
 
 ## Installation
 
@@ -80,12 +81,12 @@ silently.
 
 | Property | Meaning |
 |---|---|
-| `convertedBlockCount` | Twig blocks turned into JavaScript nodes. |
+| `convertedBlockCount` | Twig blocks turned into ESTree nodes. |
 | `ignoredBlockCount` | Blocks with no expression worth parsing, such as `{% endif %}` or `{% extends %}`. |
 | `diagnostics` | Every problem the parser read past instead of throwing on, in source order: each has a `code`, a `message` and a `range`. The codes are `DIAGNOSTIC_CODES`, and [`twig-html/no-parse-errors`](../eslint-plugin-twig-html/docs/rules/no-parse-errors.md) lists what each one means and when it stays quiet. |
 | `blocks` | Every Twig block (`print`, `tag` or `comment`) with its range, which ends at the closing delimiter and leaves out the line break Twig removes after a tag, its tag name and `depthChange`: `1` for a tag that opens a nested block such as `{% if %}`, `-1` for one that closes it, `0` otherwise, including the short forms `{% set x = 1 %}`, `{% block title page_title %}` and Drupal's `{% trans 'Hello' %}`, which have no body. `bracketPairs` lists the offsets of each `{`, `[` or `(` and its closing bracket, read from the lexer, so strings and `#{ }` are never mistaken for brackets. `inlineComments` lists the range of each `# comment` inside the block. The `twig-html` rules use it, for example to keep attributes wrapped in a Twig block together and to indent the lines inside brackets. |
 | `omittedAttributes` | Attributes left out by `ignoreInterpolatedAttributes`, with their name, range, the `Attribute` node itself and its `owner`, the `Tag`, `ScriptTag` or `StyleTag` node it was taken from. `twig-tailwind/no-twig-interpolation` reports them, and every `twig-html` rule puts them back in their place among the owner's attributes. |
-| `strings` | Every Twig string literal, read from the lexer, with its range (quotes included), its `quote` (`'` or `"`) and whether it interpolates `#{ }`. It covers tags that never become JavaScript nodes, such as `{% extends %}` and `{% trans %}`, and blocks that fail to convert. `twig-html/quotes` uses it. |
+| `strings` | Every Twig string literal, read from the lexer, with its range (quotes included), its `quote` (`'` or `"`) and whether it interpolates `#{ }`. It covers tags that never become ESTree nodes, such as `{% extends %}` and `{% trans %}`, and blocks that fail to convert. `twig-html/quotes` uses it. |
 
 A problem is thrown only when the parser cannot build a tree with correct ranges: invalid Twig, such as an
 unclosed `{{`, Twig tags that do not pair up, and broken markup, such as a tag whose `>` is missing before the
@@ -158,8 +159,6 @@ Rules import these instead of keeping their own copies.
   `{% if %}` that is never closed all fail. Twig rejects these templates when it renders them. Block tags
   are told from one-line tags by name (`if`, `for`, `trans`, `cache` and so on), and any other tag
   counts as a block tag when an `end` tag of its name appears in the file.
-- **JavaScript reserved words** used as bare Twig variables (`{{ class }}`) are renamed to a
-  same-length identifier (`_lass`) so the expression parses; rules see the new name.
 - **Concatenated strings** (`'c-grid--' ~ count ~ '-items'`) stay separate strings joined by `+`,
   so rules see each fixed fragment on its own.
 - **Elements opened or closed in different Twig branches**, such as
@@ -180,7 +179,13 @@ Rules import these instead of keeping their own copies.
 
 ## Supported Twig
 
-Twig 3.x syntax up to 3.30, verified against real Twig:
+Twig 3.x syntax up to 3.30, verified against real Twig. The grammar reads the newest Twig 3
+syntax, which accepts everything older Twig 3 releases accept, so a template written for an older
+Twig 3 is never reported for syntax its Twig has. It is also not reported for syntax its Twig
+lacks, such as `===` on Twig 3.19. A block using syntax newer than 3.30 is reported as
+`x-unparsed-twig`.
+
+How this is checked:
 
 - `test/fixtures/twig/twig-syntax.json` lists every tag, test, operator, expression form, token
   type and punctuation character Twig 3.30 defines, read from Twig's own registries by
@@ -191,9 +196,10 @@ Twig 3.x syntax up to 3.30, verified against real Twig:
 - Every fixture matches Twig 3.30.0's own tokens exactly, and its output passes the node-by-node
   checks in `test/support/output-checks.ts`: ranges, locations and text match the source, every
   string appears once, every tag and attribute is read, and every element closes.
-- The parser rejects exactly the fixture blocks Twig rejects. `tools/twig-oracle/parse.php` records
-  Twig's verdict on every block in `<name>.blocks.json`, and `test/parser/twig-block-verdicts.test.ts`
-  compares it with ours.
+- The parser rejects exactly the fixture blocks Twig rejects, with Twig's message.
+  `tools/twig-oracle/parse.php` records Twig's verdict on every block in `<name>.blocks.json`, and
+  `test/parser/twig-block-verdicts.test.ts` compares it with ours. The corpus check
+  `parser/block-verdicts` does the same on real templates.
 - On real templates (Drupal core, contributed modules and themes) the lexer matches
   Twig on every token and the output passes the same checks, apart from elements opened or closed
   in different Twig branches and a few templates with invalid HTML.
@@ -212,9 +218,10 @@ Run these from `packages/twig-eslint-parser`.
    - **Lexer parity:** the lexer tokenises something differently from Twig. Add a patch to
      `third_party/twig-lexer` (see its `UPSTREAM.md`).
    - **Block verdicts:** the parser accepts or rejects a block differently from Twig.
-   - **Operators, tests and tags:** every Twig-specific table lives in `src/twig/syntax.ts`:
-     operators and their JavaScript stand-ins, two-word tests, and which tags are converted or
-     deliberately left unconverted.
+   - **Operators, tests and tags:** operators with their precedence live in
+     `src/twig/operators.ts`, the grammar of each converted tag in `src/twig/tag-grammar.ts`, and
+     tests that take one argument without brackets and the tags deliberately left unconverted in
+     `src/twig/syntax.ts`.
 5. Run `npm run corpus` on real templates before releasing.
 
 ## Vendored code

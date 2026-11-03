@@ -1,17 +1,27 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parseForESLint } from '../src/index.js';
-import { CONVERTED_TAGS, TAGS_LEFT_UNCONVERTED, TWO_WORD_TESTS } from '../src/twig/syntax.js';
-import { TWIG_OPERATORS } from '../src/twig/operators.js';
+import { TAGS_LEFT_UNCONVERTED, TESTS_WITH_ONE_MANDATORY_ARGUMENT } from '../src/twig/syntax.js';
+import { CONVERTED_TAGS } from '../src/twig/tag-grammar.js';
+import { ARROW_PRECEDENCE, BINARY_OPERATORS, POSTFIX_PRECEDENCE, PREFIX_OPERATORS, TERNARY_PRECEDENCE, TEST_PRECEDENCE, TWIG_OPERATORS } from '../src/twig/operators.js';
 import { tokenizeTwig } from '../src/twig/tokens.js';
 import { checkParserOutput } from './support/output-checks.js';
 
+type InventoryExpression = {
+  readonly type: 'prefix' | 'infix';
+  readonly parser: string;
+  readonly name: string;
+  readonly aliases: readonly string[];
+  readonly precedence: number;
+  readonly associativity: 'left' | 'right' | null;
+};
 type Inventory = {
   readonly twig: string;
   readonly tags: readonly { readonly name: string; readonly extension: string }[];
   readonly lexerTags: readonly string[];
   readonly tests: readonly string[];
-  readonly expressions: readonly { readonly type: 'prefix' | 'infix'; readonly parser: string; readonly name: string; readonly aliases: readonly string[] }[];
+  readonly testsWithOneMandatoryArgument: readonly string[];
+  readonly expressions: readonly InventoryExpression[];
   readonly tokenTypes: readonly string[];
   readonly punctuation: readonly string[];
 };
@@ -27,6 +37,17 @@ const fixtures: Fixture[] = readdirSync(fixturesDirectory)
     return { name, code: readFileSync(new URL(name, fixturesDirectory), 'utf8'), twig: golden.twig, tokens: golden.tokens ?? [] };
   });
 
+const OTHER_INFIX_PRECEDENCE: Readonly<Record<string, number>> = {
+  '?': TERNARY_PRECEDENCE,
+  'is': TEST_PRECEDENCE,
+  'is not': TEST_PRECEDENCE,
+  '=>': ARROW_PRECEDENCE,
+  '.': POSTFIX_PRECEDENCE,
+  '?.': POSTFIX_PRECEDENCE,
+  '|': POSTFIX_PRECEDENCE,
+  '(': POSTFIX_PRECEDENCE,
+  '[': POSTFIX_PRECEDENCE,
+};
 const STATEMENT_STARTS = new Set(['begin of print statement', 'begin of statement block', 'begin of string interpolation']);
 const OPENERS = new Set(['(', '[', '{']);
 const PREFIX_CONTEXTS = new Set(['(', '[', '{', ',', ':', '?', '=>', '=']);
@@ -143,6 +164,14 @@ function featuresUsedIn(fixture: Fixture): Set<string> {
   return features;
 }
 
+function describeOurPrecedence(type: InventoryExpression['type'], name: string) {
+  if (type === 'prefix') {
+    return { name, precedence: PREFIX_OPERATORS[name]?.precedence, associativity: null };
+  }
+  const binaryOperator = BINARY_OPERATORS[name];
+  return { name, precedence: binaryOperator?.precedence ?? OTHER_INFIX_PRECEDENCE[name], associativity: binaryOperator?.associativity ?? 'left' };
+}
+
 function expectedFeatures(): string[] {
   return [
     ...inventory.tags.map((tag) => `tag: ${tag.name}`),
@@ -168,12 +197,19 @@ describe(`Twig ${inventory.twig} syntax coverage`, () => {
 
   it('knows whether to convert or skip every Twig tag', () => {
     const unclassified = inventory.tags.map((tag) => tag.name).filter((tag) => !CONVERTED_TAGS.has(tag) && !TAGS_LEFT_UNCONVERTED.has(tag));
-    expect(unclassified, 'Add these to CONVERTED_TAGS or TAGS_LEFT_UNCONVERTED in src/twig/syntax.ts').toEqual([]);
+    expect(unclassified, 'Add these to TAG_GRAMMARS in src/twig/tag-grammar.ts or TAGS_LEFT_UNCONVERTED in src/twig/syntax.ts').toEqual([]);
   });
 
-  it('knows the second word of every two-word test', () => {
-    const twoWordTestNames = inventory.tests.filter((test) => test.includes(' '));
-    expect(Object.entries(TWO_WORD_TESTS).map(([first, second]) => `${first} ${second}`).sort(), 'Update TWO_WORD_TESTS in src/twig/syntax.ts').toEqual(twoWordTestNames.sort());
+  it('knows which tests take one argument without brackets', () => {
+    expect([...TESTS_WITH_ONE_MANDATORY_ARGUMENT].sort(), 'Update TESTS_WITH_ONE_MANDATORY_ARGUMENT in src/twig/syntax.ts').toEqual([...inventory.testsWithOneMandatoryArgument].sort());
+  });
+
+  it('gives every operator the precedence and associativity Twig gives it', () => {
+    const operators = inventory.expressions.filter((expression) => !['GroupingExpressionParser', 'LiteralExpressionParser'].includes(expression.parser));
+    const namesOf = (expression: InventoryExpression) => [expression.name, ...expression.aliases];
+    const ours = operators.flatMap((expression) => namesOf(expression).map((name) => describeOurPrecedence(expression.type, name)));
+    const twigs = operators.flatMap((expression) => namesOf(expression).map((name) => ({ name, precedence: expression.precedence, associativity: expression.associativity })));
+    expect(ours, 'Update the tables in src/twig/operators.ts').toEqual(twigs);
   });
 
   it('lexes every operator Twig lexes as one', () => {
@@ -189,17 +225,18 @@ describe(`Twig ${inventory.twig} syntax coverage`, () => {
     .flatMap((expression) => [expression.name, ...expression.aliases]);
   it.each(binaryOperators)('converts the binary operator %s', (operator) => {
     const code = /^has (some|every)$/.test(operator) ? `{{ a ${operator} x => x }}` : `{{ a ${operator} b }}`;
-    expect(checkParserOutput(code), 'Map the operator in JAVASCRIPT_BY_TWIG_OPERATOR in src/twig/syntax.ts').toEqual([]);
+    expect(checkParserOutput(code), 'Add the operator to BINARY_OPERATORS in src/twig/operators.ts').toEqual([]);
     expect(parseForESLint(code).ast.twigBody).toHaveLength(1);
   });
 
   const unaryOperators = inventory.expressions.filter((expression) => expression.parser === 'UnaryOperatorExpressionParser').map((expression) => expression.name);
   it.each(unaryOperators)('converts the unary operator %s', (operator) => {
     const code = operator === '...' ? '{{ [...a] }}' : `{{ ${operator} a }}`;
-    expect(checkParserOutput(code), 'Map the operator in JAVASCRIPT_BY_TWIG_OPERATOR in src/twig/syntax.ts').toEqual([]);
+    expect(checkParserOutput(code), 'Add the operator to PREFIX_OPERATORS in src/twig/operators.ts').toEqual([]);
   });
 
-  it.each(inventory.tests.flatMap((test) => [`is ${test}`, `is not ${test}`]))('converts the test "a %s"', (test) => {
-    expect(checkParserOutput(`{{ a ${test} }}`), 'Update TWO_WORD_TESTS or JAVASCRIPT_BY_TWIG_TEST_OPERATOR in src/twig/syntax.ts').toEqual([]);
+  const testsAsWritten = inventory.tests.map((test) => (inventory.testsWithOneMandatoryArgument.includes(test) ? `${test} b` : test));
+  it.each(testsAsWritten.flatMap((test) => [`is ${test}`, `is not ${test}`]))('converts the test "a %s"', (test) => {
+    expect(checkParserOutput(`{{ a ${test} }}`), 'Update TESTS_WITH_ONE_MANDATORY_ARGUMENT in src/twig/syntax.ts').toEqual([]);
   });
 });

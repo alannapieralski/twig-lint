@@ -1,0 +1,14 @@
+{{ xor }} {{ in }} {{ is }} {{ matches }} {{ a ~ xor }} {{ in[0] }} {{ not[1] }} {{ foo.in[0] }}
+{% set xor = 1 %} {% set not = 1 %} {% set in, is = 1, 2 %} {% set a.b = 1 %} {% set a, b = 1 %} {% set a = 1, 2 %}
+{% for in in x %}{% endfor %} {% for a, in b %}{% endfor %} {% for a in b if c %}{% endfor %}
+{{ f(matches = 1) }} {{ f(in: 1) }} {{ f(a.b: 1) }} {{ f(...a, b) }} {{ f(a, ...b) }} {{ f(a = 1, b: 2) }}
+{{ (in) => in }} {{ in => in }} {{ (x) => x }} {{ (a, b) => a }} {{ 1 => 2 }} {{ (a, 1) => x }} {{ (a, b) + 1 }} {{ -(a) => b }}
+{{ x|  and }} {{ x| and }} {{ x|in }} {{ {and: 1} }} {{ { and : 1} }} {{ {and} }} {{ {(a): 1} }} {{ {"a#{b}": 1} }} {{ {1: 2, 'c': 3} }} {{ {...a, b} }}
+{{ a is in }} {{ a is and }} {{ a is same as false }} {{ a is divisible by 3 }} {{ a is defined|length }} {{ a is not null }} {{ a is foo bar }} {{ a is same as }}
+{{ (a)(1) }} {{ (a ~ b)|upper }} {{ a.() }} {{ a.(b) }} {{ a.0 }} {{ a[0](1) }} {{ 'x'|upper }} {{ [1, 2]|length }} {{ true(1) }}
+{{ a[1:2] }} {{ a[:2] }} {{ a[1:] }} {{ a[:] }} {{ a[] }} {{ [1,,2] }} {{ [,] }} {{ [] = x }} {{ [a, b] = x }} {{ {a, b} = x }} {{ a.b = 1 }}
+{{ 'a' 'b' }} {{ "#{a}" "b" }} {{ "a" "#{b}" }} {{ "a#{b}" 'c' }} {{ "" }} {{ "#{a}#{b}" }}
+{% with %}{% endwith %} {% with a only %}{% endwith %} {% include 'x' ignore missing with a only %} {% include 'x' with a ignore missing %} {% include 'x' only with a %}
+{% macro a() %}{% endmacro %} {% macro b(x, y = 1, z = [1, -2, {c: 'd'}]) %}{% endmacro %} {% macro c(...rest) %}{% endmacro %} {% macro d(x = y) %}{% endmacro %} {% macro e(...r, s) %}{% endmacro %} {% macro f(...r = 1) %}{% endmacro %} {% macro g(x = "#{y}") %}{% endmacro %} {% macro h(x = {a}) %}{% endmacro %}
+{{ a ? b }} {{ a ?: b }} {{ a ? : b }} {{ a ? b : c ? d : e }} {{ a ?? b ?? c }} {{ not a == b }} {{ -a ** 2 }} {{ a b-and b }} {{ a has some b }}
+{{ a?.b.c }} {{ a?.b|upper }} {{ a?.b ~ c }} {{ a?.b() }} {{ TRUE }} {{ NONE }} {{ null }} {{ 1_000 }} {{ 1e3 }}

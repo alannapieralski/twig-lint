@@ -1,16 +1,14 @@
 import { unionWith } from 'eslint-visitor-keys';
 import { omitInterpolatedAttributes } from './attributes.js';
 import { compareDiagnostics } from './diagnostics.js';
-import { parseJavaScriptAt } from './estree.js';
 import { findMarkupDiagnostics } from './html/diagnostics/find-markup-diagnostics.js';
 import { parseMarkup } from './html/parse-markup.js';
 import { parseTwigParserOptions } from './options.js';
 import { createOffsetLocator } from './source-text.js';
 import { blockRangeOf, groupTwigBlocks, summariseTwigBlocks } from './twig/blocks.js';
 import { readTwigTagStructure } from './twig/tag-structure.js';
-import { hasStrayComma, STRAY_COMMA_REASON } from './twig/stray-comma.js';
-import { toSameLengthJavaScript } from './twig/javascript.js';
 import { summariseTwigStrings } from './twig/strings.js';
+import { parseTwigBlock } from './twig/tag-grammar.js';
 import { TwigSyntaxError, tokenizeTwig } from './twig/tokens.js';
 import type { Linter } from 'eslint';
 import type { OmittedAttribute } from './attributes.js';
@@ -45,7 +43,7 @@ type TwigExpressions = {
 };
 
 function describeUnparsedBlock(block: TwigBlock, reason: string): TwigDiagnostic {
-  return { code: 'x-unparsed-twig', message: `This Twig block could not be parsed (${reason}).`, range: blockRangeOf(block) };
+  return { code: 'x-unparsed-twig', message: `This Twig block could not be parsed: ${reason}`, range: blockRangeOf(block) };
 }
 
 function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number) => SourcePosition): TwigExpressions {
@@ -55,28 +53,15 @@ function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number
   let ignoredBlockCount = 0;
 
   for (const block of blocks) {
-    if (hasStrayComma(block)) {
-      unparsedBlockDiagnostics.push(describeUnparsedBlock(block, STRAY_COMMA_REASON));
+    const parsed = parseTwigBlock(block, locate);
+    if (parsed === undefined) {
+      ignoredBlockCount += 1;
       continue;
     }
-
-    const javascript = toSameLengthJavaScript(block);
-    if (javascript === undefined) {
-      const isLoopWithoutIn = block.tagName === 'for';
-      if (isLoopWithoutIn) {
-        unparsedBlockDiagnostics.push(describeUnparsedBlock(block, 'a {% for %} needs "in"'));
-      } else {
-        ignoredBlockCount += 1;
-      }
-      continue;
-    }
-
-    const parsed = parseJavaScriptAt(javascript, block.start, locate);
     if (!parsed.isParsed) {
       unparsedBlockDiagnostics.push(describeUnparsedBlock(block, parsed.reason));
       continue;
     }
-
     convertedBlockCount += 1;
     statements.push(...parsed.statements);
   }

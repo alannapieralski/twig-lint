@@ -45,7 +45,7 @@ Examples of **correct** code:
 
 Every string the Twig lexer reads is checked. That includes:
 
-- **Tags that never become JavaScript nodes**, such as `{% extends %}`, `{% import %}`, `{% trans %}`
+- **Tags that never become ESTree nodes**, such as `{% extends %}`, `{% import %}`, `{% trans %}`
   and `{% cache %}`.
 - **Hash keys.**
 - **Strings inside `#{ }` interpolation**, each checked on its own.
@@ -118,7 +118,7 @@ The HTML half follows [`@html-eslint/quotes`](https://html-eslint.org/docs/rules
 ## Testing
 
 - `test/quotes.test.ts` covers both options for each kind of quote, removing escapes, every case the
-  rule leaves alone or reports without fixing, Twig in tags that never become JavaScript, raw text,
+  rule leaves alone or reports without fixing, Twig in tags that never become ESTree nodes, raw text,
   comments, `verbatim` and attributes left out by `ignoreInterpolatedAttributes`.
 - `test/fix-safety.test.ts` fixes every parser fixture with the default and the opposite options, and
   checks the result changes only HTML quotes, Twig string delimiters and quote escapes, still parses,

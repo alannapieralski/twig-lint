@@ -1,0 +1,429 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ xor }}",
+            "error": null
+        },
+        {
+            "source": "{{ in }}",
+            "error": null
+        },
+        {
+            "source": "{{ is }}",
+            "error": null
+        },
+        {
+            "source": "{{ matches }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ~ xor }}",
+            "error": null
+        },
+        {
+            "source": "{{ in[0] }}",
+            "error": null
+        },
+        {
+            "source": "{{ not[1] }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.in[0] }}",
+            "error": null
+        },
+        {
+            "source": "{% set xor = 1 %}",
+            "error": null
+        },
+        {
+            "source": "{% set not = 1 %}",
+            "error": null
+        },
+        {
+            "source": "{% set in, is = 1, 2 %}",
+            "error": null
+        },
+        {
+            "source": "{% set a.b = 1 %}",
+            "error": "Unexpected token \"operator\" of value \".\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% set a, b = 1 %}",
+            "error": "When using set, you must have the same number of variables and assignments."
+        },
+        {
+            "source": "{% set a = 1, 2 %}",
+            "error": "When using set, you must have the same number of variables and assignments."
+        },
+        {
+            "source": "{% for in in x %}",
+            "error": null
+        },
+        {
+            "source": "{% for a, in b %}",
+            "error": "Unexpected token \"name\" of value \"b\" (\"operator\" expected with value \"in\")."
+        },
+        {
+            "source": "{% for a in b if c %}",
+            "error": "Unexpected token \"name\" of value \"if\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{{ f(matches = 1) }}",
+            "error": null
+        },
+        {
+            "source": "{{ f(in: 1) }}",
+            "error": null
+        },
+        {
+            "source": "{{ f(a.b: 1) }}",
+            "error": "A parameter name must be a string, \"Twig\\Node\\Expression\\GetAttrExpression\" given."
+        },
+        {
+            "source": "{{ f(...a, b) }}",
+            "error": "Normal arguments must be placed before argument unpacking."
+        },
+        {
+            "source": "{{ f(a, ...b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ f(a = 1, b: 2) }}",
+            "error": null
+        },
+        {
+            "source": "{{ (in) => in }}",
+            "error": null
+        },
+        {
+            "source": "{{ in => in }}",
+            "error": null
+        },
+        {
+            "source": "{{ (x) => x }}",
+            "error": null
+        },
+        {
+            "source": "{{ (a, b) => a }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1 => 2 }}",
+            "error": "The arrow function argument must be a list of variables or a single variable."
+        },
+        {
+            "source": "{{ (a, 1) => x }}",
+            "error": "Unexpected token \"number\" of value \"1\" (\"name\" expected)."
+        },
+        {
+            "source": "{{ (a, b) + 1 }}",
+            "error": "A list of variables must be followed by an arrow."
+        },
+        {
+            "source": "{{ -(a) => b }}",
+            "error": "The arrow function argument must be a list of variables or a single variable."
+        },
+        {
+            "source": "{{ x|  and }}",
+            "error": "Unexpected token \"operator\" of value \"and\" (\"name\" expected)."
+        },
+        {
+            "source": "{{ x| and }}",
+            "error": null
+        },
+        {
+            "source": "{{ x|in }}",
+            "error": null
+        },
+        {
+            "source": "{{ {and: 1} }}",
+            "error": null
+        },
+        {
+            "source": "{{ { and : 1} }}",
+            "error": "A mapping key must be a quoted string, a number, a name, or an expression enclosed in parentheses (unexpected token \"operator\" of value \"and\"."
+        },
+        {
+            "source": "{{ {and} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {(a): 1} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {\"a#{b}\": 1} }}",
+            "error": "A mapping key must be followed by a colon (:). Unexpected token \"begin of string interpolation\" (\"punctuation\" expected with value \":\")."
+        },
+        {
+            "source": "{{ {1: 2, 'c': 3} }}",
+            "error": null
+        },
+        {
+            "source": "{{ {...a, b} }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is in }}",
+            "error": "Unexpected token \"operator\" of value \"in\" (\"name\" expected)."
+        },
+        {
+            "source": "{{ a is and }}",
+            "error": "Unexpected token \"operator\" of value \"and\" (\"name\" expected)."
+        },
+        {
+            "source": "{{ a is same as false }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is divisible by 3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is defined|length }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not null }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is foo bar }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is same as }}",
+            "error": "Unexpected token \"end of print statement\" of value \"\"."
+        },
+        {
+            "source": "{{ (a)(1) }}",
+            "error": null
+        },
+        {
+            "source": "{{ (a ~ b)|upper }}",
+            "error": null
+        },
+        {
+            "source": "{{ a.() }}",
+            "error": "Unexpected token \"punctuation\" of value \")\"."
+        },
+        {
+            "source": "{{ a.(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a.0 }}",
+            "error": null
+        },
+        {
+            "source": "{{ a[0](1) }}",
+            "error": "Function name must be an identifier."
+        },
+        {
+            "source": "{{ 'x'|upper }}",
+            "error": null
+        },
+        {
+            "source": "{{ [1, 2]|length }}",
+            "error": null
+        },
+        {
+            "source": "{{ true(1) }}",
+            "error": "Function name must be an identifier."
+        },
+        {
+            "source": "{{ a[1:2] }}",
+            "error": null
+        },
+        {
+            "source": "{{ a[:2] }}",
+            "error": null
+        },
+        {
+            "source": "{{ a[1:] }}",
+            "error": null
+        },
+        {
+            "source": "{{ a[:] }}",
+            "error": null
+        },
+        {
+            "source": "{{ a[] }}",
+            "error": "Unexpected token \"punctuation\" of value \"]\"."
+        },
+        {
+            "source": "{{ [1,,2] }}",
+            "error": null
+        },
+        {
+            "source": "{{ [,] }}",
+            "error": null
+        },
+        {
+            "source": "{{ [] = x }}",
+            "error": "Cannot destructure to an empty list of variables."
+        },
+        {
+            "source": "{{ [a, b] = x }}",
+            "error": null
+        },
+        {
+            "source": "{{ {a, b} = x }}",
+            "error": null
+        },
+        {
+            "source": "{{ a.b = 1 }}",
+            "error": "Cannot assign to \"Twig\\Node\\Expression\\GetAttrExpression\", only variables can be assigned."
+        },
+        {
+            "source": "{{ 'a' 'b' }}",
+            "error": "Unexpected token \"string\" of value \"b\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ \"#{a}\" \"b\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"a\" \"#{b}\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"a#{b}\" 'c' }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#{a}#{b}\" }}",
+            "error": null
+        },
+        {
+            "source": "{% with %}",
+            "error": null
+        },
+        {
+            "source": "{% with a only %}",
+            "error": null
+        },
+        {
+            "source": "{% include 'x' ignore missing with a only %}",
+            "error": null
+        },
+        {
+            "source": "{% include 'x' with a ignore missing %}",
+            "error": "Unexpected token \"name\" of value \"ignore\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% include 'x' only with a %}",
+            "error": "Unexpected token \"name\" of value \"with\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% macro a() %}",
+            "error": null
+        },
+        {
+            "source": "{% macro b(x, y = 1, z = [1, -2, {c: 'd'}]) %}",
+            "error": null
+        },
+        {
+            "source": "{% macro c(...rest) %}",
+            "error": null
+        },
+        {
+            "source": "{% macro d(x = y) %}",
+            "error": "A default value for an argument must be a constant (a boolean, a string, a number, a sequence, or a mapping)."
+        },
+        {
+            "source": "{% macro e(...r, s) %}",
+            "error": "The variadic argument \"r\" in macro \"e\" must be the last one."
+        },
+        {
+            "source": "{% macro f(...r = 1) %}",
+            "error": "The variadic argument \"r\" in macro \"f\" cannot have a default value."
+        },
+        {
+            "source": "{% macro g(x = \"#{y}\") %}",
+            "error": "A default value for an argument must be a constant (a boolean, a string, a number, a sequence, or a mapping)."
+        },
+        {
+            "source": "{% macro h(x = {a}) %}",
+            "error": "A default value for an argument must be a constant (a boolean, a string, a number, a sequence, or a mapping)."
+        },
+        {
+            "source": "{{ a ? b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ?: b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ? : b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ? b : c ? d : e }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ?? b ?? c }}",
+            "error": null
+        },
+        {
+            "source": "{{ not a == b }}",
+            "error": null
+        },
+        {
+            "source": "{{ -a ** 2 }}",
+            "error": null
+        },
+        {
+            "source": "{{ a b-and b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a has some b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?.b.c }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?.b|upper }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?.b ~ c }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?.b() }}",
+            "error": null
+        },
+        {
+            "source": "{{ TRUE }}",
+            "error": null
+        },
+        {
+            "source": "{{ NONE }}",
+            "error": null
+        },
+        {
+            "source": "{{ null }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_000 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1e3 }}",
+            "error": null
+        }
+    ]
+}

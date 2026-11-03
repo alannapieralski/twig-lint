@@ -1,5 +1,5 @@
 import { parseForESLint } from '../../src/index.js';
-import { CONVERTED_TAGS } from '../../src/twig/syntax.js';
+import { CONVERTED_TAGS } from '../../src/twig/tag-grammar.js';
 import type { Range } from '../../src/range.js';
 import type { TwigBlockSummary } from '../../src/twig/blocks.js';
 
@@ -8,6 +8,8 @@ export type BlockVerdictComparison = {
   readonly disagreements: readonly { readonly range: Range; readonly description: string }[];
   readonly rejectedByBoth: readonly { readonly range: Range; readonly twigError: string }[];
 };
+
+const UNPARSED_MESSAGE_PREFIX = 'This Twig block could not be parsed: ';
 
 function isJudgedByTheParser(block: TwigBlockSummary): boolean {
   return block.kind === 'print' || (block.kind === 'tag' && CONVERTED_TAGS.has(block.tagName ?? ''));
@@ -23,7 +25,9 @@ function isJudgedByTheParser(block: TwigBlockSummary): boolean {
 export function compareBlockVerdictsWithTwig(code: string, twigVerdicts: readonly TwigBlockVerdict[]): BlockVerdictComparison {
   const { services } = parseForESLint(code);
   const twigErrorBySource = new Map(twigVerdicts.map((verdict) => [verdict.source, verdict.error]));
-  const unparsedSources = new Set(services.twig.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig').map((diagnostic) => code.slice(...diagnostic.range)));
+  const ourReasonBySource = new Map(services.twig.diagnostics
+    .filter((diagnostic) => diagnostic.code === 'x-unparsed-twig')
+    .map((diagnostic) => [code.slice(...diagnostic.range), diagnostic.message.replace(UNPARSED_MESSAGE_PREFIX, '')]));
   const judgedBlocks = services.twig.blocks.filter(isJudgedByTheParser);
   const disagreements: BlockVerdictComparison['disagreements'][number][] = [];
   const rejectedByBoth: BlockVerdictComparison['rejectedByBoth'][number][] = [];
@@ -35,12 +39,14 @@ export function compareBlockVerdictsWithTwig(code: string, twigVerdicts: readonl
       disagreements.push({ range: block.range, description: `no verdict from Twig: ${source}` });
       continue;
     }
-    const isRejectedByUs = unparsedSources.has(source);
-    if (twigError !== null && isRejectedByUs) {
+    const ourReason = ourReasonBySource.get(source);
+    if (twigError !== null && ourReason !== undefined) {
       rejectedByBoth.push({ range: block.range, twigError });
     }
-    if ((twigError !== null) !== isRejectedByUs) {
+    if ((twigError !== null) !== (ourReason !== undefined)) {
       disagreements.push({ range: block.range, description: `${twigError === null ? 'accepted' : 'rejected'} by Twig: ${source}` });
+    } else if (twigError !== null && ourReason !== twigError) {
+      disagreements.push({ range: block.range, description: `Twig says "${twigError}" where we say "${ourReason}": ${source}` });
     }
   }
 

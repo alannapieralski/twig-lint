@@ -1,7 +1,7 @@
 import { HtmlSyntaxError, parseForESLint, TwigSyntaxError } from '../../src/index.js';
 import { createOffsetLocator } from '../../src/source-text.js';
 import { groupTwigBlocks } from '../../src/twig/blocks.js';
-import { toSameLengthJavaScript } from '../../src/twig/javascript.js';
+import { isConvertedTwigBlock } from '../../src/twig/tag-grammar.js';
 import { tokenizeTwig } from '../../src/twig/tokens.js';
 import { branchSegmentsOf, isClosedInAnotherBranch, isInsideABranch } from './branches.js';
 import type { TwigBlock } from '../../src/twig/blocks.js';
@@ -330,7 +330,7 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
     report('converts every Twig block', `${code.slice(...block.range)} (${block.message})`, [block.range[0], block.range[1]]);
   }
   const convertedRanges: Range[] = expressionBlocks
-    .filter((block) => toSameLengthJavaScript(block) !== undefined && !unparsedBlocks.some((unparsed) => unparsed.range[0] === block.start))
+    .filter((block) => isConvertedTwigBlock(block) && !unparsedBlocks.some((unparsed) => unparsed.range[0] === block.start))
     .map((block) => [block.start, block.end]);
 
   const stringCountByStart = new Map<number, number>();
@@ -349,11 +349,7 @@ export function checkParserOutput(code: string, parse: ParseForOutputChecks = pa
       report('twig: statement inside its block', `${node.type} "${source.slice(0, 40)}"`, node.range);
     }
     if (node.type === 'Identifier' && source !== node['name']) {
-      const name = String(node['name']);
-      const isRenamedReservedWord = name.length === source.length && name.startsWith('_') && source.slice(1).replace(/[^A-Za-z0-9_]/g, '_') === name.slice(1);
-      if (!isRenamedReservedWord) {
-        report('twig: identifier matches source', `"${name}" vs "${source}"`, node.range);
-      }
+      report('twig: identifier matches source', `"${String(node['name'])}" vs "${source}"`, node.range);
     }
     if (node.type === 'Literal' && source !== node['raw']) {
       report('twig: literal matches source', `${JSON.stringify(node['raw'])} vs ${JSON.stringify(source)}`, node.range);
