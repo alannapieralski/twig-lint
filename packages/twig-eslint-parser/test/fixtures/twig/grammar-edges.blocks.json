@@ -424,6 +424,14 @@
         {
             "source": "{{ 1e3 }}",
             "error": null
+        },
+        {
+            "source": "{{ constructor }}",
+            "error": null
+        },
+        {
+            "source": "{{ toString }}",
+            "error": null
         }
     ]
 }

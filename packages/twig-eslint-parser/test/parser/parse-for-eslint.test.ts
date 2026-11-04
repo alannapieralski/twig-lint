@@ -428,7 +428,36 @@ describe('block bracket pairs', () => {
   });
 });
 
+describe('names that Object.prototype also has', () => {
+  it.each(['constructor', 'toString', '__proto__'])('reads {{ %s }} as a variable', (name) => {
+    expect(onlyStatement(`{{ ${name} }}`)).toMatchObject({ expression: { type: 'Identifier', name } });
+  });
+
+  it.each(['constructor', 'toString'])('leaves the %s tag unconverted', (name) => {
+    const { statements, services } = parse(`{% ${name} %}`);
+    expect(statements).toEqual([]);
+    expect(services.convertedBlockCount).toBe(0);
+  });
+});
+
+describe('subscripts', () => {
+  it.each(['{{ a[:2] }}', '{{ a[1:] }}', '{{ a[1:2] }}'])('keeps %s as a slice', (code) => {
+    expect(onlyStatement(code)).toMatchObject({ expression: { property: { type: 'SequenceExpression' } } });
+  });
+
+  it('reads an index as a plain member', () => {
+    expect(onlyStatement('{{ a[2] }}')).toMatchObject({ expression: { property: { type: 'Literal' } } });
+  });
+});
+
 describe('large templates', () => {
+  it('reads a mapping of 8,000 string keys in well under a second', () => {
+    const entries = Array.from({ length: 8000 }, (_, index) => `"key${index}": "value${index}"`).join(', ');
+    const start = performance.now();
+    parse(`{% set x = { ${entries} } %}`);
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+
   it('groups 50,000 Twig blocks in linear time', () => {
     const code = '<p>{{ a }}{% if b %}c{% endif %}{# d #}</p>\n'.repeat(12_500);
     const { services } = parse(code);

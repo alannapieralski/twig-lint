@@ -5766,10 +5766,60 @@
             "offset": 1968
         },
         {
-            "type": "end of template",
+            "type": "begin of print statement",
             "value": "",
             "line": 15,
             "offset": 1969
+        },
+        {
+            "type": "name",
+            "value": "constructor",
+            "line": 15,
+            "offset": 1972,
+            "end": 1983
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 15,
+            "offset": 1984
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 15,
+            "offset": 1986
+        },
+        {
+            "type": "begin of print statement",
+            "value": "",
+            "line": 15,
+            "offset": 1987
+        },
+        {
+            "type": "name",
+            "value": "toString",
+            "line": 15,
+            "offset": 1990,
+            "end": 1998
+        },
+        {
+            "type": "end of print statement",
+            "value": "",
+            "line": 15,
+            "offset": 1999
+        },
+        {
+            "type": "text",
+            "value": "\n",
+            "line": 15,
+            "offset": 2001
+        },
+        {
+            "type": "end of template",
+            "value": "",
+            "line": 16,
+            "offset": 2002
         }
     ]
 }

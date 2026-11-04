@@ -185,7 +185,7 @@ function parseInclude(stream: TwigTokenStream, tagName: TwigToken): EstreeNode {
   return createStatement(stream, call);
 }
 
-const TAG_GRAMMARS: Readonly<Record<string, TagGrammar>> = {
+const TAG_GRAMMARS: ReadonlyMap<string, TagGrammar> = new Map(Object.entries({
   if: parseExpressionTag,
   elseif: parseExpressionTag,
   do: parseExpressionTag,
@@ -196,15 +196,15 @@ const TAG_GRAMMARS: Readonly<Record<string, TagGrammar>> = {
   block: parseShortFormBlock,
   include: parseInclude,
   embed: parseInclude,
-};
+}));
 
-export const CONVERTED_TAGS: ReadonlySet<string> = new Set(Object.keys(TAG_GRAMMARS));
+export const CONVERTED_TAGS: ReadonlySet<string> = new Set(TAG_GRAMMARS.keys());
 
 export function isConvertedTwigBlock(block: TwigBlock): boolean {
   if (block.kind === 'print') {
     return true;
   }
-  if (block.kind !== 'tag' || block.tagName === undefined || !TAG_GRAMMARS[block.tagName]) {
+  if (block.kind !== 'tag' || block.tagName === undefined || !TAG_GRAMMARS.has(block.tagName)) {
     return false;
   }
   return block.tagName !== 'block' || isShortFormTag(block);
@@ -217,7 +217,7 @@ function parseBlockStatement(stream: TwigTokenStream): EstreeNode | undefined {
     return createStatement(stream, expression);
   }
   const tagName = advance(stream);
-  return TAG_GRAMMARS[tagName.value]?.(stream, tagName);
+  return TAG_GRAMMARS.get(tagName.value)?.(stream, tagName);
 }
 
 function isCallStackOverflow(error: unknown): boolean {

@@ -29,7 +29,7 @@ type StringPart = { readonly raw: string; readonly start: number; readonly end: 
 const ARROW_PARAMETERS = 'TwigArrowParameters';
 const ARROW_ARGUMENT_MESSAGE = 'The arrow function argument must be a list of variables or a single variable.';
 const POSTFIX_OPERATORS: ReadonlySet<string> = new Set(['.', '?.', '|', '(', '[']);
-const LITERAL_VALUE_BY_NAME: Readonly<Record<string, boolean | null>> = { true: true, TRUE: true, false: false, FALSE: false, none: null, NONE: null, null: null, NULL: null };
+const LITERAL_VALUE_BY_NAME: ReadonlyMap<string, boolean | null> = new Map([['true', true], ['TRUE', true], ['false', false], ['FALSE', false], ['none', null], ['NONE', null], ['null', null], ['NULL', null]]);
 const TWIG_CLASS_BY_NODE_TYPE: Readonly<Partial<Record<string, string>>> = {
   Literal: 'Twig\\Node\\Expression\\ConstantExpression',
   TemplateLiteral: 'Twig\\Node\\Expression\\ConstantExpression',
@@ -246,11 +246,12 @@ function parseSubscript(stream: TwigTokenStream, object: EstreeNode): EstreeNode
   const length = isSlice && !isAt(stream, 'punctuation', ']') ? parseExpression(stream) : undefined;
   const closing = expect(stream, 'punctuation', ']');
   const parts = [from, length].filter((part) => part !== undefined);
-  const [first, second] = parts;
+  const [first] = parts;
   if (!first) {
     return object;
   }
-  const property = second ? createNode(stream, 'SequenceExpression', first.start, second.end, { expressions: parts }) : first;
+  const last = parts.at(-1) as EstreeNode;
+  const property = isSlice ? createNode(stream, 'SequenceExpression', first.start, last.end, { expressions: parts }) : first;
   return createMember(stream, object, property, closing.end, { isComputed: true, isOptional: false });
 }
 
@@ -320,7 +321,7 @@ function parseGroup(stream: TwigTokenStream): EstreeNode {
 
 function parseName(stream: TwigTokenStream): EstreeNode {
   const token = advance(stream);
-  const literalValue = LITERAL_VALUE_BY_NAME[token.value];
+  const literalValue = LITERAL_VALUE_BY_NAME.get(token.value);
   if (literalValue !== undefined) {
     return createNode(stream, 'Literal', token.start, token.end, { value: literalValue, raw: token.value });
   }
@@ -350,12 +351,12 @@ function parseLiteral(stream: TwigTokenStream): EstreeNode {
   throw new TwigGrammarError(describeUnexpectedToken(stream));
 }
 
-function createStringNode(stream: TwigTokenStream, parts: readonly StringPart[], expressions: readonly EstreeNode[], options: { readonly start: number; readonly end: number; readonly isKey: boolean }): EstreeNode {
+function createStringNode(stream: TwigTokenStream, parts: readonly StringPart[], expressions: readonly EstreeNode[], options: { readonly start: number; readonly end: number; readonly isKey: boolean; readonly source: string }): EstreeNode {
   const hasJavaScriptSyntax = parts.some((part) => part.raw.includes('`') || part.raw.includes('${'));
   const isPlainValue = expressions.length === 0 && (options.isKey || hasJavaScriptSyntax);
   if (isPlainValue) {
     const text = parts.map((part) => part.raw).join('');
-    return createNode(stream, 'Literal', options.start, options.end, { value: decodeTwigString(text), raw: sourceTextOf(stream, options.start, options.end) });
+    return createNode(stream, 'Literal', options.start, options.end, { value: decodeTwigString(text), raw: options.source });
   }
   const quasis = parts.map((part, partIndex) => createNode(stream, 'TemplateElement', part.start, part.end, {
     value: { raw: part.raw, cooked: decodeTwigString(part.raw) },
@@ -364,11 +365,8 @@ function createStringNode(stream: TwigTokenStream, parts: readonly StringPart[],
   return createNode(stream, 'TemplateLiteral', options.start, options.end, { quasis, expressions });
 }
 
-function sourceTextOf(stream: TwigTokenStream, start: number, end: number): string {
-  return stream.block.tokens.filter((token) => token.start >= start && token.end <= end).map((token) => token.value).join('');
-}
-
 function parseQuotedString(stream: TwigTokenStream, isKey: boolean): QuotedString {
+  const openingIndex = stream.index;
   const opening = advance(stream);
   const parts: StringPart[] = [];
   const expressions: EstreeNode[] = [];
@@ -392,7 +390,8 @@ function parseQuotedString(stream: TwigTokenStream, isKey: boolean): QuotedStrin
   }
   const closing = advance(stream);
   parts.push({ raw, start: partStart, end: closing.end });
-  const node = createStringNode(stream, parts, expressions, { start: opening.start, end: closing.end, isKey });
+  const source = stream.tokens.slice(openingIndex, stream.index).map((token) => token.value).join('');
+  const node = createStringNode(stream, parts, expressions, { start: opening.start, end: closing.end, isKey, source });
   return { node, endsWithText };
 }
 
@@ -429,8 +428,16 @@ function parseSequence(stream: TwigTokenStream): EstreeNode {
 }
 
 function isInterpolatedStringAt(stream: TwigTokenStream): boolean {
-  const closingQuoteIndex = stream.tokens.findIndex((token, index) => index > stream.index && token.type === 'CLOSING_QUOTE');
-  return stream.tokens.slice(stream.index + 1, closingQuoteIndex).some((token) => token.type === 'INTERPOLATION_START');
+  for (let index = stream.index + 1; index < stream.tokens.length; index += 1) {
+    const type = stream.tokens[index]?.type;
+    if (type === 'INTERPOLATION_START') {
+      return true;
+    }
+    if (type === 'CLOSING_QUOTE') {
+      return false;
+    }
+  }
+  return false;
 }
 
 function parseMappingKey(stream: TwigTokenStream): { readonly key: EstreeNode; readonly isComputed: boolean } {

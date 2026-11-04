@@ -16,8 +16,6 @@ export const TAGS_THAT_CANNOT_FOLLOW_ELSE: ReadonlySet<string> = new Set(['else'
 
 export const TAGS_WITH_VARYING_MARKUP: ReadonlySet<string> = new Set(['if', 'for', 'guard', 'trans', 'verbatim']);
 
-export const INCLUDE_TAGS: ReadonlySet<string> = new Set(['include', 'embed']);
-
 export const TWIG_DELIMITERS = /\{\{|\}\}|\{%|%\}|\{#|#\}/g;
 
 export const TAGS_LEFT_UNCONVERTED: ReadonlySet<string> = new Set([

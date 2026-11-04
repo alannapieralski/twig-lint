@@ -12,3 +12,4 @@
 {% macro a() %}{% endmacro %} {% macro b(x, y = 1, z = [1, -2, {c: 'd'}]) %}{% endmacro %} {% macro c(...rest) %}{% endmacro %} {% macro d(x = y) %}{% endmacro %} {% macro e(...r, s) %}{% endmacro %} {% macro f(...r = 1) %}{% endmacro %} {% macro g(x = "#{y}") %}{% endmacro %} {% macro h(x = {a}) %}{% endmacro %}
 {{ a ? b }} {{ a ?: b }} {{ a ? : b }} {{ a ? b : c ? d : e }} {{ a ?? b ?? c }} {{ not a == b }} {{ -a ** 2 }} {{ a b-and b }} {{ a has some b }}
 {{ a?.b.c }} {{ a?.b|upper }} {{ a?.b ~ c }} {{ a?.b() }} {{ TRUE }} {{ NONE }} {{ null }} {{ 1_000 }} {{ 1e3 }}
+{{ constructor }} {{ toString }}
