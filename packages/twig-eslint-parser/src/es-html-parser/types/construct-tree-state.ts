@@ -1,6 +1,7 @@
 import { ConstructTreeContextTypes } from "../constants/index.js";
 import { DocumentNode } from "./node.js";
 import { AnyContextualNode } from "./contextual-node.js";
+import { ParseError } from "./parse-error.js";
 
 export type ConstructTreeState<N extends AnyContextualNode> = {
   caretPosition: number;
@@ -12,4 +13,6 @@ export type ConstructTreeState<N extends AnyContextualNode> = {
   currentNode: N;
   rootNode: DocumentNode;
   voidElements: ReadonlySet<string>;
+  errors: ParseError[];
+  selfClosedElementsByName: Map<string, AnyContextualNode>;
 };

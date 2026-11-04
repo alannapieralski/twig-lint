@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { groupTwigBlocks } from '../../src/twig/blocks.js';
 import { tokenizeTwig } from '../../src/twig/tokens.js';
-import { parseHtmlProgram } from '../../src/html/program.js';
+import { parseHtmlDocument } from '../../src/html/program.js';
 import { REWRITES, checkRewritesKeepTheTree } from './metamorphic.js';
 import type { TreeParser } from './metamorphic.js';
 
 const parseWithoutTwigKinds: TreeParser = (source) => {
   const templateInfos = groupTwigBlocks(tokenizeTwig(source)).map((block): [number, number] => [block.start, block.end]);
-  const program = parseHtmlProgram(source, { templateInfos });
+  const program = parseHtmlDocument(source, { templateInfos }).program;
   return { ast: { body: program.body, twigBody: [] } };
 };
 

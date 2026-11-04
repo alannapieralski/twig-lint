@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { isWhitespace } from "../../utils/index.js";
+import { isWhitespace, reportEndOfInputInTag } from "../../utils/index.js";
 import type { TemplateKind, TokenizerState, Range } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -21,7 +21,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.sourceCode.next();
 }
 
-export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
+export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+  if (kind === "tag") {
+    state.contextParams[TokenizerContextTypes.AttributeValueBare] = { isAfterTwigTag: true };
+  }
   parseBare(state);
 }
 
@@ -55,4 +58,8 @@ function parseTagEnd(state: TokenizerState) {
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.Attributes;
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

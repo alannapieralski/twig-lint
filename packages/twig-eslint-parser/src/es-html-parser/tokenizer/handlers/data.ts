@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition, createParts, pushContentAtEndOfInput, readTemplateAsContent } from "../../utils/index.js";
+import { calculateTokenPosition, createParts, pushContentAtEndOfInput, readTemplateAsContent, reportEndOfInputInTag } from "../../utils/index.js";
 import { Range, AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -51,6 +51,10 @@ function isAfterLoneOpeningCornerBrace(chars: CharsBuffer): boolean {
 }
 
 export function handleContentEnd(state: TokenizerState) {
+  if (state.decisionBuffer.value().startsWith("<")) {
+    state.tagStart = startOfDecisionBuffer(state);
+    reportEndOfInputInTag(state);
+  }
   pushContentAtEndOfInput(state, TokenTypes.Text);
 }
 
@@ -66,6 +70,7 @@ function generateTextToken(state: TokenizerState): AnyToken {
 }
 
 function parseOpeningCornerBraceWithText(state: TokenizerState) {
+  state.tagStart = startOfDecisionBuffer(state);
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
   }
@@ -76,6 +81,7 @@ function parseOpeningCornerBraceWithText(state: TokenizerState) {
 }
 
 function parseOpeningCornerBraceWithSlash(state: TokenizerState) {
+  state.tagStart = startOfDecisionBuffer(state);
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
   }
@@ -99,6 +105,10 @@ function isIncompleteDoctype(chars: string) {
   );
 }
 
+function startOfDecisionBuffer(state: TokenizerState): number {
+  return state.sourceCode.index() - (state.decisionBuffer.length() - 1);
+}
+
 function parseCommentOpen(state: TokenizerState) {
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
@@ -119,10 +129,12 @@ function parseCommentOpen(state: TokenizerState) {
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.CommentContent;
+  state.contextParams[TokenizerContextTypes.CommentContent] = { openRange: range };
   state.sourceCode.next();
 }
 
 function parseDoctypeOpen(state: TokenizerState) {
+  state.tagStart = startOfDecisionBuffer(state);
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
   }

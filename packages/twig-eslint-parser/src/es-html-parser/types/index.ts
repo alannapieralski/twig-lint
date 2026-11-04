@@ -10,3 +10,4 @@ export * from "./base-node.js";
 export * from "./parse-result.js";
 export * from "./token-adapter.js";
 export * from "./template.js";
+export * from "./parse-error.js";

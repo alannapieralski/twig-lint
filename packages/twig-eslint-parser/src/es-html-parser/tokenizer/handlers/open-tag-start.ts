@@ -5,6 +5,7 @@ import {
   isWhitespace,
   readTemplateAsContent,
   readTagName,
+  reportEndOfInputInTag,
 } from "../../utils/index.js";
 import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
@@ -15,8 +16,12 @@ const OPEN_TAG_START_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
 ]);
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
-  if (chars.value() === ">" || chars.value() === "/") {
+  if (chars.value() === ">") {
     return parseTagEnd(state);
+  }
+
+  if (chars.value() === "/") {
+    return reconsumeInAttributes(state);
   }
 
   if (isWhitespace(chars.value())) {
@@ -32,12 +37,7 @@ export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
   if (kind === "print") {
     return readTemplateAsContent(kind, state);
   }
-  const tagName = pushOpenTagStart(state);
-
-  state.accumulatedContent.clear();
-  state.decisionBuffer.clear();
-  state.currentContext = TokenizerContextTypes.Attributes;
-  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
+  reconsumeInAttributes(state);
 }
 
 function pushOpenTagStart(state: TokenizerState): string {
@@ -56,13 +56,22 @@ function pushOpenTagStart(state: TokenizerState): string {
   return tagName;
 }
 
+function reconsumeInAttributes(state: TokenizerState) {
+  const tagName = pushOpenTagStart(state);
+
+  state.accumulatedContent.clear();
+  state.decisionBuffer.clear();
+  state.currentContext = TokenizerContextTypes.Attributes;
+  state.contextParams[TokenizerContextTypes.Attributes] = { tagName, attributeNameRanges: new Map() };
+}
+
 function parseWhitespace(state: TokenizerState) {
   const tagName = pushOpenTagStart(state);
 
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.Attributes;
-  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
+  state.contextParams[TokenizerContextTypes.Attributes] = { tagName, attributeNameRanges: new Map() };
   state.sourceCode.next();
 }
 
@@ -73,4 +82,8 @@ function parseTagEnd(state: TokenizerState) {
   state.accumulatedContent.clear();
   state.currentContext = TokenizerContextTypes.OpenTagEnd;
   state.contextParams[TokenizerContextTypes.OpenTagEnd] = { tagName };
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

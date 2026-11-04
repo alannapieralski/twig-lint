@@ -2,6 +2,7 @@ import { ConstructTreeContextTypes, NodeTypes } from "../constants/index.js";
 import { AnyContextualNode, ConstructTreeState, DocumentNode, Range, AnyToken } from "../types/index.js";
 import { SourceLocation } from "../types/source-location.js";
 import { extendNodeEndToLastChild, first, last } from "../utils/index.js";
+import { reportUnclosedElement } from "./element-errors.js";
 import { cloneLocation } from "../utils/clone-location.js";
 import {
   tagContent,
@@ -93,19 +94,22 @@ export function constructTree(tokens: AnyToken[], extraVoidElements: readonly st
     currentContext: rootContext,
     currentNode: rootNode,
     rootNode,
+    errors: [],
+    selfClosedElementsByName: new Map(),
     voidElements: new Set([...VOID_ELEMENTS, ...extraVoidElements.map((name) => name.toLowerCase())]),
   };
 
   const positionOffset = state!.caretPosition;
   processTokens(tokens, state!, positionOffset);
-  endElementsLeftOpen(state!.currentNode);
+  endElementsLeftOpen(state!, state!.currentNode);
 
   return { state, ast: state!.rootNode };
 }
 
-function endElementsLeftOpen(node: AnyContextualNode | undefined) {
+function endElementsLeftOpen(state: ConstructTreeState<any>, node: AnyContextualNode | undefined) {
   for (let open = node; open && open.type !== NodeTypes.Document; open = open.parentRef) {
     extendNodeEndToLastChild(open);
+    reportUnclosedElement(state, open);
   }
 }
 

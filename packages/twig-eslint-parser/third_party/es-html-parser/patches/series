@@ -1,5 +1,4 @@
 # Applied in order by scripts/vendor.ts. One patch per concern.
-EHP-00-vitest-error-snapshot.patch
 EHP-01-esm-import-specifiers.patch
 EHP-02-template-hook-per-state.patch
 EHP-03-tag-names-on-tokens.patch
@@ -9,3 +8,6 @@ EHP-06-comment-ends.patch
 EHP-07-void-elements.patch
 EHP-08-close-back-to-open-ancestor.patch
 EHP-09-content-at-end-of-input.patch
+EHP-10-error-list.patch
+EHP-11-malformed-open-tags.patch
+EHP-12-tree-errors.patch

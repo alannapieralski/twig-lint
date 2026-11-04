@@ -16,15 +16,18 @@ import {
   TextNode,
   CompositeToken,
   RawContentNode,
+  TagNode,
 } from "../../types/index.js";
 import {
   cloneRange,
   extendNodeEndToLastChild,
+  reportError,
   pairingKeyOf,
   createNodeFrom,
   cloneLocation,
   initChildrenIfNone,
 } from "../../utils/index.js";
+import { reportUnclosedElement } from "../element-errors.js";
 
 function handleOpenTagStart(
   state: ConstructTreeState<ContextualTagNode>,
@@ -63,8 +66,18 @@ function findOpenTagClosedBy(node: ContextualTagNode, closeTagKey: string): Cont
 
 function leaveElementUnclosed(state: ConstructTreeState<ContextualTagNode>) {
   extendNodeEndToLastChild(state.currentNode);
+  reportUnclosedElement(state, state.currentNode);
   state.currentNode = state.currentNode.parentRef as ContextualTagNode;
   state.currentContext = state.currentContext.parentRef.parentRef;
+}
+
+function reportInvalidEndTag(state: ConstructTreeState<ContextualTagNode>, token: AnyToken, name: string) {
+  if (state.voidElements.has(name)) {
+    return;
+  }
+  const openElement = state.currentNode.type === NodeTypes.Tag ? (state.currentNode as unknown as TagNode) : undefined;
+  const selfClosedElement = state.selfClosedElementsByName.get(pairingKeyOf(name)) as unknown as TagNode | undefined;
+  reportError(state, { code: "x-invalid-end-tag", range: cloneRange(token.range), name, openElement, selfClosedElement });
 }
 
 function handleCloseTag(
@@ -75,6 +88,7 @@ function handleCloseTag(
   const closedTag = findOpenTagClosedBy(state.currentNode, pairingKeyOf(closeTagName));
 
   if (!closedTag) {
+    reportInvalidEndTag(state, token, closeTagName);
     state.caretPosition++;
 
     return state;

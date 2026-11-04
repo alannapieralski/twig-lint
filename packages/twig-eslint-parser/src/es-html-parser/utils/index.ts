@@ -12,6 +12,6 @@ export * from "./first.js";
 export * from "./clone-location.js";
 export * from "./init-if-none.js";
 export * from "./templates.js";
-export * from "./raise.js";
 export * from "./tag-name.js";
 export * from "./pending-text.js";
+export * from "./report-error.js";

@@ -89,6 +89,7 @@ export function tokenize(
     tokenAdapter,
     rawContentTags: options.rawContentTags,
     sourceCode: new SourceCode(source, options.templateInfos || []),
+    errors: [],
     tokens: {
       push(token: AnyToken) {
         tokens.push({

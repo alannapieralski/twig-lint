@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition, readTagName } from "../../utils/index.js";
+import { calculateTokenPosition, readTagName, reportEndOfInputInTag } from "../../utils/index.js";
 import type { AnyToken, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -30,4 +30,8 @@ function parseClosingCornerBrace(state: TokenizerState) {
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.Data;
   state.sourceCode.next();
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

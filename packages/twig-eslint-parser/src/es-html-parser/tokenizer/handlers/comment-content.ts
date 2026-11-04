@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition, createParts, moveIntoContentExceptLast, pushContentAtEndOfInput } from "../../utils/index.js";
+import { calculateTokenPosition, createParts, moveIntoContentExceptLast, pushContentAtEndOfInput, reportError } from "../../utils/index.js";
 import type { Range, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -51,9 +51,14 @@ function parseCommentClose(state: TokenizerState, closeLength: number) {
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.Data;
+  state.contextParams[TokenizerContextTypes.CommentContent] = undefined;
   state.sourceCode.next();
 }
 
 export function handleContentEnd(state: TokenizerState) {
+  const openRange = state.contextParams[TokenizerContextTypes.CommentContent]?.openRange;
+  if (openRange) {
+    reportError(state, { code: "eof-in-comment", range: openRange });
+  }
   pushContentAtEndOfInput(state, TokenTypes.CommentContent);
 }

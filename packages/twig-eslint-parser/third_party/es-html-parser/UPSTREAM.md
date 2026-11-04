@@ -49,7 +49,6 @@ with upstream's own strictness (`strict`), not this package's extra checks
 
 | ID | Change | Why | Test |
 |---|---|---|---|
-| EHP-00 | Expect vitest's format for an inline error snapshot | Upstream runs its tests with jest; test-only | `npm run test:upstream` |
 | EHP-01 | Full `.js` specifiers in relative imports, `export type` for type re-exports | Shipped as native ES modules under `isolatedModules` | `npm run typecheck`, `npm run test:upstream` |
 | EHP-02 | Template ranges carry a kind, and each tokenizer state reads a template through one `parseTemplate` hook: a print continues what it touches, a Twig tag stands alone, a Twig comment is nothing, and inside content all three are content | Five places decided what a template meant by three techniques, and any state that string-matched its buffer could see template text, so a Twig string holding `</script>` ended a script | `test/parser/parse-for-eslint.test.ts` |
 | EHP-03 | A tag name is read once, in the tag states, carried on the token as `name`, and elements pair by it; `<` opens a tag only before an ASCII letter; token types are looked up in a `Map` | `</ div>` and `</d iv>` closed a `div`, `</div class>` did not, `</{{ Tag }}>` closed `<{{ tag }}>`, `x <3` opened a tag and `<constructor>` crashed the parser | `test/parser/parse-for-eslint.test.ts`, upstream snapshots |
@@ -59,6 +58,9 @@ with upstream's own strictness (`strict`), not this package's extra checks
 | EHP-07 | A `voidElements` option names extra elements that never have content or a close tag | Drupal's `<head-placeholder token="...">` was never closed and took in the markup after it | `test/parser/parse-for-eslint.test.ts` |
 | EHP-08 | A close tag that matches an open ancestor closes back to it; an element that is never closed ends where its last child ends. Unlike a browser, the walk does not stop at special elements | One never-closed element took in every later close tag, and its range stopped at its open tag while its children ran past it | `test/parser/parse-for-eslint.test.ts`, the "child inside parent" output check |
 | EHP-09 | At the end of the input the text, comment, raw-text, attribute name and attribute value states emit what they read | The rest of a file after an unterminated `<!--` or `<script>` was in no node | `test/parser/parse-for-eslint.test.ts`, `test/parser/diagnostics.test.ts` |
+| EHP-10 | An error list on the tokenizer and tree states, returned by `parse()`: a code and facts, no wording. Each tag state's end of input reports `eof-in-tag`, the comment state `eof-in-comment` | The parser's wrapper re-derived these from the final tree |  `test/parser/diagnostics.test.ts` |
+| EHP-11 | A quote or `<` in an attribute name or an unquoted value is read as part of it and reported; a `/` not followed by `>` is reported and ignored | Upstream threw on `<` in an open tag and took the attributes after a stray `/` into the open tag end | `test/parser/diagnostics.test.ts`, upstream "reports a < inside an open tag and reads on" |
+| EHP-12 | `duplicate-attribute` when a key ends, `x-invalid-end-tag` and `x-unclosed-element` from the element stack, with the elements involved | The wrapper found these by walking the tree and the tokens again | `test/parser/diagnostics.test.ts` |
 
 ## Commands
 

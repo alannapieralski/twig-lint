@@ -1,0 +1,263 @@
+Description: Report repeated attributes, unmatched end tags and unclosed elements
+ An attribute name the tag already has reports "duplicate-attribute" with
+ the range of the first, when its key holds no template. A close tag that
+ matches no open element reports "x-invalid-end-tag" with the innermost
+ open element and the last element of its name closed by "/>", unless it
+ names a void element. An element whose open tag ended but which is left
+ open, by a close tag of an ancestor or by the end of the input, reports
+ "x-unclosed-element", unless HTML lets its end tag be left out.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/diagnostics.test.ts ("duplicate-attribute", "x-invalid-end-tag", "x-unclosed-element")
+Last-Update: 2026-11-04
+---
+diff --git a/src/tokenizer/handlers/attribute-key.ts b/src/tokenizer/handlers/attribute-key.ts
+index 76c0279..4f600d2 100644
+--- a/src/tokenizer/handlers/attribute-key.ts
++++ b/src/tokenizer/handlers/attribute-key.ts
+@@ -8,9 +8,10 @@ import {
+   pushContentAtEndOfInput,
+   readTemplateAsContent,
+   reportCharacterInOpenTag,
++  reportError,
+   reportEndOfInputInTag,
+ } from "../../utils/index.js";
+-import type { TemplateKind, TokenizerState } from "../../types/index.js";
++import type { Range, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -39,8 +40,21 @@ function isKeyBreak(chars: CharsBuffer): boolean {
+   return value === "=" || value === "/" || value === ">" || isWhitespace(value);
+ }
+ 
++function checkForRepeatedName(state: TokenizerState, name: string, range: Range) {
++  const nameRanges = state.contextParams[TokenizerContextTypes.Attributes]?.attributeNameRanges;
++  const firstRange = nameRanges?.get(name);
++  if (firstRange) {
++    reportError(state, { code: "duplicate-attribute", tagStart: state.tagStart ?? 0, range, firstRange });
++    return;
++  }
++  nameRanges?.set(name, range);
++}
++
+ function parseKeyEnd(state: TokenizerState) {
+   const position = calculateTokenPosition(state, { keepBuffer: false });
++  if (!state.accumulatedContent.hasTemplate()) {
++    checkForRepeatedName(state, state.accumulatedContent.value().toLowerCase(), position.range);
++  }
+ 
+   state.tokens.push({
+     type: TokenTypes.AttributeKey,
+diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
+index 570ac93..9345c5e 100644
+--- a/src/tokenizer/handlers/open-tag-start.ts
++++ b/src/tokenizer/handlers/open-tag-start.ts
+@@ -62,7 +62,7 @@ function reconsumeInAttributes(state: TokenizerState) {
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.Attributes;
+-  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
++  state.contextParams[TokenizerContextTypes.Attributes] = { tagName, attributeNameRanges: new Map() };
+ }
+ 
+ function parseWhitespace(state: TokenizerState) {
+@@ -71,7 +71,7 @@ function parseWhitespace(state: TokenizerState) {
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.Attributes;
+-  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
++  state.contextParams[TokenizerContextTypes.Attributes] = { tagName, attributeNameRanges: new Map() };
+   state.sourceCode.next();
+ }
+ 
+diff --git a/src/tree-constructor/construct-tree.ts b/src/tree-constructor/construct-tree.ts
+index 38a1592..de48fa2 100644
+--- a/src/tree-constructor/construct-tree.ts
++++ b/src/tree-constructor/construct-tree.ts
+@@ -2,6 +2,7 @@ import { ConstructTreeContextTypes, NodeTypes } from "../constants/index.js";
+ import { AnyContextualNode, ConstructTreeState, DocumentNode, Range, AnyToken } from "../types/index.js";
+ import { SourceLocation } from "../types/source-location.js";
+ import { extendNodeEndToLastChild, first, last } from "../utils/index.js";
++import { reportUnclosedElement } from "./element-errors.js";
+ import { cloneLocation } from "../utils/clone-location.js";
+ import {
+   tagContent,
+@@ -94,19 +95,21 @@ export function constructTree(tokens: AnyToken[], extraVoidElements: readonly st
+     currentNode: rootNode,
+     rootNode,
+     errors: [],
++    selfClosedElementsByName: new Map(),
+     voidElements: new Set([...VOID_ELEMENTS, ...extraVoidElements.map((name) => name.toLowerCase())]),
+   };
+ 
+   const positionOffset = state!.caretPosition;
+   processTokens(tokens, state!, positionOffset);
+-  endElementsLeftOpen(state!.currentNode);
++  endElementsLeftOpen(state!, state!.currentNode);
+ 
+   return { state, ast: state!.rootNode };
+ }
+ 
+-function endElementsLeftOpen(node: AnyContextualNode | undefined) {
++function endElementsLeftOpen(state: ConstructTreeState<any>, node: AnyContextualNode | undefined) {
+   for (let open = node; open && open.type !== NodeTypes.Document; open = open.parentRef) {
+     extendNodeEndToLastChild(open);
++    reportUnclosedElement(state, open);
+   }
+ }
+ 
+diff --git a/src/tree-constructor/element-errors.ts b/src/tree-constructor/element-errors.ts
+new file mode 100644
+index 0000000..c05dafe
+--- /dev/null
++++ b/src/tree-constructor/element-errors.ts
+@@ -0,0 +1,31 @@
++import { NodeTypes } from "../constants/index.js";
++import { AnyContextualNode, ConstructTreeState, ContextualScriptTagNode, ContextualStyleTagNode, ContextualTagNode, ParseError, Range } from "../types/index.js";
++import { reportError } from "../utils/index.js";
++
++type ContextualElementNode = ContextualTagNode | ContextualScriptTagNode | ContextualStyleTagNode;
++
++const ELEMENT_NODE_TYPES: ReadonlySet<NodeTypes> = new Set([NodeTypes.Tag, NodeTypes.ScriptTag, NodeTypes.StyleTag]);
++
++const END_TAG_OPTIONAL_ELEMENTS: ReadonlySet<string> = new Set([
++  "body", "caption", "colgroup", "dd", "dt", "head", "html", "li", "optgroup", "option", "p", "rp", "rt", "tbody", "td", "tfoot", "th", "thead", "tr",
++]);
++
++function isElementNode(node: AnyContextualNode): node is ContextualElementNode {
++  return ELEMENT_NODE_TYPES.has(node.type);
++}
++
++function isMissingItsEndTag(element: ContextualElementNode): boolean {
++  const name = element.type === NodeTypes.Tag ? element.name : undefined;
++  const isEndTagOptional = name !== undefined && END_TAG_OPTIONAL_ELEMENTS.has(name);
++  return element.openEnd !== undefined && element.close === undefined && !isEndTagOptional;
++}
++
++type UnclosedElement = Extract<ParseError, { code: "x-unclosed-element" }>["element"];
++
++export function reportUnclosedElement(state: ConstructTreeState<any>, node: AnyContextualNode): void {
++  if (!isElementNode(node) || !isMissingItsEndTag(node) || !node.openStart || !node.openEnd) {
++    return;
++  }
++  const range: Range = [node.openStart.range[0], node.openEnd.range[1]];
++  reportError(state, { code: "x-unclosed-element", range, element: node as unknown as UnclosedElement });
++}
+diff --git a/src/tree-constructor/handlers/tag-content.ts b/src/tree-constructor/handlers/tag-content.ts
+index 88862ed..66e8c50 100644
+--- a/src/tree-constructor/handlers/tag-content.ts
++++ b/src/tree-constructor/handlers/tag-content.ts
+@@ -16,15 +16,18 @@ import {
+   TextNode,
+   CompositeToken,
+   RawContentNode,
++  TagNode,
+ } from "../../types/index.js";
+ import {
+   cloneRange,
+   extendNodeEndToLastChild,
++  reportError,
+   pairingKeyOf,
+   createNodeFrom,
+   cloneLocation,
+   initChildrenIfNone,
+ } from "../../utils/index.js";
++import { reportUnclosedElement } from "../element-errors.js";
+ 
+ function handleOpenTagStart(
+   state: ConstructTreeState<ContextualTagNode>,
+@@ -63,10 +66,20 @@ function findOpenTagClosedBy(node: ContextualTagNode, closeTagKey: string): Cont
+ 
+ function leaveElementUnclosed(state: ConstructTreeState<ContextualTagNode>) {
+   extendNodeEndToLastChild(state.currentNode);
++  reportUnclosedElement(state, state.currentNode);
+   state.currentNode = state.currentNode.parentRef as ContextualTagNode;
+   state.currentContext = state.currentContext.parentRef.parentRef;
+ }
+ 
++function reportInvalidEndTag(state: ConstructTreeState<ContextualTagNode>, token: AnyToken, name: string) {
++  if (state.voidElements.has(name)) {
++    return;
++  }
++  const openElement = state.currentNode.type === NodeTypes.Tag ? (state.currentNode as unknown as TagNode) : undefined;
++  const selfClosedElement = state.selfClosedElementsByName.get(pairingKeyOf(name)) as unknown as TagNode | undefined;
++  reportError(state, { code: "x-invalid-end-tag", range: cloneRange(token.range), name, openElement, selfClosedElement });
++}
++
+ function handleCloseTag(
+   state: ConstructTreeState<ContextualTagNode>,
+   token: AnyToken
+@@ -75,6 +88,7 @@ function handleCloseTag(
+   const closedTag = findOpenTagClosedBy(state.currentNode, pairingKeyOf(closeTagName));
+ 
+   if (!closedTag) {
++    reportInvalidEndTag(state, token, closeTagName);
+     state.caretPosition++;
+ 
+     return state;
+diff --git a/src/tree-constructor/handlers/tag.ts b/src/tree-constructor/handlers/tag.ts
+index d523da9..bf1c40f 100644
+--- a/src/tree-constructor/handlers/tag.ts
++++ b/src/tree-constructor/handlers/tag.ts
+@@ -9,7 +9,7 @@ import {
+   NamedToken,
+   Token,
+ } from "../../types/index.js";
+-import { createNodeFrom, updateNodeEnd } from "../../utils/index.js";
++import { createNodeFrom, pairingKeyOf, updateNodeEnd } from "../../utils/index.js";
+ 
+ const ATTRIBUTE_START_TOKENS = [
+   TokenTypes.AttributeKey,
+@@ -53,6 +53,9 @@ function handleOpenTagEnd(
+     state.currentNode.openEnd.value === "/>"
+   ) {
+     state.currentNode.selfClosing = true;
++    if (state.currentNode.openEnd.value === "/>") {
++      state.selfClosedElementsByName.set(pairingKeyOf(tagName ?? ""), state.currentNode);
++    }
+     state.currentNode = state.currentNode.parentRef;
+     state.currentContext = state.currentContext.parentRef;
+     state.caretPosition++;
+diff --git a/src/types/construct-tree-state.ts b/src/types/construct-tree-state.ts
+index eb9bf31..d7b7341 100644
+--- a/src/types/construct-tree-state.ts
++++ b/src/types/construct-tree-state.ts
+@@ -14,4 +14,5 @@ export type ConstructTreeState<N extends AnyContextualNode> = {
+   rootNode: DocumentNode;
+   voidElements: ReadonlySet<string>;
+   errors: ParseError[];
++  selfClosedElementsByName: Map<string, AnyContextualNode>;
+ };
+diff --git a/src/types/parse-error.ts b/src/types/parse-error.ts
+index 9b04520..f2a6f2e 100644
+--- a/src/types/parse-error.ts
++++ b/src/types/parse-error.ts
+@@ -1,9 +1,13 @@
++import { ScriptTagNode, StyleTagNode, TagNode } from "./node.js";
+ import { Range } from "./range.js";
+ 
+ export type ParseError =
+   | { code: "eof-in-comment"; range: Range }
+   | { code: "eof-in-tag"; tagStart: number; range: Range }
+-  | { code: OpenTagCharacterErrorCode; tagStart: number; range: Range };
++  | { code: OpenTagCharacterErrorCode; tagStart: number; range: Range }
++  | { code: "duplicate-attribute"; tagStart: number; range: Range; firstRange: Range }
++  | { code: "x-invalid-end-tag"; range: Range; name: string; openElement?: TagNode; selfClosedElement?: TagNode }
++  | { code: "x-unclosed-element"; range: Range; element: TagNode | ScriptTagNode | StyleTagNode };
+ 
+ export type OpenTagCharacterErrorCode =
+   | "unexpected-character-in-attribute-name"
+diff --git a/src/types/tokenizer-state.ts b/src/types/tokenizer-state.ts
+index f56e26c..5f554d6 100644
+--- a/src/types/tokenizer-state.ts
++++ b/src/types/tokenizer-state.ts
+@@ -13,6 +13,7 @@ type ContextParams = {
+   };
+   [TokenizerContextTypes.Attributes]?: {
+     tagName: string;
++    attributeNameRanges: Map<string, Range>;
+   };
+   [TokenizerContextTypes.OpenTagEnd]?: {
+     tagName: string;

@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition } from "../../utils/index.js";
+import { calculateTokenPosition, reportEndOfInputInTag } from "../../utils/index.js";
 import type { TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -51,4 +51,8 @@ function parseClosingCornerBrace(state: TokenizerState) {
   state.sourceCode.next();
 
   state.contextParams[TokenizerContextTypes.OpenTagEnd] = undefined;
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

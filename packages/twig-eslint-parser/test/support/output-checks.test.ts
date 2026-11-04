@@ -72,7 +72,7 @@ describe('checkParserOutput', () => {
   });
 
   it('reports a template the parser rejects as a template defect with its line', () => {
-    expect(checkParserOutput('<p>\n<div class="a"\n<p>')).toEqual([
+    expect(checkParserOutput('<p>\n<div>\n{% endif %}')).toEqual([
       expect.objectContaining({ check: 'template is valid Twig and HTML', line: 3 }),
     ]);
   });

@@ -69,6 +69,11 @@ describe('unexpected-solidus-in-tag', () => {
   it.each(['<div/ class="x"\n  id="y">z</div>', '<img src="a" / >'])('reports a / that does not end the tag: %j', (code) => {
     expect(codesOf(code)).toEqual(['unexpected-solidus-in-tag']);
   });
+
+  it('reads the attributes after the /, as a browser does', () => {
+    const [document] = parseForESLint('<img src="a" / alt="b">').ast.body as unknown as { children: { attributes: unknown[] }[] }[];
+    expect(document?.children[0]?.attributes).toHaveLength(2);
+  });
 });
 
 describe('elements written as self-closing', () => {
@@ -127,6 +132,10 @@ describe('unexpected-character-in-attribute-name', () => {
     expect(codesOf(code)).toEqual(['unexpected-character-in-attribute-name']);
   });
 
+  it('reports a < in an open tag whose > is missing and reads on instead of failing the file', () => {
+    expect(codesOf('<div class="a"\n  <p>x</p>\n</div>')[0]).toBe('unexpected-character-in-attribute-name');
+  });
+
   it('reports the < before a / when a missing > lets the tag take in the next closing tag', () => {
     expect(codesOf('<ul>\n  <li class="x"{{ item }}</li>\n</ul>')).toEqual(['unexpected-character-in-attribute-name']);
   });
@@ -146,6 +155,10 @@ describe('unexpected-character-in-unquoted-attribute-value', () => {
     expect(diagnostic).toMatchObject({ code: 'unexpected-character-in-unquoted-attribute-value', range: [0, 14] });
   });
 
+  it('stays quiet for quotes in an unquoted value after a Twig tag, which decides the quoting', () => {
+    expect(codesOf('<div class={% if a %}"x"{% else %}"y"{% endif %}>z</div>')).toEqual([]);
+  });
+
   it.each(['<a title="a<b">x</a>', '<a {{ x < y }}>x</a>', '<a {% if x < y %}b{% endif %}>x</a>'])('stays quiet for a < inside quotes or Twig: %s', (code) => {
     expect(codesOf(code)).toEqual([]);
   });
@@ -163,7 +176,7 @@ describe('x-invalid-end-tag', () => {
 
   it('says when an earlier tag of the same name ended with "/>", which browsers ignore on that element', () => {
     const [diagnostic] = diagnosticsOf('<div>\n  <button class="a" type="button" />\n  <span>x</span>\n</button>\n</div>');
-    expect(diagnostic?.message).toBe('</button> closes nothing, because the <button … /> before it already ended with "/>". Browsers ignore "/>" on this element, so remove the "/" there or remove this closing tag.');
+    expect(diagnostic?.message).toBe('</button> closes nothing, because the <button … /> before it already ended with "/>". Remove the "/" there or remove this closing tag.');
   });
 
   it('reports the closing tag only', () => {
@@ -212,6 +225,18 @@ describe('x-invalid-end-tag', () => {
 });
 
 describe('x-unclosed-element', () => {
+  it('reports an element named by Twig that is never closed', () => {
+    expect(codesOf('<{{ element }} class="a">x')).toEqual(['x-unclosed-element']);
+  });
+
+  it('stays quiet when a closing tag with a written name may close an element named by Twig', () => {
+    expect(codesOf('<h{{ level }} class="a">x</h2>')).toEqual([]);
+  });
+
+  it('reports an element whose glued Twig cannot be part of the name the closing tag has', () => {
+    expect(codesOf('<div{{ attributes }}><p>x</p></span>')).toEqual(['x-unclosed-element', 'x-invalid-end-tag']);
+  });
+
   it('reports an element that is never closed, at its open tag', () => {
     const [diagnostic] = diagnosticsOf('<div><p>x</p>');
     expect(diagnostic).toMatchObject({ code: 'x-unclosed-element', range: [0, 5] });
@@ -333,6 +358,26 @@ describe('x-unparsed-twig for blocks Twig rejects', () => {
     ['macro defaults', "{% macro input(name, value = '') %}{% endmacro %}"],
   ])('stays quiet for %s', (_name, code) => {
     expect(diagnosticsOf(code)).toEqual([]);
+  });
+});
+
+describe('unreadable open tags', () => {
+  const unreadableTagStartsIn = (code: string) => parseForESLint(code).services.twig.unreadableTagStarts;
+
+  it.each([
+    ['a tag that ends with > and holds only attributes', '<a href="x">y</a>', []],
+    ['an open tag with no closing bracket', '<p>x</p><a href="x"', [8]],
+    ['a tag with an unquoted value that runs into the next tag', '<p>x</p><li id=b<span>x</span></li>', [8]],
+    ['a tag whose quotes are mangled, so an attribute name holds a quote', '<p>x</p><li class="a\' data-x="y" id="z">x</li>', [8]],
+    ['a closing tag that matches nothing, which misreads no open tag', '<p>x</p></div>', []],
+    ['a < inside a quoted value or a Twig block', '<a title="a<b" {{ x < y }}>y</a>', []],
+  ])('lists %s', (_name, code, starts) => {
+    expect(unreadableTagStartsIn(code)).toEqual(starts);
+  });
+
+  it('lists the start of every open tag the parser could not read, whether or not it is reported', () => {
+    const code = '<p class="a\' data-b="c">x</p>{% if a %}<i title="a\' data-b="c">y</i>{% endif %}<div class="c"';
+    expect(parseForESLint(code).services.twig.unreadableTagStarts).toEqual([0, code.indexOf('<i'), code.indexOf('<div')]);
   });
 });
 

@@ -23,14 +23,14 @@ describe('measureLineCoverage', () => {
   });
 
   it('marks every counted line when the template cannot be parsed', () => {
-    const coverage = measure('<div\n<p>text</p>\n');
+    const coverage = measure('{% endif %}\n<p>text</p>\n');
 
     expect(coverage.lineStatuses.fault).toBe(coverage.countedLines);
     expect(coverage.spans.map((span) => span.cause)).toEqual(['unparseable']);
   });
 
   it('files an unparseable template under template defects when Twig rejects it too', () => {
-    const coverage = measure('<div\n<p>text</p>\n', { kind: 'rejected-by-twig' });
+    const coverage = measure('{% endif %}\n<p>text</p>\n', { kind: 'rejected-by-twig' });
 
     expect(coverage.lineStatuses).toMatchObject({ fault: 0, templateDefect: coverage.countedLines });
   });

@@ -1,11 +1,33 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition, createParts, isWhitespace, raise } from "../../utils/index.js";
+import {
+  calculateTokenPosition,
+  createParts,
+  isCharacterThatBreaksAnAttribute,
+  isWhitespace,
+  moveIntoContentExceptLast,
+  reportCharacterInOpenTag,
+  reportEndOfInputInTag,
+} from "../../utils/index.js";
 import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
   const value = chars.value();
-  if (value === ">" || value === "/") {
+  if (value === "/") {
+    state.sourceCode.next();
+    return;
+  }
+
+  if (value === "/>") {
+    moveIntoContentExceptLast(state, 1);
+    return parseTagEnd(state);
+  }
+
+  if (value.startsWith("/")) {
+    return ignoreStraySolidus(state);
+  }
+
+  if (value === ">") {
     return parseTagEnd(state);
   }
 
@@ -22,6 +44,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 }
 
 export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+  if (state.decisionBuffer.value().startsWith("/")) {
+    reportCharacterInOpenTag(state, "unexpected-solidus-in-tag", startOfDecisionBuffer(state));
+    state.decisionBuffer.removeFirst();
+  }
   if (kind === "comment") {
     state.decisionBuffer.clear();
     state.sourceCode.next();
@@ -50,11 +76,19 @@ function parseStandaloneTemplate(state: TokenizerState) {
   state.sourceCode.next();
 }
 
+function startOfDecisionBuffer(state: TokenizerState): number {
+  return state.sourceCode.index() - (state.decisionBuffer.length() - 1);
+}
+
+function ignoreStraySolidus(state: TokenizerState) {
+  reportCharacterInOpenTag(state, "unexpected-solidus-in-tag", startOfDecisionBuffer(state));
+  state.decisionBuffer.clear();
+}
+
 function parseTagEnd(state: TokenizerState) {
   const tagName =
     state.contextParams[TokenizerContextTypes.Attributes]?.tagName;
 
-  state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.OpenTagEnd;
   state.contextParams[TokenizerContextTypes.OpenTagEnd] = { tagName: tagName! };
@@ -62,11 +96,8 @@ function parseTagEnd(state: TokenizerState) {
 }
 
 function parseNoneWhitespace(chars: CharsBuffer, state: TokenizerState) {
-  if (chars.value() === "<") {
-    raise(
-      calculateTokenPosition(state, { keepBuffer: true }),
-      "Unexpected end of tag. Expected '>' to close the opening tag."
-    );
+  if (isCharacterThatBreaksAnAttribute(chars.value())) {
+    reportCharacterInOpenTag(state, "unexpected-character-in-attribute-name", startOfDecisionBuffer(state));
   }
   state.accumulatedContent.replace(state.decisionBuffer);
   state.currentContext = TokenizerContextTypes.AttributeKey;
@@ -87,4 +118,8 @@ function parseEqual(state: TokenizerState) {
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.AttributeValue;
   state.sourceCode.next();
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

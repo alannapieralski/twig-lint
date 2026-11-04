@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition } from "../../utils/index.js";
+import { calculateTokenPosition, reportEndOfInputInTag } from "../../utils/index.js";
 import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -21,4 +21,8 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 
 export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
   parse(state.decisionBuffer, state);
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

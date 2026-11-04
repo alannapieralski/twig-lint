@@ -9,7 +9,7 @@ import {
   NamedToken,
   Token,
 } from "../../types/index.js";
-import { createNodeFrom, updateNodeEnd } from "../../utils/index.js";
+import { createNodeFrom, pairingKeyOf, updateNodeEnd } from "../../utils/index.js";
 
 const ATTRIBUTE_START_TOKENS = [
   TokenTypes.AttributeKey,
@@ -53,6 +53,9 @@ function handleOpenTagEnd(
     state.currentNode.openEnd.value === "/>"
   ) {
     state.currentNode.selfClosing = true;
+    if (state.currentNode.openEnd.value === "/>") {
+      state.selfClosedElementsByName.set(pairingKeyOf(tagName ?? ""), state.currentNode);
+    }
     state.currentNode = state.currentNode.parentRef;
     state.currentContext = state.currentContext.parentRef;
     state.caretPosition++;

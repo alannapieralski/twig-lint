@@ -14,7 +14,7 @@ import type { Linter } from 'eslint';
 import type { OmittedAttribute } from './attributes.js';
 import type { TwigDiagnostic } from './diagnostics.js';
 import type { EstreeNode } from './estree.js';
-import type { MarkupTreeNode, SourceToken } from './html/diagnostics/markup-elements.js';
+import type { MarkupTreeNode } from './html/diagnostics/markup-elements.js';
 import type { SourcePosition } from './source-text.js';
 import type { TwigBlock, TwigBlockSummary } from './twig/blocks.js';
 import type { TwigStringSummary } from './twig/strings.js';
@@ -25,6 +25,7 @@ export type TwigParserServices = {
   readonly convertedBlockCount: number;
   readonly ignoredBlockCount: number;
   readonly diagnostics: readonly TwigDiagnostic[];
+  readonly unreadableTagStarts: readonly number[];
   readonly omittedAttributes: readonly OmittedAttribute[];
   readonly blocks: readonly TwigBlockSummary[];
   readonly strings: readonly TwigStringSummary[];
@@ -92,7 +93,7 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   }
 
   const markup = parseMarkupWithinStack(code, blocks, rawContentTags);
-  const markupDiagnostics = findMarkupDiagnostics({ document: markup.ast.body[0] as MarkupTreeNode, tokens: markup.ast.tokens as SourceToken[], text: code, blocks: blockSummaries });
+  const { diagnostics: markupDiagnostics, unreadableTagStarts } = findMarkupDiagnostics({ errors: markup.errors, document: markup.ast.body[0] as MarkupTreeNode, text: code, blocks: blockSummaries });
   const omittedAttributes = omitInterpolatedAttributes(markup.ast, ignoreInterpolatedAttributes);
   const { statements, unparsedBlockDiagnostics, ...blockCounts } = convertTwigBlocks(blocks, createOffsetLocator(code));
   const diagnostics = [...markupDiagnostics, ...misplacedTagDiagnostics, ...unparsedBlockDiagnostics].sort(compareDiagnostics);
@@ -102,6 +103,6 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   return {
     ast,
     visitorKeys: { ...visitorKeys, Program: [...(visitorKeys['Program'] ?? []), 'twigBody'] },
-    services: { twig: { ...blockCounts, diagnostics, omittedAttributes, blocks: blockSummaries, strings: summariseTwigStrings(tokens) } },
+    services: { twig: { ...blockCounts, diagnostics, unreadableTagStarts, omittedAttributes, blocks: blockSummaries, strings: summariseTwigStrings(tokens) } },
   };
 }

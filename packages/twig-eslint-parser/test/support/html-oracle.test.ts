@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseHtmlProgram } from '../../src/html/program.js';
+import { parseHtmlDocument } from '../../src/html/program.js';
 import { parseForESLint } from '../../src/index.js';
 import { compareWithHtmlOracle, twigRangesFromOracle } from './html-oracle.js';
 import type { Golden } from '../lexer/parity.js';
@@ -31,7 +31,7 @@ function oracleIssues(source: string, tokens: readonly CompactToken[]) {
 function issuesForTreeWithoutTwigKinds(source: string, tokens: readonly CompactToken[]) {
   const ranges = twigRangesFromOracle(source, golden(tokens));
   const templateInfos = ranges.map(({ start, end }): [number, number] => [start, end]);
-  const ast = parseHtmlProgram(source, { templateInfos, rawContentTags: [] });
+  const ast = parseHtmlDocument(source, { templateInfos, rawContentTags: [] }).program;
   return compareWithHtmlOracle(source, ranges, ast).map(({ check, detail }) => ({ check, detail }));
 }
 
@@ -240,7 +240,7 @@ describe('compareWithHtmlOracle', () => {
   it('gives each issue the range it covers and can lift the issue limit', () => {
     const source = `<textarea>${'\n<b></b>'.repeat(30)}</textarea>`;
     const ranges = twigRangesFromOracle(source, golden(plainHtml(source)));
-    const ast = parseHtmlProgram(source, { templateInfos: [], rawContentTags: [] });
+    const ast = parseHtmlDocument(source, { templateInfos: [], rawContentTags: [] }).program;
 
     expect(compareWithHtmlOracle(source, ranges, ast).every((issue) => issue.range !== undefined)).toBe(true);
     expect(compareWithHtmlOracle(source, ranges, ast, Infinity).length).toBeGreaterThan(compareWithHtmlOracle(source, ranges, ast).length);
