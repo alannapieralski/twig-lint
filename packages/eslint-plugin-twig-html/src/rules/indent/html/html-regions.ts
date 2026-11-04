@@ -2,7 +2,6 @@ import { RAW_TEXT_ELEMENT_NAMES, SINGLE_TOKEN_NODE_TYPES } from 'twig-eslint-par
 import { WHITESPACE_SENSITIVE_ELEMENTS } from '../../../shared/html-elements.js';
 import { elementNameSet } from '../../../shared/ignores.js';
 import { lineIndentationAt } from '../../../shared/line-text.js';
-import { countAttributesGluedToTagName, findTagLineEnd } from '../../../shared/tag-line.js';
 import { isOpenTagUnreadable } from '../../../shared/unreadable-open-tags.js';
 import { elementNameOf } from '../../../shared/tag-node.js';
 import { interiorOf } from '../range-lookup.js';
@@ -106,14 +105,13 @@ export function describeOpenTags(elements: readonly Element[], source: HtmlSourc
 
     const attributes = attributesOf(element);
     const tagStart = element.openStart.range[0];
-    const openStartEnd = element.openStart.range[1];
-    const firstAttribute = attributes[countAttributesGluedToTagName(openStartEnd, attributes)];
+    const firstAttribute = attributes[0];
     const isFirstAttributeOnTagLine = firstAttribute !== undefined && !text.slice(tagStart, firstAttribute.range[0]).includes('\n');
     const isDepthUnknown = depthUnknown.covers(tagStart);
 
     return [{
       start: tagStart,
-      attributesStart: findTagLineEnd(openStartEnd, attributes),
+      attributesStart: element.openStart.range[1],
       closeBracketStart: element.openEnd.range[0],
       isSelfClosing: element.openEnd.value === '/>',
       firstAttributeColumn: isFirstAttributeOnTagLine ? firstAttribute.range[0] - tagStart : undefined,

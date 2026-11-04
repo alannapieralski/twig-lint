@@ -473,9 +473,9 @@ function openTagStartEnd(source: string, nameEnd: number, twigRanges: readonly T
   let end = nameEnd;
   for (;;) {
     const gluedTwig = twigRanges.find((range) => range.start === end);
-    if (gluedTwig?.kind === 'print') {
+    if (gluedTwig) {
       end = gluedTwig.end;
-    } else if (!gluedTwig && end > nameEnd && /[^\s/>]/.test(source[end] ?? '>')) {
+    } else if (end > nameEnd && /[^\s/>]/.test(source[end] ?? '>')) {
       end += 1;
     } else {
       return end;

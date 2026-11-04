@@ -51,10 +51,10 @@ index 76c0279..4f600d2 100644
    state.tokens.push({
      type: TokenTypes.AttributeKey,
 diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
-index 570ac93..9345c5e 100644
+index 50d56aa..caf89b3 100644
 --- a/src/tokenizer/handlers/open-tag-start.ts
 +++ b/src/tokenizer/handlers/open-tag-start.ts
-@@ -62,7 +62,7 @@ function reconsumeInAttributes(state: TokenizerState) {
+@@ -54,7 +54,7 @@ function reconsumeInAttributes(state: TokenizerState) {
    state.accumulatedContent.clear();
    state.decisionBuffer.clear();
    state.currentContext = TokenizerContextTypes.Attributes;
@@ -63,7 +63,7 @@ index 570ac93..9345c5e 100644
  }
  
  function parseWhitespace(state: TokenizerState) {
-@@ -71,7 +71,7 @@ function parseWhitespace(state: TokenizerState) {
+@@ -63,7 +63,7 @@ function parseWhitespace(state: TokenizerState) {
    state.accumulatedContent.clear();
    state.decisionBuffer.clear();
    state.currentContext = TokenizerContextTypes.Attributes;

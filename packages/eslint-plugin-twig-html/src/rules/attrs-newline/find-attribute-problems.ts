@@ -1,5 +1,4 @@
 import { isOpenTagUnreadable } from '../../shared/unreadable-open-tags.js';
-import { findTagLineEnd } from '../../shared/tag-line.js';
 import { describeSeparators } from './describe-separators.js';
 import { groupAttributes } from './group-attributes.js';
 import type { Problem } from '../../shared/problem.js';
@@ -43,7 +42,7 @@ export function findAttributeProblems(tag: TagNode, source: TagSource, options: 
     return [];
   }
 
-  const separators = describeSeparators(tag, findTagLineEnd(tag.openStart.range[1], attributes), groups, text, lineBreak, options.closeStyle);
+  const separators = describeSeparators(tag, groups, text, lineBreak, options.closeStyle);
   const wrongSeparators = separators.filter((separator) => !isSeparatorCorrect(text.slice(...separator.range), separator, lineBreak));
   const firstWrongSeparator = wrongSeparators[0];
   if (!firstWrongSeparator) {

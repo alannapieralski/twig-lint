@@ -103,15 +103,15 @@ depend on the extensions a site loads.
 The markup reader knows where every Twig block is, and what kind it is, so a block means what its
 position in the markup says:
 
-- A print touching the end of a tag name is part of the open tag start (`openStart`), not an
-  attribute, whatever it outputs, and the name ends where it starts: `<div{{ attributes }}>` is
-  named `div` and `<h{{ level }}>` is named `h`. Close tags end their name the same way, so
-  `</h{{ level }}>` closes `<h{{ level }}>` and `<input{{ attr }}>` stays a void `input`. A Twig tag
-  or comment touching a tag name ends the open tag start and is read among the attributes, so
-  `<a{% if url %} href="{{ url }}"{% endif %}>` has the attributes `{% if url %}`, `href` and
-  `{% endif %}`. Twig with whitespace before it, as in `<div {{ attributes }}>`, is an attribute. A
-  print straight after `<` (`<{{ html_element }}>`) is the tag name, kept as written; otherwise `<`
-  opens a tag only before an ASCII letter, so `x <3` is text.
+- Twig touching the end of a tag name is part of the open tag start (`openStart`), not an
+  attribute, whatever kind of block it is and whatever it outputs, and the name ends where it
+  starts: `<div{{ attributes }}>` is named `div`, and `<h{{ level }}>` and
+  `<h{% if big %}1{% else %}2{% endif %}>` are named `h`. Only whitespace, `/` or `>` ends the open
+  tag start. Close tags end their name the same way, so `</h{{ level }}>` closes `<h{{ level }}>`
+  and `<input{{ attr }}>` stays a void `input`. Twig with whitespace before it, as in
+  `<div {{ attributes }}>`, is an attribute. A print straight after `<` (`<{{ html_element }}>`) is
+  the tag name, kept as written; otherwise `<` opens a tag only before an ASCII letter, so `x <3` is
+  text.
 - A Twig tag ends an attribute name and becomes an attribute of its own
   (`<span {% if x %}class="a"{% endif %}>` has the attributes `{% if x %}`, `class` and
   `{% endif %}`); comments between attributes are skipped. A print touching an attribute name

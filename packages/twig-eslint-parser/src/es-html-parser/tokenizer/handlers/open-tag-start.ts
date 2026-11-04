@@ -3,11 +3,10 @@ import {
   calculateTokenPosition,
   createParts,
   isWhitespace,
-  readTemplateAsContent,
   readTagName,
   reportEndOfInputInTag,
 } from "../../utils/index.js";
-import type { TemplateKind, TokenizerState } from "../../types/index.js";
+import type { TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 const OPEN_TAG_START_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
@@ -31,13 +30,6 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.accumulatedContent.concatBuffer(state.decisionBuffer);
   state.decisionBuffer.clear();
   state.sourceCode.next();
-}
-
-export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
-  if (kind === "print") {
-    return readTemplateAsContent(kind, state);
-  }
-  reconsumeInAttributes(state);
 }
 
 function pushOpenTagStart(state: TokenizerState): string {

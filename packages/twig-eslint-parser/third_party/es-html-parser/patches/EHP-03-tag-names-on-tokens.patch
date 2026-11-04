@@ -999,18 +999,17 @@ index 8ce0fae..248471f 100644
  
    state.sourceCode.next();
 diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
-index 2ed5360..03bd578 100644
+index ed99c5e..dc9fb98 100644
 --- a/src/tokenizer/handlers/open-tag-start.ts
 +++ b/src/tokenizer/handlers/open-tag-start.ts
-@@ -3,17 +3,16 @@ import {
+@@ -3,16 +3,15 @@ import {
    calculateTokenPosition,
    createParts,
    isWhitespace,
 -  parseOpenTagName,
-   readTemplateAsContent,
 +  readTagName,
  } from "../../utils/index.js";
- import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import type { TokenizerState } from "../../types/index.js";
  import { CharsBuffer } from "../chars-buffer.js";
  
 -const tokensMap = {
@@ -1025,7 +1024,7 @@ index 2ed5360..03bd578 100644
  
  export function parse(chars: CharsBuffer, state: TokenizerState) {
    if (chars.value() === ">" || chars.value() === "/") {
-@@ -42,12 +41,13 @@ export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+@@ -29,12 +28,13 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
  }
  
  function pushOpenTagStart(state: TokenizerState): string {

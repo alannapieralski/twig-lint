@@ -365,18 +365,18 @@ index 21cdf36..4ac4011 100644
 +  reportEndOfInputInTag(state);
 +}
 diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
-index 03bd578..133e157 100644
+index dc9fb98..5303359 100644
 --- a/src/tokenizer/handlers/open-tag-start.ts
 +++ b/src/tokenizer/handlers/open-tag-start.ts
-@@ -5,6 +5,7 @@ import {
+@@ -4,6 +4,7 @@ import {
+   createParts,
    isWhitespace,
-   readTemplateAsContent,
    readTagName,
 +  reportEndOfInputInTag,
  } from "../../utils/index.js";
- import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import type { TokenizerState } from "../../types/index.js";
  import { CharsBuffer } from "../chars-buffer.js";
-@@ -74,3 +75,7 @@ function parseTagEnd(state: TokenizerState) {
+@@ -61,3 +62,7 @@ function parseTagEnd(state: TokenizerState) {
    state.currentContext = TokenizerContextTypes.OpenTagEnd;
    state.contextParams[TokenizerContextTypes.OpenTagEnd] = { tagName };
  }

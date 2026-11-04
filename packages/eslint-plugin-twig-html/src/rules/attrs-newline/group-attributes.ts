@@ -1,5 +1,4 @@
 import { depthChangeWithin } from 'twig-eslint-parser';
-import { countAttributesGluedToTagName, findTagLineEnd } from '../../shared/tag-line.js';
 import type { TwigBlockSummary } from 'twig-eslint-parser';
 import type { Range } from '../../shared/range.js';
 import type { TagNode } from '../../shared/tag-node.js';
@@ -7,10 +6,10 @@ import type { TagNode } from '../../shared/tag-node.js';
 export function groupAttributes(tag: TagNode, attributes: TagNode['attributes'], blocks: readonly TwigBlockSummary[]): Range[] {
   const groups: Range[] = [];
   let groupStart: number | undefined;
-  const tagLine: Range = [tag.openStart.range[0], findTagLineEnd(tag.openStart.range[1], attributes)];
-  let depth = depthChangeWithin(tagLine, blocks);
+  const tagStartBeforeAttributes: Range = [tag.openStart.range[0], attributes[0]?.range[0] ?? tag.openStart.range[1]];
+  let depth = depthChangeWithin(tagStartBeforeAttributes, blocks);
 
-  for (const attribute of attributes.slice(countAttributesGluedToTagName(tag.openStart.range[1], attributes))) {
+  for (const attribute of attributes) {
     groupStart ??= attribute.range[0];
     depth += depthChangeWithin(attribute.range, blocks);
 

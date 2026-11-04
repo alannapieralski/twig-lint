@@ -598,21 +598,28 @@ describe('Twig delimiters inside Twig strings', () => {
 describe('Twig tags and verbatim content inside markup', () => {
   const childTagNames = (tag: Node) => (tag['children'] as Node[]).filter((child) => child.type === 'Tag').map((child) => child['name']);
 
-  it('reads a Twig tag written straight after the tag name as an attribute, like the Twig tags among the attributes', () => {
+  it('parses a conditional attribute written straight after the tag name, closed where the template closes it', () => {
     const code = '<div{% if a %} class="x"{% endif %}><p>y</p></div><span>z</span>';
     const div = namedTag(code, 'div');
-    expect(sourceOf(code, div['openStart'] as Node)).toBe('<div');
-    expect((div['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['{% if a %}', 'class="x"', '{% endif %}']);
+    expect(sourceOf(code, div['openStart'] as Node)).toBe('<div{% if a %}');
     expect(sourceOf(code, div['close'] as Node)).toBe('</div>');
     expect(childTagNames(div)).toEqual(['p']);
   });
 
-  it('ends a tag name at a Twig tag, and pairs a close tag by the name before it', () => {
+  it('keeps a Twig comment touching a tag name in the open tag start', () => {
+    const code = '<h{# level #}1 id="a">x</h1>';
+    const [heading] = tagsOf(code);
+    expect(heading?.['name']).toBe('h');
+    expect(sourceOf(code, heading?.['openStart'] as Node)).toBe('<h{# level #}1');
+    expect((heading?.['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['id="a"']);
+  });
+
+  it('ends a tag name at a Twig tag, and pairs a close tag built the same way', () => {
     const code = '<h{% if big %}1{% else %}2{% endif %} id="a">x</h{% if big %}1{% else %}2{% endif %}><span>after</span>';
     const [heading] = tagsOf(code);
     expect(heading?.['name']).toBe('h');
-    expect(sourceOf(code, heading?.['openStart'] as Node)).toBe('<h');
-    expect((heading?.['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['{% if big %}', '1', '{% else %}', '2', '{% endif %}', 'id="a"']);
+    expect(sourceOf(code, heading?.['openStart'] as Node)).toBe('<h{% if big %}1{% else %}2{% endif %}');
+    expect((heading?.['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['id="a"']);
     expect(sourceOf(code, heading?.['close'] as Node)).toBe('</h{% if big %}1{% else %}2{% endif %}>');
     expect(childTagNames(heading as Node)).toEqual([]);
   });

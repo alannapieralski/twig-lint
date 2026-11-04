@@ -219,10 +219,10 @@ index d4409b6..7f20ec2 100644
    state.accumulatedContent.replace(state.decisionBuffer);
    state.currentContext = TokenizerContextTypes.AttributeKey;
 diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
-index 133e157..570ac93 100644
+index 5303359..50d56aa 100644
 --- a/src/tokenizer/handlers/open-tag-start.ts
 +++ b/src/tokenizer/handlers/open-tag-start.ts
-@@ -16,10 +16,14 @@ const OPEN_TAG_START_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
+@@ -15,10 +15,14 @@ const OPEN_TAG_START_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
  ]);
  
  export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -238,21 +238,7 @@ index 133e157..570ac93 100644
    if (isWhitespace(chars.value())) {
      return parseWhitespace(state);
    }
-@@ -33,12 +37,7 @@ export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
-   if (kind === "print") {
-     return readTemplateAsContent(kind, state);
-   }
--  const tagName = pushOpenTagStart(state);
--
--  state.accumulatedContent.clear();
--  state.decisionBuffer.clear();
--  state.currentContext = TokenizerContextTypes.Attributes;
--  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
-+  reconsumeInAttributes(state);
- }
- 
- function pushOpenTagStart(state: TokenizerState): string {
-@@ -57,6 +56,15 @@ function pushOpenTagStart(state: TokenizerState): string {
+@@ -44,6 +48,15 @@ function pushOpenTagStart(state: TokenizerState): string {
    return tagName;
  }
  

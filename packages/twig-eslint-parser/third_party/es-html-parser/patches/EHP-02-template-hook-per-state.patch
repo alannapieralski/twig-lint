@@ -5,10 +5,10 @@ Description: Read every template through one hook per tokenizer state
  match template text. A state without a hook takes the template as content.
  The rule the hooks apply: a print continues what it touches, a Twig tag
  stands alone, a Twig comment is nothing, and inside content all three are
- content. So "<" followed by a print opens a tag; a tag or comment glued to a
- tag name ends the open tag start and is read among the attributes, where a
- tag is an attribute of its own and a comment is skipped; a print continues
- an attribute name, and any template starts an unquoted value. The doctype
+ content. So "<" followed by a print opens a tag; any template glued to a
+ tag name stays in the open tag start; among the attributes a tag is an
+ attribute of its own and a comment is skipped; a print continues an
+ attribute name, and any template starts an unquoted value. The doctype
  states keep upstream's reading. Templates in script, style and raw text are
  content, so a Twig string holding "</script>" cannot end the element.
 Author: Numiko
@@ -284,40 +284,22 @@ index cfec755..4f5e71c 100644
    const position = calculateTokenPosition(state, { keepBuffer: false });
  
 diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
-index 5aafa61..2ed5360 100644
+index 5aafa61..ed99c5e 100644
 --- a/src/tokenizer/handlers/open-tag-start.ts
 +++ b/src/tokenizer/handlers/open-tag-start.ts
-@@ -1,10 +1,12 @@
+@@ -1,6 +1,7 @@
  import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
  import {
    calculateTokenPosition,
 +  createParts,
    isWhitespace,
    parseOpenTagName,
-+  readTemplateAsContent,
  } from "../../utils/index.js";
--import type { TokenizerState } from "../../types/index.js";
-+import type { TemplateKind, TokenizerState } from "../../types/index.js";
- import { CharsBuffer } from "../chars-buffer.js";
- 
- const tokensMap = {
-@@ -27,16 +29,35 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -27,16 +28,23 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
    state.sourceCode.next();
  }
  
 -function parseWhitespace(state: TokenizerState) {
-+export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
-+  if (kind === "print") {
-+    return readTemplateAsContent(kind, state);
-+  }
-+  const tagName = pushOpenTagStart(state);
-+
-+  state.accumulatedContent.clear();
-+  state.decisionBuffer.clear();
-+  state.currentContext = TokenizerContextTypes.Attributes;
-+  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
-+}
-+
 +function pushOpenTagStart(state: TokenizerState): string {
    const tagName = parseOpenTagName(state.accumulatedContent.value());
    const position = calculateTokenPosition(state, { keepBuffer: false });
@@ -338,7 +320,7 @@ index 5aafa61..2ed5360 100644
  
    state.accumulatedContent.clear();
    state.decisionBuffer.clear();
-@@ -46,15 +67,7 @@ function parseWhitespace(state: TokenizerState) {
+@@ -46,15 +54,7 @@ function parseWhitespace(state: TokenizerState) {
  }
  
  function parseTagEnd(state: TokenizerState) {
