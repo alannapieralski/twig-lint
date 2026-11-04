@@ -179,11 +179,12 @@ Rules import these instead of keeping their own copies.
 
 ## Supported Twig
 
-Twig 3.x syntax up to 3.30, verified against real Twig. The grammar reads the newest Twig 3
-syntax, which accepts everything older Twig 3 releases accept, so a template written for an older
-Twig 3 is never reported for syntax its Twig has. It is also not reported for syntax its Twig
-lacks, such as `===` on Twig 3.19. A block using syntax newer than 3.30 is reported as
-`x-unparsed-twig`.
+Twig 3.x syntax up to 3.30, verified against real Twig 3.30. The grammar reads the newest Twig 3
+syntax, which accepts nearly everything older Twig 3 releases accept. A template is not reported for
+syntax its own Twig lacks, such as `===` on Twig 3.19. A few blocks that older releases parse are
+reported because 3.30 is stricter, such as a test with no argument where it needs one
+(`a is same as`) or an arrow function with a unary operator before it (`-(a) => b`); Twig fails to
+render both anyway. A block using syntax newer than 3.30 is reported as `x-unparsed-twig`.
 
 How this is checked:
 

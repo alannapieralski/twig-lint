@@ -61,6 +61,8 @@ export const PREFIX_OPERATORS: Readonly<Record<string, PrefixOperator>> = {
   '...': { precedence: 512, operandPrecedence: 0, nodeType: 'SpreadElement', estreeOperator: '...' },
 };
 
+export const PUNCTUATION_NAMED_AS_OPERATOR: ReadonlySet<string> = new Set(['(', '[', '.', '|', '?']);
+
 export const TERNARY_PRECEDENCE = 0;
 export const TEST_PRECEDENCE = 100;
 export const ARROW_PRECEDENCE = 250;

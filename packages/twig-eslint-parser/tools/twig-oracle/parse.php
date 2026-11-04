@@ -2,6 +2,17 @@
 
 declare(strict_types=1);
 
+/**
+ * Records what real Twig says about each block of a template, so that the parser's own verdicts can be compared with it.
+ *
+ * 1. findBlockSources() tokenises the template with Twig and cuts out the source of every {{ }} and {% %} block.
+ * 2. describeBlock() parses each block on its own as Twig would inside a template: an opening tag is given its end
+ *    tag, a middle tag its opening tag, and a block Twig only rejects when it stands alone is retried inside a child template.
+ * 3. The result is written to <name>.blocks.json beside each fixture (or printed with --stdin for the corpus check).
+ *
+ * Unknown filters, functions and tests are accepted, because which ones exist depends on the extensions a site loads.
+ */
+
 require __DIR__ . '/vendor/autoload.php';
 
 use Twig\Environment;

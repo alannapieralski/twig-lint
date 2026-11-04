@@ -450,6 +450,24 @@ describe('subscripts', () => {
   });
 });
 
+describe('end tags and else with something after them', () => {
+  it.each([
+    ['{% if a %}{% endif b %}', 'Unexpected token "name" of value "b" ("end of statement block" expected).'],
+    ['{% set a %}x{% endset b %}', 'Unexpected token "name" of value "b" ("end of statement block" expected).'],
+    ['{% with %}{% endwith x %}', 'Unexpected token "name" of value "x" ("end of statement block" expected).'],
+    ['{% apply upper %}x{% endapply upper %}', 'Unexpected token "name" of value "upper" ("end of statement block" expected).'],
+    ['{% block a %}x{% endblock a b %}', 'Unexpected token "name" of value "b" ("end of statement block" expected).'],
+    ['{% if a %}{% else x %}{% endif %}', 'Unexpected token "name" of value "x" ("end of statement block" expected).'],
+    ['{% for a in b %}{% else x %}{% endfor %}', 'Unexpected token "name" of value "x" ("end of statement block" expected).'],
+  ])('reports %s with the message Twig 3.30 gives', (code, reason) => {
+    expect(unparsedTwig(parse(code).services).map((diagnostic) => diagnostic.message)).toEqual([`This Twig block could not be parsed: ${reason}`]);
+  });
+
+  it.each(['{% if a %}{% endif %}', '{% block a %}x{% endblock %}', '{% block a %}x{% endblock a %}', '{% macro f() %}{% endmacro f %}', '{%- if a -%}{%- else -%}{%- endif -%}'])('accepts %s', (code) => {
+    expect(parse(code).services.diagnostics).toEqual([]);
+  });
+});
+
 describe('large templates', () => {
   it('reads a mapping of 8,000 string keys in well under a second', () => {
     const entries = Array.from({ length: 8000 }, (_, index) => `"key${index}": "value${index}"`).join(', ');

@@ -1,4 +1,5 @@
 import { namePattern } from '../lexer/Lexer.js';
+import { PUNCTUATION_NAMED_AS_OPERATOR } from './operators.js';
 import { decodeTwigString } from './string-value.js';
 import { isSignificant } from './tokens.js';
 import type { EstreeNode } from '../estree.js';
@@ -22,7 +23,6 @@ export class TwigGrammarError extends Error {}
 const STARTS_WITH_NAME = new RegExp(`^(?:${namePattern})`);
 const IS_NAME = new RegExp(`^(?:${namePattern})$`);
 const PCRE_WHITESPACE = /[ \t\n\v\f\r]+/g;
-const OPERATOR_PUNCTUATION: ReadonlySet<string> = new Set(['(', '[', '.', '|', '?']);
 
 const TWIG_TYPE_BY_TOKEN_TYPE: Readonly<Partial<Record<string, string>>> = {
   NAME: 'name',
@@ -83,7 +83,7 @@ export function viewCurrentToken(stream: TwigTokenStream): TwigTokenView {
     return viewOfOpeningQuote(stream);
   }
   if (token.type === 'PUNCTUATION') {
-    return { type: OPERATOR_PUNCTUATION.has(token.value) ? 'operator' : 'punctuation', value: token.value };
+    return { type: PUNCTUATION_NAMED_AS_OPERATOR.has(token.value) ? 'operator' : 'punctuation', value: token.value };
   }
   if (token.type === 'NUMBER') {
     return { type: 'number', value: twigNumberValue(token.value) };
@@ -152,4 +152,35 @@ export function outerStartOf(stream: TwigTokenStream, node: EstreeNode): number 
 
 export function outerEndOf(stream: TwigTokenStream, node: EstreeNode): number {
   return stream.parenthesisedRanges.get(node)?.[1] ?? node.end;
+}
+
+export function createIdentifier(stream: TwigTokenStream, token: TwigToken): EstreeNode {
+  return createNode(stream, 'Identifier', token.start, token.end, { name: token.value });
+}
+
+export function createNumberLiteral(stream: TwigTokenStream, token: TwigToken): EstreeNode {
+  return createNode(stream, 'Literal', token.start, token.end, { value: Number(token.value.replace(/_/g, '')), raw: token.value });
+}
+
+/**
+ * Reads items separated by commas up to, but not including, a closing punctuation character, allowing one trailing comma.
+ *
+ * @param stream - The block being read.
+ * @param closing - The punctuation character that ends the list.
+ * @param separatorMessage - The sentence Twig puts before its error when a comma is missing.
+ * @param parseItem - Reads one item.
+ * @returns The items read.
+ */
+export function parseDelimitedList<T>(stream: TwigTokenStream, closing: string, separatorMessage: string, parseItem: () => T): T[] {
+  const items: T[] = [];
+  while (!isAt(stream, 'punctuation', closing)) {
+    if (items.length > 0) {
+      expect(stream, 'punctuation', ',', separatorMessage);
+      if (isAt(stream, 'punctuation', closing)) {
+        break;
+      }
+    }
+    items.push(parseItem());
+  }
+  return items;
 }

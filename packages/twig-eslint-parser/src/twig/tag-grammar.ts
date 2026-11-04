@@ -1,6 +1,7 @@
 import { isShortFormTag } from './blocks.js';
-import { createIdentifier, parseExpression } from './expression-grammar.js';
-import { advance, createNode, createTokenStream, expect, isAt, nextIf, outerEndOf, outerStartOf, startsWithName, TwigGrammarError, viewCurrentToken } from './token-stream.js';
+import { parseExpression } from './expression-grammar.js';
+import { BLOCK_TAGS } from './syntax.js';
+import { advance, createIdentifier, createNode, createTokenStream, expect, isAt, nextIf, outerEndOf, parseDelimitedList, outerStartOf, startsWithName, TwigGrammarError, viewCurrentToken } from './token-stream.js';
 import type { EstreeNode } from '../estree.js';
 import type { SourcePosition } from '../source-text.js';
 import type { TwigBlock } from './blocks.js';
@@ -146,21 +147,10 @@ function parseVariadicParameter(stream: TwigTokenStream, spread: TwigToken, macr
 function parseMacro(stream: TwigTokenStream): EstreeNode {
   const name = expect(stream, 'name');
   expect(stream, 'operator', '(', 'A list of arguments must begin with an opening parenthesis');
-  const parameters: EstreeNode[] = [];
-  while (!isAt(stream, 'punctuation', ')')) {
-    if (parameters.length > 0) {
-      expect(stream, 'punctuation', ',', 'Arguments must be separated by a comma');
-      if (isAt(stream, 'punctuation', ')')) {
-        break;
-      }
-    }
+  const parameters = parseDelimitedList(stream, ')', 'Arguments must be separated by a comma', () => {
     const spread = nextIf(stream, 'operator', '...');
-    if (spread) {
-      parameters.push(parseVariadicParameter(stream, spread, name.value));
-      break;
-    }
-    parameters.push(parseMacroParameter(stream));
-  }
+    return spread ? parseVariadicParameter(stream, spread, name.value) : parseMacroParameter(stream);
+  });
   const closing = expect(stream, 'punctuation', ')', 'A list of arguments must be closed by a parenthesis');
   expect(stream, END_OF_STATEMENT_BLOCK);
   const callee = createIdentifier(stream, name);
@@ -198,16 +188,36 @@ const TAG_GRAMMARS: ReadonlyMap<string, TagGrammar> = new Map(Object.entries({
   embed: parseInclude,
 }));
 
+function parseTagWithoutArguments(stream: TwigTokenStream): undefined {
+  expect(stream, END_OF_STATEMENT_BLOCK);
+  return undefined;
+}
+
+function parseEndOfNamedTag(stream: TwigTokenStream): undefined {
+  nextIf(stream, 'name');
+  return parseTagWithoutArguments(stream);
+}
+
+const TAGS_WITH_AN_OPTIONAL_NAME_AT_THE_END: ReadonlySet<string> = new Set(['block', 'macro']);
+
+const CLOSING_TAG_GRAMMARS: ReadonlyMap<string, TagGrammar> = new Map([
+  ['else', parseTagWithoutArguments],
+  ...[...BLOCK_TAGS].map((name): [string, TagGrammar] => [`end${name}`, TAGS_WITH_AN_OPTIONAL_NAME_AT_THE_END.has(name) ? parseEndOfNamedTag : parseTagWithoutArguments]),
+]);
+
 export const CONVERTED_TAGS: ReadonlySet<string> = new Set(TAG_GRAMMARS.keys());
 
 export function isConvertedTwigBlock(block: TwigBlock): boolean {
   if (block.kind === 'print') {
     return true;
   }
-  if (block.kind !== 'tag' || block.tagName === undefined || !TAG_GRAMMARS.has(block.tagName)) {
+  if (block.kind !== 'tag' || block.tagName === undefined) {
     return false;
   }
-  return block.tagName !== 'block' || isShortFormTag(block);
+  if (CLOSING_TAG_GRAMMARS.has(block.tagName)) {
+    return true;
+  }
+  return TAG_GRAMMARS.has(block.tagName) && (block.tagName !== 'block' || isShortFormTag(block));
 }
 
 function parseBlockStatement(stream: TwigTokenStream): EstreeNode | undefined {
@@ -217,7 +227,7 @@ function parseBlockStatement(stream: TwigTokenStream): EstreeNode | undefined {
     return createStatement(stream, expression);
   }
   const tagName = advance(stream);
-  return TAG_GRAMMARS.get(tagName.value)?.(stream, tagName);
+  return (TAG_GRAMMARS.get(tagName.value) ?? CLOSING_TAG_GRAMMARS.get(tagName.value))?.(stream, tagName);
 }
 
 function isCallStackOverflow(error: unknown): boolean {
