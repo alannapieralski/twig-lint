@@ -25,6 +25,7 @@
     "dist",
     "LICENSE",
     "NOTICE",
+    "third_party/twig/LICENSE",
     "third_party/twig-lexer/LICENSE",
     "third_party/twig-lexer/UPSTREAM.md",
     "third_party/es-html-parser/LICENSE.md",

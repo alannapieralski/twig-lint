@@ -66,9 +66,12 @@ return {
 ## Comments
 
 - **Most code has no comment.** The names say what it is and does.
-- **A function a reader cannot follow from its name and signature gets a TSDoc block**, such as a
-  binary search or a lookup built once and queried many times. Up to three lines say what it does,
-  then one line for each `@param` and one for `@returns`.
+- **TSDoc is documentation for other developers, not a comment.** It is allowed on any function
+  whose name and signature do not tell a new reader enough, such as a binary search, a lookup built
+  once and queried many times, or a function that follows an outside source. It has no length limit
+  and does not count against the no-comment rule. Describe what the function does, then one line for
+  each `@param` and one for `@returns`.
+- **Everything else is a comment**, and a comment is the exception (the rules below).
 - **No comment says why a change was made** or walks through the code line by line.
 
 ```ts

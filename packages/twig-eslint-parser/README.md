@@ -224,6 +224,23 @@ Run these from `packages/twig-eslint-parser`.
      `src/twig/syntax.ts`.
 5. Run `npm run corpus` on real templates before releasing.
 
+## Ported code
+
+The grammar in `src/twig` is not vendored, because Twig's parser is PHP and builds Twig's own nodes
+without source offsets. It is a TypeScript port of the Twig 3.30 parser that builds ESTree nodes
+with exact ranges instead. Twig is licensed under the BSD 3-Clause License, kept in
+[`third_party/twig/LICENSE`](third_party/twig/LICENSE) and named in [NOTICE](NOTICE).
+
+| Our file | Twig 3.30 source (`src/` in [twigphp/Twig](https://github.com/twigphp/Twig/tree/v3.30.0)) |
+|---|---|
+| `src/twig/expression-grammar.ts` | `ExpressionParser/Infix/*`, `ExpressionParser/Prefix/*`, `ExpressionParser/Infix/ArgumentsTrait.php` |
+| `src/twig/operators.ts` | operator precedences in `ExpressionParsers.php` and `Extension/CoreExtension.php` |
+| `src/twig/tag-grammar.ts` | `TokenParser/{If,Do,With,Set,For,Macro,Block,Include,Embed}TokenParser.php` |
+| `src/twig/token-stream.ts` | `TokenStream.php` and `Token.php` (`expect`, the messages and token names) |
+| `src/twig/tag-structure.ts` | `Parser.php` (`subparse` and the tag stack) |
+
+Run `npm run golden:twig` after bumping Twig. Its block verdicts show where the port and Twig differ.
+
 ## Vendored code
 
 Two upstream projects are kept as forks, each the same way: the upstream files byte for byte in
@@ -259,4 +276,5 @@ Run these from the repository root; see the [root README](https://github.com/ala
 
 Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). The lexer is derived from
 twig-lexer by Eric MORAND, also Apache-2.0. The markup reader is derived from es-html-parser by
-YeonJuan, and the HTML visitor keys from html-eslint, both MIT.
+YeonJuan, and the HTML visitor keys from html-eslint, both MIT. The Twig grammar is a port of the
+Twig parser, BSD 3-Clause (see [Ported code](#ported-code)).

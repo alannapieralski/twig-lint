@@ -13,6 +13,12 @@ Copyright (c) 2022 YeonJuan, licensed under the MIT License.
 The licence text is in third_party/es-html-parser/LICENSE.md and every change
 made to it is recorded in third_party/es-html-parser/UPSTREAM.md.
 
+The Twig grammar in src/twig (expression-grammar.ts, tag-grammar.ts, token-stream.ts,
+operators.ts and tag-structure.ts) is a TypeScript port of the parser in Twig 3.30
+(https://github.com/twigphp/Twig, tag v3.30.0), Copyright (c) 2009-present by the Twig Team,
+licensed under the BSD 3-Clause License. The licence text is in third_party/twig/LICENSE and
+the ported files are listed in the package README.
+
 The HTML and CSS visitor keys in src/html/visitor-keys.ts follow
 @html-eslint/parser 0.66.0 (https://github.com/yeonjuan/html-eslint),
 Copyright (c) 2020 YeonJuan, licensed under the MIT License.
