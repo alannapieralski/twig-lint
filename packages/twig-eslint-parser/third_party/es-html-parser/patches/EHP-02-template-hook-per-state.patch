@@ -1,0 +1,445 @@
+Description: Read every template through one hook per tokenizer state
+ A template range may carry its kind (print, tag or comment). The tokenizer
+ hands a template character to the state's parseTemplate hook instead of
+ parse, so parse only ever sees HTML characters and no string compare can
+ match template text. A state without a hook takes the template as content.
+ The rule the hooks apply: a print continues what it touches, a Twig tag
+ stands alone, a Twig comment is nothing, and inside content all three are
+ content. So "<" followed by a print opens a tag; a tag or comment glued to a
+ tag name ends the open tag start and is read among the attributes, where a
+ tag is an attribute of its own and a comment is skipped; a print continues
+ an attribute name, and any template starts an unquoted value. The doctype
+ states keep upstream's reading. Templates in script, style and raw text are
+ content, so a Twig string holding "</script>" cannot end the element.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/parse-for-eslint.test.ts ("Twig tags and verbatim content inside markup", "Twig as part of the markup structure"); npm run test:upstream
+Last-Update: 2026-11-04
+---
+diff --git a/src/tokenizer/chars.ts b/src/tokenizer/chars.ts
+index 2f21185..8b71165 100644
+--- a/src/tokenizer/chars.ts
++++ b/src/tokenizer/chars.ts
+@@ -1,4 +1,4 @@
+-import { Range } from "../types/index.js";
++import { Range, TemplateWrapper } from "../types/index.js";
+ 
+ export enum CharsType {
+   HTML = "HTML",
+@@ -13,10 +13,7 @@ export class Chars {
+     public type: CharsType,
+     public value: string,
+     public range: Range,
+-    public wrapper?: {
+-      open: Range;
+-      close: Range;
+-    }
++    public wrapper?: TemplateWrapper
+   ) {
+     this.isTemplate = type !== CharsType.HTML;
+   }
+diff --git a/src/tokenizer/handlers/attribute-key.ts b/src/tokenizer/handlers/attribute-key.ts
+index 7aecd54..9619480 100644
+--- a/src/tokenizer/handlers/attribute-key.ts
++++ b/src/tokenizer/handlers/attribute-key.ts
+@@ -1,7 +1,7 @@
+ import { TokenizerContextTypes } from "../../constants/index.js";
+ import { TokenTypes } from "../../constants/token-types.js";
+-import { calculateTokenPosition, isWhitespace, createParts } from "../../utils/index.js";
+-import type { TokenizerState } from "../../types/index.js";
++import { calculateTokenPosition, isWhitespace, createParts, readTemplateAsContent } from "../../utils/index.js";
++import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -14,6 +14,13 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
++  if (kind === "print") {
++    return readTemplateAsContent(kind, state);
++  }
++  parseKeyEnd(state);
++}
++
+ function isKeyBreak(chars: CharsBuffer): boolean {
+   const value = chars.value();
+   return value === "=" || value === "/" || value === ">" || isWhitespace(value);
+diff --git a/src/tokenizer/handlers/attribute-value.ts b/src/tokenizer/handlers/attribute-value.ts
+index 40d8cf2..55eb55e 100644
+--- a/src/tokenizer/handlers/attribute-value.ts
++++ b/src/tokenizer/handlers/attribute-value.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { isWhitespace } from "../../utils/index.js";
+-import type { TokenizerState, Range } from "../../types/index.js";
++import type { TemplateKind, TokenizerState, Range } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -21,6 +21,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
++  parseBare(state);
++}
++
+ function parseWrapper(state: TokenizerState) {
+   const wrapper = state.decisionBuffer.value();
+   const range: Range = [state.sourceCode.index(), state.sourceCode.index() + 1];
+diff --git a/src/tokenizer/handlers/attributes.ts b/src/tokenizer/handlers/attributes.ts
+index cc868f3..4b6312c 100644
+--- a/src/tokenizer/handlers/attributes.ts
++++ b/src/tokenizer/handlers/attributes.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, isWhitespace, raise } from "../../utils/index.js";
+-import type { TokenizerState } from "../../types/index.js";
++import { calculateTokenPosition, createParts, isWhitespace, raise } from "../../utils/index.js";
++import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -21,6 +21,35 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
++  if (kind === "comment") {
++    state.decisionBuffer.clear();
++    state.sourceCode.next();
++    return;
++  }
++  if (kind === "tag") {
++    return parseStandaloneTemplate(state);
++  }
++  parseNoneWhitespace(state.decisionBuffer, state);
++}
++
++function parseStandaloneTemplate(state: TokenizerState) {
++  state.accumulatedContent.replace(state.decisionBuffer);
++  state.decisionBuffer.clear();
++  const position = calculateTokenPosition(state, { keepBuffer: false });
++
++  state.tokens.push({
++    type: TokenTypes.AttributeKey,
++    value: state.accumulatedContent.value(),
++    range: position.range,
++    loc: position.loc,
++    parts: createParts(state, TokenTypes.AttributeKey),
++  });
++
++  state.accumulatedContent.clear();
++  state.sourceCode.next();
++}
++
+ function parseTagEnd(state: TokenizerState) {
+   const tagName =
+     state.contextParams[TokenizerContextTypes.Attributes]?.tagName;
+diff --git a/src/tokenizer/handlers/data.ts b/src/tokenizer/handlers/data.ts
+index 92333ba..89e9478 100644
+--- a/src/tokenizer/handlers/data.ts
++++ b/src/tokenizer/handlers/data.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts } from "../../utils/index.js";
+-import { Range, AnyToken, TokenizerState } from "../../types/index.js";
++import { calculateTokenPosition, createParts, readTemplateAsContent } from "../../utils/index.js";
++import { Range, AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ const COMMENT_START = "<!--";
+@@ -38,6 +38,18 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
++  if (kind === "print" && isAfterLoneOpeningCornerBrace(state.decisionBuffer)) {
++    return parseOpeningCornerBraceWithText(state);
++  }
++  readTemplateAsContent(kind, state);
++}
++
++function isAfterLoneOpeningCornerBrace(chars: CharsBuffer): boolean {
++  const [first, ...rest] = chars.getParts();
++  return rest.length === 1 && first?.isTemplate === false && first.value === "<";
++}
++
+ export function handleContentEnd(state: TokenizerState) {
+   const textContent =
+     state.accumulatedContent.value() + state.decisionBuffer.value();
+diff --git a/src/tokenizer/handlers/doctype-attribute-bare.ts b/src/tokenizer/handlers/doctype-attribute-bare.ts
+index a86c3e3..05193f3 100644
+--- a/src/tokenizer/handlers/doctype-attribute-bare.ts
++++ b/src/tokenizer/handlers/doctype-attribute-bare.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { calculateTokenPosition, isWhitespace } from "../../utils/index.js";
+-import type { TokenizerState } from "../../types/index.js";
++import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -13,6 +13,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
++  parse(state.decisionBuffer, state);
++}
++
+ function parseAttributeEnd(state: TokenizerState) {
+   const position = calculateTokenPosition(state, { keepBuffer: false });
+ 
+diff --git a/src/tokenizer/handlers/doctype-attribute-wrapped.ts b/src/tokenizer/handlers/doctype-attribute-wrapped.ts
+index 4eb404c..31da42e 100644
+--- a/src/tokenizer/handlers/doctype-attribute-wrapped.ts
++++ b/src/tokenizer/handlers/doctype-attribute-wrapped.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { calculateTokenPosition } from "../../utils/index.js";
+-import type { Range, TokenizerState } from "../../types/index.js";
++import type { Range, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -16,6 +16,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
++  parse(state.decisionBuffer, state);
++}
++
+ function parseWrapper(state: TokenizerState) {
+   const position = calculateTokenPosition(state, { keepBuffer: false });
+   const endWrapperPosition = position.range[1];
+diff --git a/src/tokenizer/handlers/doctype-attributes.ts b/src/tokenizer/handlers/doctype-attributes.ts
+index 8f29cfb..0fd3c65 100644
+--- a/src/tokenizer/handlers/doctype-attributes.ts
++++ b/src/tokenizer/handlers/doctype-attributes.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { isWhitespace } from "../../utils/index.js";
+-import type { Range, TokenizerState } from "../../types/index.js";
++import type { Range, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -20,6 +20,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
++  parse(state.decisionBuffer, state);
++}
++
+ function parseWrapper(state: TokenizerState) {
+   const wrapper = state.decisionBuffer.value();
+   const range: Range = [
+diff --git a/src/tokenizer/handlers/doctype-end.ts b/src/tokenizer/handlers/doctype-end.ts
+index b4d87df..a173f39 100644
+--- a/src/tokenizer/handlers/doctype-end.ts
++++ b/src/tokenizer/handlers/doctype-end.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { calculateTokenPosition } from "../../utils/index.js";
+-import type { TokenizerState } from "../../types/index.js";
++import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -18,3 +18,7 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.currentContext = TokenizerContextTypes.Data;
+   state.sourceCode.next();
+ }
++
++export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
++  parse(state.decisionBuffer, state);
++}
+diff --git a/src/tokenizer/handlers/doctype-start.ts b/src/tokenizer/handlers/doctype-start.ts
+index cfec755..4f5e71c 100644
+--- a/src/tokenizer/handlers/doctype-start.ts
++++ b/src/tokenizer/handlers/doctype-start.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { calculateTokenPosition, isWhitespace } from "../../utils/index.js";
+-import { AnyToken, TokenizerState } from "../../types/index.js";
++import { AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -17,6 +17,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
++export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
++  parse(state.decisionBuffer, state);
++}
++
+ function generateDoctypeOpenToken(state: TokenizerState): AnyToken {
+   const position = calculateTokenPosition(state, { keepBuffer: false });
+ 
+diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
+index 5aafa61..2ed5360 100644
+--- a/src/tokenizer/handlers/open-tag-start.ts
++++ b/src/tokenizer/handlers/open-tag-start.ts
+@@ -1,10 +1,12 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import {
+   calculateTokenPosition,
++  createParts,
+   isWhitespace,
+   parseOpenTagName,
++  readTemplateAsContent,
+ } from "../../utils/index.js";
+-import type { TokenizerState } from "../../types/index.js";
++import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ const tokensMap = {
+@@ -27,16 +29,35 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
+-function parseWhitespace(state: TokenizerState) {
++export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
++  if (kind === "print") {
++    return readTemplateAsContent(kind, state);
++  }
++  const tagName = pushOpenTagStart(state);
++
++  state.accumulatedContent.clear();
++  state.decisionBuffer.clear();
++  state.currentContext = TokenizerContextTypes.Attributes;
++  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
++}
++
++function pushOpenTagStart(state: TokenizerState): string {
+   const tagName = parseOpenTagName(state.accumulatedContent.value());
+   const position = calculateTokenPosition(state, { keepBuffer: false });
++  const parts = createParts(state, TokenTypes.OpenTagStart);
+ 
+   state.tokens.push({
+     type: tokensMap[tagName as keyof typeof tokensMap] || tokensMap.default,
+     value: state.accumulatedContent.value(),
+     range: position.range,
+     loc: position.loc,
++    ...(parts.length > 0 && { parts }),
+   });
++  return tagName;
++}
++
++function parseWhitespace(state: TokenizerState) {
++  const tagName = pushOpenTagStart(state);
+ 
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+@@ -46,15 +67,7 @@ function parseWhitespace(state: TokenizerState) {
+ }
+ 
+ function parseTagEnd(state: TokenizerState) {
+-  const tagName = parseOpenTagName(state.accumulatedContent.value());
+-  const position = calculateTokenPosition(state, { keepBuffer: false });
+-
+-  state.tokens.push({
+-    type: tokensMap[tagName as keyof typeof tokensMap] || tokensMap.default,
+-    value: state.accumulatedContent.value(),
+-    range: position.range,
+-    loc: position.loc,
+-  });
++  const tagName = pushOpenTagStart(state);
+ 
+   state.decisionBuffer.clear();
+   state.accumulatedContent.clear();
+diff --git a/src/tokenizer/tokenize.ts b/src/tokenizer/tokenize.ts
+index c9f3af7..154ba5f 100644
+--- a/src/tokenizer/tokenize.ts
++++ b/src/tokenizer/tokenize.ts
+@@ -24,6 +24,7 @@ import {
+ import { TokenizeHandler } from "../types/index.js";
+ import { SourceCode } from "./source-code.js";
+ import { CharsBuffer } from "./chars-buffer.js";
++import { readTemplateAsContent, templateKindOf } from "../utils/index.js";
+ 
+ const contextHandlers: Record<TokenizerContextTypes, TokenizeHandler> = {
+   [TokenizerContextTypes.Data]: data,
+@@ -51,8 +52,13 @@ const contextHandlers: Record<TokenizerContextTypes, TokenizeHandler> = {
+ function tokenizeChars(state: TokenizerState) {
+   while (!state.sourceCode.isEof()) {
+     const handler = contextHandlers[state.currentContext];
+-    state.decisionBuffer.concat(state.sourceCode.current());
+-    handler.parse(state.decisionBuffer, state);
++    const current = state.sourceCode.current();
++    state.decisionBuffer.concat(current);
++    if (current.isTemplate) {
++      (handler.parseTemplate ?? readTemplateAsContent)(templateKindOf(current), state);
++    } else {
++      handler.parse(state.decisionBuffer, state);
++    }
+   }
+ 
+   const handler = contextHandlers[state.currentContext];
+diff --git a/src/types/template.ts b/src/types/template.ts
+index a1c4375..d78cd45 100644
+--- a/src/types/template.ts
++++ b/src/types/template.ts
+@@ -1,8 +1,11 @@
+ import { Range } from "./range.js";
+ 
+-export type TemplateInfo =
+-  | Range
+-  | {
+-      open: Range;
+-      close: Range;
+-    };
++export type TemplateKind = "print" | "tag" | "comment";
++
++export type TemplateWrapper = {
++  open: Range;
++  close: Range;
++  kind?: TemplateKind;
++};
++
++export type TemplateInfo = Range | TemplateWrapper;
+diff --git a/src/types/tokenizer-context-handler.ts b/src/types/tokenizer-context-handler.ts
+index 540b9bd..aee2b41 100644
+--- a/src/types/tokenizer-context-handler.ts
++++ b/src/types/tokenizer-context-handler.ts
+@@ -1,7 +1,9 @@
+ import { CharsBuffer } from "../tokenizer/chars-buffer.js";
++import { TemplateKind } from "./template.js";
+ import { TokenizerState } from "./tokenizer-state.js";
+ 
+ export interface TokenizeHandler {
+   parse(chars: CharsBuffer, state: TokenizerState): void;
++  parseTemplate?(kind: TemplateKind, state: TokenizerState): void;
+   handleContentEnd?: (state: TokenizerState) => void;
+ }
+diff --git a/src/utils/templates.ts b/src/utils/templates.ts
+index db0b247..497e34f 100644
+--- a/src/utils/templates.ts
++++ b/src/utils/templates.ts
+@@ -1,7 +1,17 @@
+-import { TemplateInfo, Token } from "../types/index.js";
++import { TemplateInfo, TemplateKind, Token } from "../types/index.js";
+ import { TokenTypes } from "../constants/index.js";
+ import { PartToken, TemplateToken, TokenizerState } from "../types/index.js";
+-import { CharsType } from "../tokenizer/chars.js";
++import { Chars, CharsType } from "../tokenizer/chars.js";
++
++export function templateKindOf(chars: Chars): TemplateKind {
++  return chars.wrapper?.kind ?? "print";
++}
++
++export function readTemplateAsContent(_kind: TemplateKind, state: TokenizerState) {
++  state.accumulatedContent.concatBuffer(state.decisionBuffer);
++  state.decisionBuffer.clear();
++  state.sourceCode.next();
++}
+ 
+ export const getRange = (info: TemplateInfo) => {
+   return Array.isArray(info) ? info : [info.open[0], info.close[1]];

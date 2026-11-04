@@ -15,9 +15,7 @@ export * as DoctypeClose from "./doctype-end.js";
 export * as DoctypeOpen from "./doctype-start.js";
 export * as openTagEnd from "./open-tag-end.js";
 export * as openTagStart from "./open-tag-start.js";
-export * as scriptTagContent from "./script-tag-content.js";
-export * as styleTagContent from "./style-tag-content.js";
-export * as customTagRawContent from "./custom-tag-raw-content.js";
+export * as rawText from "./raw-text.js";
 export const noop: TokenizeHandler = {
   parse: () => void 0,
 };

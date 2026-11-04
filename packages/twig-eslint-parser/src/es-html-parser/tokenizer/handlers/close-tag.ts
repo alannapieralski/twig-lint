@@ -1,6 +1,6 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition, createParts } from "../../utils/index.js";
-import type { TokenizerState } from "../../types/index.js";
+import { calculateTokenPosition, readTagName } from "../../utils/index.js";
+import type { AnyToken, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -16,15 +16,15 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 
 function parseClosingCornerBrace(state: TokenizerState) {
   const position = calculateTokenPosition(state, { keepBuffer: true });
-  const parts = createParts(state, TokenTypes.CloseTag);
 
   state.tokens.push({
-    type: TokenTypes.CloseTag,
+    type: state.contextParams[TokenizerContextTypes.CloseTag]?.closeType ?? TokenTypes.CloseTag,
+    name: readTagName(state.accumulatedContent, "</"),
     value: state.accumulatedContent.value() + state.decisionBuffer.value(),
     range: position.range,
     loc: position.loc,
-    ...(parts.length > 0 && { parts }),
-  });
+  } as AnyToken);
+  state.contextParams[TokenizerContextTypes.CloseTag] = undefined;
 
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();

@@ -3,16 +3,14 @@ import { TokenTypes } from "../constants/index.js";
 import { PartToken, TemplateToken, TokenizerState } from "../types/index.js";
 import { Chars, CharsType } from "../tokenizer/chars.js";
 
-export function templateKindOf(chars: Chars | undefined): TemplateKind | undefined {
-  if (!chars?.isTemplate) {
-    return undefined;
-  }
+export function templateKindOf(chars: Chars): TemplateKind {
   return chars.wrapper?.kind ?? "print";
 }
 
-export function isStructuralTemplate(chars: Chars | undefined): boolean {
-  const kind = templateKindOf(chars);
-  return kind === "tag" || kind === "comment";
+export function readTemplateAsContent(_kind: TemplateKind, state: TokenizerState) {
+  state.accumulatedContent.concatBuffer(state.decisionBuffer);
+  state.decisionBuffer.clear();
+  state.sourceCode.next();
 }
 
 export const getRange = (info: TemplateInfo) => {

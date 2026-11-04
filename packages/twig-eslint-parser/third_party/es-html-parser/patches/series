@@ -1,12 +1,11 @@
 # Applied in order by scripts/vendor.ts. One patch per concern.
 EHP-00-vitest-error-snapshot.patch
 EHP-01-esm-import-specifiers.patch
-EHP-02-template-info-kinds.patch
-EHP-03-opaque-templates-in-raw-text.patch
-EHP-04-tag-name-state.patch
-EHP-05-template-blocks-among-attributes.patch
-EHP-06-close-tag-name-keys.patch
-EHP-07-close-back-to-open-ancestor.patch
-EHP-08-slash-in-unquoted-attribute-value.patch
-EHP-09-void-elements.patch
-EHP-10-text-at-end-of-input.patch
+EHP-02-template-hook-per-state.patch
+EHP-03-tag-names-on-tokens.patch
+EHP-04-raw-text-end-tag.patch
+EHP-05-unquoted-value-ends.patch
+EHP-06-comment-ends.patch
+EHP-07-void-elements.patch
+EHP-08-close-back-to-open-ancestor.patch
+EHP-09-content-at-end-of-input.patch

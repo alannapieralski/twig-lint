@@ -24,6 +24,11 @@ export interface TemplateToken<T extends TokenTypes>
   close?: Token<TokenTypes.CloseTemplate>;
 }
 
+export interface NamedToken<T extends TokenTypes> extends Token<T> {
+  name: string;
+  parts?: (PartToken<T> | TemplateToken<T>)[];
+}
+
 export interface CompositeToken<T extends TokenTypes> extends Token<T> {
   parts: (PartToken<T> | TemplateToken<T>)[];
 }
@@ -31,9 +36,9 @@ export interface CompositeToken<T extends TokenTypes> extends Token<T> {
 export type AnyToken =
   | CompositeToken<TokenTypes.Text>
   | CompositeToken<TokenTypes.RawContent>
-  | Token<TokenTypes.OpenTagStart>
+  | NamedToken<TokenTypes.OpenTagStart>
   | Token<TokenTypes.OpenTagEnd>
-  | Token<TokenTypes.CloseTag>
+  | NamedToken<TokenTypes.CloseTag>
   | CompositeToken<TokenTypes.AttributeKey>
   | Token<TokenTypes.AttributeAssignment>
   | Token<TokenTypes.AttributeValueWrapperStart>

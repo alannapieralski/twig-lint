@@ -1,13 +1,6 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import {
-  calculateTokenPosition,
-  createParts,
-  isStructuralTemplate,
-  isWhitespace,
-  raise,
-  templateKindOf,
-} from "../../utils/index.js";
-import type { TokenizerState } from "../../types/index.js";
+import { calculateTokenPosition, createParts, isWhitespace, raise } from "../../utils/index.js";
+import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -20,16 +13,6 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
     return parseEqual(state);
   }
 
-  if (templateKindOf(chars.last()) === "comment") {
-    state.decisionBuffer.clear();
-    state.sourceCode.next();
-    return;
-  }
-
-  if (isStructuralTemplate(chars.last())) {
-    return parseStandaloneTemplate(state);
-  }
-
   if (!isWhitespace(value)) {
     return parseNoneWhitespace(chars, state);
   }
@@ -38,15 +21,16 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.sourceCode.next();
 }
 
-function parseTagEnd(state: TokenizerState) {
-  const tagName =
-    state.contextParams[TokenizerContextTypes.Attributes]?.tagName;
-
-  state.accumulatedContent.clear();
-  state.decisionBuffer.clear();
-  state.currentContext = TokenizerContextTypes.OpenTagEnd;
-  state.contextParams[TokenizerContextTypes.OpenTagEnd] = { tagName: tagName! };
-  state.contextParams[TokenizerContextTypes.Attributes] = undefined;
+export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+  if (kind === "comment") {
+    state.decisionBuffer.clear();
+    state.sourceCode.next();
+    return;
+  }
+  if (kind === "tag") {
+    return parseStandaloneTemplate(state);
+  }
+  parseNoneWhitespace(state.decisionBuffer, state);
 }
 
 function parseStandaloneTemplate(state: TokenizerState) {
@@ -64,6 +48,17 @@ function parseStandaloneTemplate(state: TokenizerState) {
 
   state.accumulatedContent.clear();
   state.sourceCode.next();
+}
+
+function parseTagEnd(state: TokenizerState) {
+  const tagName =
+    state.contextParams[TokenizerContextTypes.Attributes]?.tagName;
+
+  state.accumulatedContent.clear();
+  state.decisionBuffer.clear();
+  state.currentContext = TokenizerContextTypes.OpenTagEnd;
+  state.contextParams[TokenizerContextTypes.OpenTagEnd] = { tagName: tagName! };
+  state.contextParams[TokenizerContextTypes.Attributes] = undefined;
 }
 
 function parseNoneWhitespace(chars: CharsBuffer, state: TokenizerState) {

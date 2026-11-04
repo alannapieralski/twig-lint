@@ -1,6 +1,6 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
 import { calculateTokenPosition } from "../../utils/index.js";
-import type { TokenizerState } from "../../types/index.js";
+import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -17,4 +17,8 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.Data;
   state.sourceCode.next();
+}
+
+export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
+  parse(state.decisionBuffer, state);
 }

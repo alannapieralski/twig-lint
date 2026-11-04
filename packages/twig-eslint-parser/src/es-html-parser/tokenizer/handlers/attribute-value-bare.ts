@@ -1,5 +1,5 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition, isWhitespace, createParts } from "../../utils/index.js";
+import { calculateTokenPosition, isWhitespace, createParts, pushContentAtEndOfInput } from "../../utils/index.js";
 import type { TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
@@ -30,5 +30,5 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 }
 
 export function handleContentEnd(state: TokenizerState) {
-  if (state.accumulatedContent.length() > 0) parseValueEnd(state);
+  pushContentAtEndOfInput(state, TokenTypes.AttributeValue);
 }

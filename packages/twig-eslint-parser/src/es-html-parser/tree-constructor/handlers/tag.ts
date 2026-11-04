@@ -6,6 +6,7 @@ import {
   ContextualTagNode,
   OpenTagEndNode,
   OpenTagStartNode,
+  NamedToken,
   Token,
 } from "../../types/index.js";
 import { createNodeFrom, updateNodeEnd } from "../../utils/index.js";
@@ -15,27 +16,9 @@ const ATTRIBUTE_START_TOKENS = [
   TokenTypes.AttributeAssignment,
 ];
 
-const SELF_CLOSING_TAGS = [
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "keygen",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr",
-];
-
 function handleOpenTagStart(
   state: ConstructTreeState<ContextualTagNode>,
-  token: Token<TokenTypes.OpenTagStart>
+  token: NamedToken<TokenTypes.OpenTagStart>
 ) {
   state.currentNode.openStart = createNodeFrom(token) as OpenTagStartNode;
   state.currentContext = {
@@ -66,8 +49,7 @@ function handleOpenTagEnd(
   updateNodeEnd(state.currentNode, token);
 
   if (
-    SELF_CLOSING_TAGS.indexOf(tagName!) !== -1 ||
-    state.voidElements.includes(tagName!) ||
+    state.voidElements.has(tagName ?? "") ||
     state.currentNode.openEnd.value === "/>"
   ) {
     state.currentNode.selfClosing = true;
@@ -90,7 +72,7 @@ function handleOpenTagEnd(
 
 function handleCloseTag(
   state: ConstructTreeState<ContextualTagNode>,
-  token: Token<TokenTypes.CloseTag>
+  token: NamedToken<TokenTypes.CloseTag>
 ) {
   state.currentNode.close = createNodeFrom(token) as CloseTagNode;
   updateNodeEnd(state.currentNode, token);

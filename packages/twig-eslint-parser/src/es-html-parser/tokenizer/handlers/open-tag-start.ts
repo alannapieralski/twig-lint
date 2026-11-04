@@ -3,16 +3,16 @@ import {
   calculateTokenPosition,
   createParts,
   isWhitespace,
-  openTagNameOf,
+  readTemplateAsContent,
+  readTagName,
 } from "../../utils/index.js";
-import type { TokenizerState } from "../../types/index.js";
+import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
-const tokensMap = {
-  script: TokenTypes.OpenScriptTagStart,
-  style: TokenTypes.OpenStyleTagStart,
-  default: TokenTypes.OpenTagStart,
-} as const;
+const OPEN_TAG_START_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
+  ["script", TokenTypes.OpenScriptTagStart],
+  ["style", TokenTypes.OpenStyleTagStart],
+]);
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
   if (chars.value() === ">" || chars.value() === "/") {
@@ -28,13 +28,26 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.sourceCode.next();
 }
 
+export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+  if (kind === "print") {
+    return readTemplateAsContent(kind, state);
+  }
+  const tagName = pushOpenTagStart(state);
+
+  state.accumulatedContent.clear();
+  state.decisionBuffer.clear();
+  state.currentContext = TokenizerContextTypes.Attributes;
+  state.contextParams[TokenizerContextTypes.Attributes] = { tagName };
+}
+
 function pushOpenTagStart(state: TokenizerState): string {
-  const tagName = openTagNameOf(state.accumulatedContent);
+  const tagName = readTagName(state.accumulatedContent, "<");
   const position = calculateTokenPosition(state, { keepBuffer: false });
   const parts = createParts(state, TokenTypes.OpenTagStart);
 
   state.tokens.push({
-    type: tokensMap[tagName as keyof typeof tokensMap] || tokensMap.default,
+    type: (OPEN_TAG_START_TYPES.get(tagName) ?? TokenTypes.OpenTagStart) as TokenTypes.OpenTagStart,
+    name: tagName,
     value: state.accumulatedContent.value(),
     range: position.range,
     loc: position.loc,

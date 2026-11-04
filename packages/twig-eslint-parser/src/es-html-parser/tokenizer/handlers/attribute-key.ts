@@ -1,12 +1,7 @@
 import { TokenizerContextTypes } from "../../constants/index.js";
 import { TokenTypes } from "../../constants/token-types.js";
-import {
-  calculateTokenPosition,
-  isWhitespace,
-  createParts,
-  isStructuralTemplate,
-} from "../../utils/index.js";
-import type { TokenizerState } from "../../types/index.js";
+import { calculateTokenPosition, isWhitespace, createParts, readTemplateAsContent, pushContentAtEndOfInput } from "../../utils/index.js";
+import type { TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -19,15 +14,16 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.sourceCode.next();
 }
 
+export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+  if (kind === "print") {
+    return readTemplateAsContent(kind, state);
+  }
+  parseKeyEnd(state);
+}
+
 function isKeyBreak(chars: CharsBuffer): boolean {
   const value = chars.value();
-  return (
-    value === "=" ||
-    value === "/" ||
-    value === ">" ||
-    isWhitespace(value) ||
-    isStructuralTemplate(chars.last())
-  );
+  return value === "=" || value === "/" || value === ">" || isWhitespace(value);
 }
 
 function parseKeyEnd(state: TokenizerState) {
@@ -44,4 +40,8 @@ function parseKeyEnd(state: TokenizerState) {
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.Attributes;
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  pushContentAtEndOfInput(state, TokenTypes.AttributeKey);
 }

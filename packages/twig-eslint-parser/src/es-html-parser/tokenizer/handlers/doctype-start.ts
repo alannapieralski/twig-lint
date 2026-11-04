@@ -1,6 +1,6 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
 import { calculateTokenPosition, isWhitespace } from "../../utils/index.js";
-import { AnyToken, TokenizerState } from "../../types/index.js";
+import { AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -15,6 +15,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 
   state.decisionBuffer.clear();
   state.sourceCode.next();
+}
+
+export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
+  parse(state.decisionBuffer, state);
 }
 
 function generateDoctypeOpenToken(state: TokenizerState): AnyToken {

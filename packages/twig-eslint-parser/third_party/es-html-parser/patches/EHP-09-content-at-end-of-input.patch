@@ -1,0 +1,207 @@
+Description: Keep what each state read when the input ends
+ At the end of the input the HTML tokenizer emits the text, comment or
+ raw text it has read. The data, comment and raw-text states, and the
+ attribute name and value states, now push what they read as their token
+ through one helper. Upstream dropped it, so the rest of a file after an
+ unterminated "<!--" or "<script>" was in no node, and the data state's
+ range left out a trailing "<".
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/parse-for-eslint.test.ts ("unquoted attribute values"); test/parser/diagnostics.test.ts
+Last-Update: 2026-11-04
+---
+diff --git a/src/tokenizer/handlers/attribute-key.ts b/src/tokenizer/handlers/attribute-key.ts
+index 9619480..9f0a9d4 100644
+--- a/src/tokenizer/handlers/attribute-key.ts
++++ b/src/tokenizer/handlers/attribute-key.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes } from "../../constants/index.js";
+ import { TokenTypes } from "../../constants/token-types.js";
+-import { calculateTokenPosition, isWhitespace, createParts, readTemplateAsContent } from "../../utils/index.js";
++import { calculateTokenPosition, isWhitespace, createParts, readTemplateAsContent, pushContentAtEndOfInput } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -41,3 +41,7 @@ function parseKeyEnd(state: TokenizerState) {
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.Attributes;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  pushContentAtEndOfInput(state, TokenTypes.AttributeKey);
++}
+diff --git a/src/tokenizer/handlers/attribute-value-bare.ts b/src/tokenizer/handlers/attribute-value-bare.ts
+index 8a5cc62..5bbfe64 100644
+--- a/src/tokenizer/handlers/attribute-value-bare.ts
++++ b/src/tokenizer/handlers/attribute-value-bare.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, isWhitespace, createParts } from "../../utils/index.js";
++import { calculateTokenPosition, isWhitespace, createParts, pushContentAtEndOfInput } from "../../utils/index.js";
+ import type { TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -28,3 +28,7 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.decisionBuffer.clear();
+   state.sourceCode.next();
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  pushContentAtEndOfInput(state, TokenTypes.AttributeValue);
++}
+diff --git a/src/tokenizer/handlers/attribute-value-wrapped.ts b/src/tokenizer/handlers/attribute-value-wrapped.ts
+index 47d1a03..3fa3f91 100644
+--- a/src/tokenizer/handlers/attribute-value-wrapped.ts
++++ b/src/tokenizer/handlers/attribute-value-wrapped.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, pushContentAtEndOfInput } from "../../utils/index.js";
+ import type { Range, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -43,3 +43,7 @@ function parseWrapper(state: TokenizerState) {
+ 
+   state.contextParams[TokenizerContextTypes.AttributeValueWrapped] = undefined;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  pushContentAtEndOfInput(state, TokenTypes.AttributeValue);
++}
+diff --git a/src/tokenizer/handlers/comment-content.ts b/src/tokenizer/handlers/comment-content.ts
+index e26a29c..ddc4528 100644
+--- a/src/tokenizer/handlers/comment-content.ts
++++ b/src/tokenizer/handlers/comment-content.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, moveIntoContentExceptLast } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, moveIntoContentExceptLast, pushContentAtEndOfInput } from "../../utils/index.js";
+ import type { Range, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -53,3 +53,7 @@ function parseCommentClose(state: TokenizerState, closeLength: number) {
+   state.currentContext = TokenizerContextTypes.Data;
+   state.sourceCode.next();
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  pushContentAtEndOfInput(state, TokenTypes.CommentContent);
++}
+diff --git a/src/tokenizer/handlers/data.ts b/src/tokenizer/handlers/data.ts
+index 5ca8228..97b8b2a 100644
+--- a/src/tokenizer/handlers/data.ts
++++ b/src/tokenizer/handlers/data.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, readTemplateAsContent } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, pushContentAtEndOfInput, readTemplateAsContent } from "../../utils/index.js";
+ import { Range, AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -51,20 +51,7 @@ function isAfterLoneOpeningCornerBrace(chars: CharsBuffer): boolean {
+ }
+ 
+ export function handleContentEnd(state: TokenizerState) {
+-  const textContent =
+-    state.accumulatedContent.value() + state.decisionBuffer.value();
+-
+-  if (textContent.length !== 0) {
+-    const position = calculateTokenPosition(state, { keepBuffer: false });
+-
+-    state.tokens.push({
+-      type: TokenTypes.Text,
+-      value: textContent,
+-      range: position.range,
+-      loc: position.loc,
+-      parts: createParts(state, TokenTypes.Text),
+-    });
+-  }
++  pushContentAtEndOfInput(state, TokenTypes.Text);
+ }
+ 
+ function generateTextToken(state: TokenizerState): AnyToken {
+diff --git a/src/tokenizer/handlers/raw-text.ts b/src/tokenizer/handlers/raw-text.ts
+index 19067f7..2d35262 100644
+--- a/src/tokenizer/handlers/raw-text.ts
++++ b/src/tokenizer/handlers/raw-text.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, moveIntoContentExceptLast } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, moveIntoContentExceptLast, pushContentAtEndOfInput } from "../../utils/index.js";
+ import type { AnyToken, Range, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -78,3 +78,10 @@ function parseEndTag(state: TokenizerState) {
+   state.currentContext = TokenizerContextTypes.CloseTag;
+   state.sourceCode.next();
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  const params = state.contextParams[TokenizerContextTypes.RawText];
++  if (params) {
++    pushContentAtEndOfInput(state, params.contentType);
++  }
++}
+diff --git a/src/tree-constructor/handlers/comment.ts b/src/tree-constructor/handlers/comment.ts
+index d63884f..d2c9fd6 100644
+--- a/src/tree-constructor/handlers/comment.ts
++++ b/src/tree-constructor/handlers/comment.ts
+@@ -25,6 +25,7 @@ function handleCommentContent(
+   token: AnyToken
+ ) {
+   state.currentNode.value = createNodeFrom(token) as CommentContentNode;
++  updateNodeEnd(state.currentNode, token);
+   state.caretPosition++;
+ 
+   return state;
+diff --git a/src/utils/pending-text.ts b/src/utils/pending-text.ts
+index c945e4d..0fbb3c7 100644
+--- a/src/utils/pending-text.ts
++++ b/src/utils/pending-text.ts
+@@ -1,5 +1,8 @@
++import { TokenTypes } from "../constants/index.js";
+ import { Chars, CharsType } from "../tokenizer/chars.js";
+-import { TokenizerState } from "../types/index.js";
++import { AnyToken, TokenizerState } from "../types/index.js";
++import { calculateTokenPosition } from "./calculate-token-position.js";
++import { createParts } from "./templates.js";
+ 
+ /**
+  * Moves the pending HTML text in the decision buffer into the content, except its last characters.
+@@ -18,3 +21,35 @@ export function moveIntoContentExceptLast(state: TokenizerState, keptLength: num
+   state.decisionBuffer.clear();
+   state.decisionBuffer.concat(new Chars(CharsType.HTML, pending.value.slice(-keptLength), [splitAt, end]));
+ }
++
++export type EndOfInputTokenType =
++  | TokenTypes.Text
++  | TokenTypes.CommentContent
++  | TokenTypes.ScriptTagContent
++  | TokenTypes.StyleTagContent
++  | TokenTypes.RawContent
++  | TokenTypes.AttributeKey
++  | TokenTypes.AttributeValue;
++
++/**
++ * Emits everything read since the last token as one content token, as the HTML tokenizer does at the end of the input.
++ *
++ * @param state - The tokenizer state at the end of the input.
++ * @param type - The type of content the current state reads.
++ */
++export function pushContentAtEndOfInput(state: TokenizerState, type: EndOfInputTokenType): void {
++  state.accumulatedContent.concatBuffer(state.decisionBuffer);
++  state.decisionBuffer.clear();
++  if (state.accumulatedContent.length() === 0) {
++    return;
++  }
++  const position = calculateTokenPosition(state, { keepBuffer: false });
++  state.tokens.push({
++    type,
++    value: state.accumulatedContent.value(),
++    range: position.range,
++    loc: position.loc,
++    parts: createParts(state, type),
++  } as AnyToken);
++  state.accumulatedContent.clear();
++}

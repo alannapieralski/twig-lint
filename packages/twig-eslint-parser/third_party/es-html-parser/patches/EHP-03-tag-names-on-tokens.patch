@@ -1,0 +1,1293 @@
+Description: Read a tag name once, in the tag states, and carry it on the token
+ The open tag start and close tag tokens carry the element name, read as the
+ tag name state reads it: HTML characters lower-cased up to whitespace, "/"
+ or ">", a template glued after the name ends it, and a template right after
+ the opening is the name. The tree reads the name from the token and pairs
+ close tags by it, ignoring whitespace inside template text. So "</ div>"
+ closes nothing, "</d iv>" is "</d>", "</div class>" closes a div, and
+ "</{{ Tag }}>" does not close "<{{ tag }}>". "<" opens a tag only before an
+ ASCII letter, so "x <3" is text. Token types and contexts are looked up in a
+ Map, so "<constructor>" no longer crashes the parser. parseOpenTagName and
+ parseCloseTagName, and their tests, are replaced.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/parse-for-eslint.test.ts ("markup read as a browser reads it"); npm run test:upstream (snapshots gain "name")
+Last-Update: 2026-11-04
+---
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-apostrophe.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-apostrophe.html-0.json
+index 44a7c3c..d73e02a 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-apostrophe.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-apostrophe.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -313,6 +314,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       67,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare-wrong-quote.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare-wrong-quote.html-0.json
+index cd0f583..f7ea905 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare-wrong-quote.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare-wrong-quote.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "a",
+     "value": "<a",
+     "range": [
+       0,
+@@ -93,6 +94,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "a",
+     "value": "</a>",
+     "range": [
+       19,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare.html-0.json
+index ffd5d75..2b15f43 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-bare.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -149,6 +150,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       38,
+@@ -186,6 +188,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       46,
+@@ -297,6 +300,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "custom-element",
+     "value": "<custom-element",
+     "range": [
+       90,
+@@ -464,6 +468,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "custom-element",
+     "value": "</custom-element>",
+     "range": [
+       169,
+@@ -501,6 +506,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       187,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-empty.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-empty.html-0.json
+index 425c6b2..6289117 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-empty.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-empty.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "custom-element",
+     "value": "<custom-element",
+     "range": [
+       23,
+@@ -111,6 +113,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "custom-element",
+     "value": "</custom-element>",
+     "range": [
+       74,
+@@ -148,6 +151,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       92,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-multiline.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-multiline.html-0.json
+index 5df9bf0..cff0bc9 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-multiline.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-multiline.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -259,6 +260,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       39,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-quote.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-quote.html-0.json
+index 3845acf..06f0f86 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-quote.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-attributes-quote.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       8,
+@@ -295,6 +297,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       76,
+@@ -350,6 +353,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "custom-element",
+     "value": "<custom-element",
+     "range": [
+       108,
+@@ -589,6 +593,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "custom-element",
+     "value": "</custom-element>",
+     "range": [
+       248,
+@@ -626,6 +631,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       270,
+@@ -663,6 +669,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       279,
+@@ -700,6 +707,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       287,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-comments.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-comments.html-0.json
+index adaeccc..496df07 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-comments.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-comments.html-0.json
+@@ -75,6 +75,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       23,
+@@ -130,6 +131,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       31,
+@@ -259,6 +261,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       63,
+@@ -370,6 +373,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       102,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-elements.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-elements.html-0.json
+index f3a6294..7c39a86 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-elements.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-elements.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "custom-one",
+     "value": "<custom-one",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "custom-two",
+     "value": "<custom-two",
+     "range": [
+       28,
+@@ -111,6 +113,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "custom-two",
+     "value": "</custom-two>",
+     "range": [
+       60,
+@@ -148,6 +151,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "custom-one",
+     "value": "</custom-one>",
+     "range": [
+       74,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-tag-raw-content.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-tag-raw-content.html-0.json
+index 9439a67..4c7afc4 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-tag-raw-content.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-custom-tag-raw-content.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "markdown",
+     "value": "<markdown",
+     "range": [
+       0,
+@@ -148,6 +149,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "iostream",
+     "value": "<iostream",
+     "range": [
+       60,
+@@ -203,6 +205,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "markdown",
+     "value": "</markdown>",
+     "range": [
+       260,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-nested-tags.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-nested-tags.html-0.json
+index 0078c55..a0667e4 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-nested-tags.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-nested-tags.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       8,
+@@ -111,6 +113,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       34,
+@@ -166,6 +169,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       64,
+@@ -203,6 +207,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       74,
+@@ -240,6 +245,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       82,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-opening-closing-text.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-opening-closing-text.html-0.json
+index a74e86e..d603af6 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-opening-closing-text.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-opening-closing-text.html-0.json
+@@ -20,6 +20,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       14,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       19,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json
+index f98e8df..f41c216 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       25,
+@@ -332,6 +334,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       122,
+@@ -535,6 +538,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       228,
+@@ -572,6 +576,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       236,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json
+index f446e65..77e4d5a 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json
+@@ -20,6 +20,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       14,
+@@ -75,6 +76,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       22,
+@@ -167,6 +169,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       63,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json
+index 446bd49..a492975 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       0,
+@@ -277,6 +278,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       95,
+@@ -332,6 +334,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       103,
+@@ -554,6 +557,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       222,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json
+index dbdf244..023a74c 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json
+@@ -20,6 +20,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       14,
+@@ -112,6 +113,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       74,
+@@ -167,6 +169,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       82,
+@@ -259,6 +262,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       147,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-svg.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-svg.html-0.json
+index c2ade12..239702c 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-svg.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-svg.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "svg",
+     "value": "<svg",
+     "range": [
+       0,
+@@ -129,6 +130,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "circle",
+     "value": "<circle",
+     "range": [
+       40,
+@@ -165,6 +167,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "svg",
+     "value": "</svg>",
+     "range": [
+       50,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json
+index 19e80e9..7a6e1e5 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</DIV>",
+     "range": [
+       6,
+@@ -93,6 +95,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<DIV",
+     "range": [
+       14,
+@@ -129,6 +132,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       19,
+@@ -166,6 +170,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<span",
+     "range": [
+       27,
+@@ -221,6 +226,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</span>",
+     "range": [
+       34,
+@@ -258,6 +264,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "span",
+     "value": "<SPAN",
+     "range": [
+       43,
+@@ -294,6 +301,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "span",
+     "value": "</SPAN>",
+     "range": [
+       49,
+@@ -331,6 +339,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       58,
+@@ -404,6 +413,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<SCRIPT",
+     "range": [
+       76,
+@@ -496,6 +506,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<SCRIPT",
+     "range": [
+       95,
+@@ -569,6 +580,7 @@
+   },
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       113,
+@@ -661,6 +673,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       133,
+@@ -734,6 +747,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<STYLE",
+     "range": [
+       149,
+@@ -826,6 +840,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<STYLE",
+     "range": [
+       166,
+@@ -899,6 +914,7 @@
+   },
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       182,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-key.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-key.html-0.json
+index 42b483b..456c677 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-key.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-key.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -112,6 +113,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       12,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-bare.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-bare.html-0.json
+index c07aa73..a7d91ce 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-bare.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-bare.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -113,6 +114,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       14,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped-2.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped-2.html-0.json
+index aad453e..1c7189c 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped-2.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped-2.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -206,6 +207,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       33,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped.html-0.json
+index fa4a7ed..f1251d8 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-attributes-value-wrapped.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -149,6 +150,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       16,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-data.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-data.html-0.json
+index 30757cd..19f696e 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-data.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-data.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "div",
+     "value": "<div",
+     "range": [
+       0,
+@@ -76,6 +77,7 @@
+   },
+   {
+     "type": "CloseTag",
++    "name": "div",
+     "value": "</div>",
+     "range": [
+       16,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json
+index e3bb287..2f4e6ab 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenScriptTagStart",
++    "name": "script",
+     "value": "<script",
+     "range": [
+       0,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json
+index bc41637..b8de522 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenStyleTagStart",
++    "name": "style",
+     "value": "<style",
+     "range": [
+       0,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-void-tags.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-void-tags.html-0.json
+index d0538f5..30b4948 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-void-tags.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-void-tags.html-0.json
+@@ -1,6 +1,7 @@
+ [
+   {
+     "type": "OpenTagStart",
++    "name": "img",
+     "value": "<img",
+     "range": [
+       0,
+@@ -56,6 +57,7 @@
+   },
+   {
+     "type": "OpenTagStart",
++    "name": "img",
+     "value": "<img",
+     "range": [
+       9,
+diff --git a/src/constants/regex.ts b/src/constants/regex.ts
+index 699124c..c2d0b2f 100644
+--- a/src/constants/regex.ts
++++ b/src/constants/regex.ts
+@@ -3,7 +3,3 @@ export const INCOMPLETE_CLOSING_TAG_PATTERN = /<\/[^>]+$/;
+ export const CLOSING_SCRIPT_TAG_PATTERN = /<\/script\s*>/i;
+ 
+ export const CLOSING_STYLE_TAG_PATTERN = /<\/style\s*>/i;
+-
+-export const OPEN_TAG_NAME_PATTERN = /^<(\S+)/;
+-
+-export const CLOSE_TAG_NAME_PATTERN = /^<\/((?:.|\r?\n)*)>$/;
+diff --git a/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap b/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap
+index 10dd8ad..173534a 100644
+--- a/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap
++++ b/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap
+@@ -128,6 +128,7 @@ exports[`parse basic 1`] = `
+           "line": 1,
+         },
+       },
++      "name": "div",
+       "range": [
+         0,
+         4,
+@@ -183,6 +184,7 @@ exports[`parse basic 1`] = `
+           "line": 1,
+         },
+       },
++      "name": "div",
+       "range": [
+         12,
+         18,
+@@ -322,6 +324,7 @@ exports[`parse token adapter 1`] = `
+           "line": 2,
+         },
+       },
++      "name": "div",
+       "range": [
+         1,
+         5,
+@@ -377,6 +380,7 @@ exports[`parse token adapter 1`] = `
+           "line": 2,
+         },
+       },
++      "name": "div",
+       "range": [
+         13,
+         19,
+diff --git a/src/tokenizer/handlers/close-tag.ts b/src/tokenizer/handlers/close-tag.ts
+index f4650f3..dd04ad9 100644
+--- a/src/tokenizer/handlers/close-tag.ts
++++ b/src/tokenizer/handlers/close-tag.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition } from "../../utils/index.js";
++import { calculateTokenPosition, readTagName } from "../../utils/index.js";
+ import type { TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -19,6 +19,7 @@ function parseClosingCornerBrace(state: TokenizerState) {
+ 
+   state.tokens.push({
+     type: TokenTypes.CloseTag,
++    name: readTagName(state.accumulatedContent, "</"),
+     value: state.accumulatedContent.value() + state.decisionBuffer.value(),
+     range: position.range,
+     loc: position.loc,
+diff --git a/src/tokenizer/handlers/custom-tag-raw-content.ts b/src/tokenizer/handlers/custom-tag-raw-content.ts
+index c15051e..84d8338 100644
+--- a/src/tokenizer/handlers/custom-tag-raw-content.ts
++++ b/src/tokenizer/handlers/custom-tag-raw-content.ts
+@@ -50,6 +50,7 @@ function parseClosingCustomTag(state: TokenizerState) {
+ 
+   state.tokens.push({
+     type: TokenTypes.CloseTag,
++    name: state.contextParams[TokenizerContextTypes.CustomTagRawContent]?.tagName ?? "",
+     value: state.decisionBuffer.value(),
+     range,
+     loc: state.sourceCode.getLocationOf(range),
+diff --git a/src/tokenizer/handlers/data.ts b/src/tokenizer/handlers/data.ts
+index 89e9478..5ca8228 100644
+--- a/src/tokenizer/handlers/data.ts
++++ b/src/tokenizer/handlers/data.ts
+@@ -4,7 +4,7 @@ import { Range, AnyToken, TemplateKind, TokenizerState } from "../../types/index
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ const COMMENT_START = "<!--";
+-const OPEN_TAG_START_PATTERN = /^<\w/;
++const OPEN_TAG_START_PATTERN = /^<[a-zA-Z]/;
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   const value = chars.value();
+diff --git a/src/tokenizer/handlers/open-tag-end.ts b/src/tokenizer/handlers/open-tag-end.ts
+index 8ce0fae..248471f 100644
+--- a/src/tokenizer/handlers/open-tag-end.ts
++++ b/src/tokenizer/handlers/open-tag-end.ts
+@@ -3,17 +3,15 @@ import { calculateTokenPosition } from "../../utils/index.js";
+ import type { TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+-const tokensMap = {
+-  script: TokenTypes.OpenScriptTagEnd,
+-  style: TokenTypes.OpenStyleTagEnd,
+-  default: TokenTypes.OpenTagEnd,
+-} as const;
+-
+-const contextsMap = {
+-  script: TokenizerContextTypes.ScriptContent,
+-  style: TokenizerContextTypes.StyleContent,
+-  default: TokenizerContextTypes.Data,
+-} as const;
++const OPEN_TAG_END_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
++  ["script", TokenTypes.OpenScriptTagEnd],
++  ["style", TokenTypes.OpenStyleTagEnd],
++]);
++
++const CONTEXTS_AFTER_OPEN_TAG: ReadonlyMap<string, TokenizerContextTypes> = new Map([
++  ["script", TokenizerContextTypes.ScriptContent],
++  ["style", TokenizerContextTypes.StyleContent],
++]);
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   if (chars.value() === ">") {
+@@ -27,11 +25,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+ 
+ function parseClosingCornerBrace(state: TokenizerState) {
+   const position = calculateTokenPosition(state, { keepBuffer: true });
+-  const tagName = state.contextParams[TokenizerContextTypes.OpenTagEnd]
+-    ?.tagName! as keyof typeof tokensMap;
++  const tagName = state.contextParams[TokenizerContextTypes.OpenTagEnd]?.tagName ?? "";
+ 
+   state.tokens.push({
+-    type: tokensMap[tagName] || tokensMap.default,
++    type: (OPEN_TAG_END_TYPES.get(tagName) ?? TokenTypes.OpenTagEnd) as TokenTypes.OpenTagEnd,
+     value: state.accumulatedContent.value() + state.decisionBuffer.value(),
+     range: position.range,
+     loc: position.loc,
+@@ -45,8 +42,7 @@ function parseClosingCornerBrace(state: TokenizerState) {
+     };
+     state.currentContext = TokenizerContextTypes.CustomTagRawContent;
+   } else {
+-    state.currentContext =
+-      contextsMap[tagName || "default"] || contextsMap["default"];
++    state.currentContext = CONTEXTS_AFTER_OPEN_TAG.get(tagName) ?? TokenizerContextTypes.Data;
+   }
+ 
+   state.sourceCode.next();
+diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
+index 2ed5360..03bd578 100644
+--- a/src/tokenizer/handlers/open-tag-start.ts
++++ b/src/tokenizer/handlers/open-tag-start.ts
+@@ -3,17 +3,16 @@ import {
+   calculateTokenPosition,
+   createParts,
+   isWhitespace,
+-  parseOpenTagName,
+   readTemplateAsContent,
++  readTagName,
+ } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+-const tokensMap = {
+-  script: TokenTypes.OpenScriptTagStart,
+-  style: TokenTypes.OpenStyleTagStart,
+-  default: TokenTypes.OpenTagStart,
+-} as const;
++const OPEN_TAG_START_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
++  ["script", TokenTypes.OpenScriptTagStart],
++  ["style", TokenTypes.OpenStyleTagStart],
++]);
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   if (chars.value() === ">" || chars.value() === "/") {
+@@ -42,12 +41,13 @@ export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+ }
+ 
+ function pushOpenTagStart(state: TokenizerState): string {
+-  const tagName = parseOpenTagName(state.accumulatedContent.value());
++  const tagName = readTagName(state.accumulatedContent, "<");
+   const position = calculateTokenPosition(state, { keepBuffer: false });
+   const parts = createParts(state, TokenTypes.OpenTagStart);
+ 
+   state.tokens.push({
+-    type: tokensMap[tagName as keyof typeof tokensMap] || tokensMap.default,
++    type: (OPEN_TAG_START_TYPES.get(tagName) ?? TokenTypes.OpenTagStart) as TokenTypes.OpenTagStart,
++    name: tagName,
+     value: state.accumulatedContent.value(),
+     range: position.range,
+     loc: position.loc,
+diff --git a/src/tree-constructor/handlers/tag-content.ts b/src/tree-constructor/handlers/tag-content.ts
+index c753d8a..1d007b1 100644
+--- a/src/tree-constructor/handlers/tag-content.ts
++++ b/src/tree-constructor/handlers/tag-content.ts
+@@ -19,7 +19,7 @@ import {
+ } from "../../types/index.js";
+ import {
+   cloneRange,
+-  parseCloseTagName,
++  pairingKeyOf,
+   createNodeFrom,
+   cloneLocation,
+   initChildrenIfNone,
+@@ -55,9 +55,9 @@ function handleCloseTag(
+   state: ConstructTreeState<ContextualTagNode>,
+   token: AnyToken
+ ) {
+-  const closeTagName = parseCloseTagName(token.value);
++  const closeTagName = token.type === TokenTypes.CloseTag ? token.name : "";
+ 
+-  if (closeTagName !== state.currentNode.name) {
++  if (pairingKeyOf(closeTagName) !== pairingKeyOf(state.currentNode.name ?? "")) {
+     state.caretPosition++;
+ 
+     return state;
+diff --git a/src/tree-constructor/handlers/tag-name.ts b/src/tree-constructor/handlers/tag-name.ts
+index de36bac..22ac9bd 100644
+--- a/src/tree-constructor/handlers/tag-name.ts
++++ b/src/tree-constructor/handlers/tag-name.ts
+@@ -2,16 +2,15 @@ import { TokenTypes } from "../../constants/index.js";
+ import {
+   AnyToken,
+   ConstructTreeState,
+-  Token,
++  NamedToken,
+   ContextualTagNode,
+ } from "../../types/index.js";
+-import { parseOpenTagName } from "../../utils/index.js";
+ 
+ function handleTagOpenStart(
+   state: ConstructTreeState<ContextualTagNode>,
+-  token: Token<TokenTypes.OpenTagStart>
++  token: NamedToken<TokenTypes.OpenTagStart>
+ ) {
+-  state.currentNode.name = parseOpenTagName(token.value);
++  state.currentNode.name = token.name;
+ 
+   state.currentContext = state.currentContext.parentRef;
+ 
+diff --git a/src/tree-constructor/handlers/tag.ts b/src/tree-constructor/handlers/tag.ts
+index 91ceb21..0fe0b0c 100644
+--- a/src/tree-constructor/handlers/tag.ts
++++ b/src/tree-constructor/handlers/tag.ts
+@@ -6,6 +6,7 @@ import {
+   ContextualTagNode,
+   OpenTagEndNode,
+   OpenTagStartNode,
++  NamedToken,
+   Token,
+ } from "../../types/index.js";
+ import { createNodeFrom, updateNodeEnd } from "../../utils/index.js";
+@@ -35,7 +36,7 @@ const SELF_CLOSING_TAGS = [
+ 
+ function handleOpenTagStart(
+   state: ConstructTreeState<ContextualTagNode>,
+-  token: Token<TokenTypes.OpenTagStart>
++  token: NamedToken<TokenTypes.OpenTagStart>
+ ) {
+   state.currentNode.openStart = createNodeFrom(token) as OpenTagStartNode;
+   state.currentContext = {
+@@ -89,7 +90,7 @@ function handleOpenTagEnd(
+ 
+ function handleCloseTag(
+   state: ConstructTreeState<ContextualTagNode>,
+-  token: Token<TokenTypes.CloseTag>
++  token: NamedToken<TokenTypes.CloseTag>
+ ) {
+   state.currentNode.close = createNodeFrom(token) as CloseTagNode;
+   updateNodeEnd(state.currentNode, token);
+diff --git a/src/types/token.ts b/src/types/token.ts
+index b2e303c..7e09681 100644
+--- a/src/types/token.ts
++++ b/src/types/token.ts
+@@ -24,6 +24,11 @@ export interface TemplateToken<T extends TokenTypes>
+   close?: Token<TokenTypes.CloseTemplate>;
+ }
+ 
++export interface NamedToken<T extends TokenTypes> extends Token<T> {
++  name: string;
++  parts?: (PartToken<T> | TemplateToken<T>)[];
++}
++
+ export interface CompositeToken<T extends TokenTypes> extends Token<T> {
+   parts: (PartToken<T> | TemplateToken<T>)[];
+ }
+@@ -31,9 +36,9 @@ export interface CompositeToken<T extends TokenTypes> extends Token<T> {
+ export type AnyToken =
+   | CompositeToken<TokenTypes.Text>
+   | CompositeToken<TokenTypes.RawContent>
+-  | Token<TokenTypes.OpenTagStart>
++  | NamedToken<TokenTypes.OpenTagStart>
+   | Token<TokenTypes.OpenTagEnd>
+-  | Token<TokenTypes.CloseTag>
++  | NamedToken<TokenTypes.CloseTag>
+   | CompositeToken<TokenTypes.AttributeKey>
+   | Token<TokenTypes.AttributeAssignment>
+   | Token<TokenTypes.AttributeValueWrapperStart>
+diff --git a/src/utils/__tests__/parse-close-tag-name.spec.ts b/src/utils/__tests__/parse-close-tag-name.spec.ts
+deleted file mode 100644
+index 0740c71..0000000
+--- a/src/utils/__tests__/parse-close-tag-name.spec.ts
++++ /dev/null
+@@ -1,21 +0,0 @@
+-import { parseCloseTagName } from "../parse-close-tag-name";
+-
+-describe("parseCloseTagName", () => {
+-  it("Should return close tag name", () => {
+-    expect(parseCloseTagName("</div>")).toBe("div");
+-  });
+-
+-  it("Should return close tag name when close tag has LF newline before closing caret", () => {
+-    const closeTag = `</div\n>`;
+-    expect(parseCloseTagName(closeTag)).toBe("div");
+-  });
+-
+-  it("Should return close tag name when close tag has CRLF newline before closing caret", () => {
+-    const closeTag = `</div\r\n>`;
+-    expect(parseCloseTagName(closeTag)).toBe("div");
+-  });
+-
+-  it("Should throw error", () => {
+-    expect(() => parseCloseTagName("<div>")).toThrow();
+-  });
+-});
+diff --git a/src/utils/__tests__/parse-open-tag-name.spec.ts b/src/utils/__tests__/parse-open-tag-name.spec.ts
+deleted file mode 100644
+index f6bd32e..0000000
+--- a/src/utils/__tests__/parse-open-tag-name.spec.ts
++++ /dev/null
+@@ -1,11 +0,0 @@
+-import { parseOpenTagName } from "../parse-open-tag-name";
+-
+-describe("parseOpenTagName", () => {
+-  it("Should return close tag name", () => {
+-    expect(parseOpenTagName("<div >")).toBe("div");
+-  });
+-
+-  it("Should throw error", () => {
+-    expect(() => parseOpenTagName("> div>")).toThrow();
+-  });
+-});
+diff --git a/src/utils/index.ts b/src/utils/index.ts
+index 0d30281..508381c 100644
+--- a/src/utils/index.ts
++++ b/src/utils/index.ts
+@@ -1,7 +1,5 @@
+ export * from "./calculate-token-characters-range.js";
+ export * from "./is-whitespace.js";
+-export * from "./parse-open-tag-name.js";
+-export * from "./parse-close-tag-name.js";
+ export * from "./clear-parent.js";
+ export * from "./calculate-token-location.js";
+ export * from "./calculate-token-position.js";
+@@ -15,3 +13,4 @@ export * from "./clone-location.js";
+ export * from "./init-if-none.js";
+ export * from "./templates.js";
+ export * from "./raise.js";
++export * from "./tag-name.js";
+diff --git a/src/utils/parse-close-tag-name.ts b/src/utils/parse-close-tag-name.ts
+deleted file mode 100644
+index a0442c8..0000000
+--- a/src/utils/parse-close-tag-name.ts
++++ /dev/null
+@@ -1,14 +0,0 @@
+-import { CLOSE_TAG_NAME_PATTERN } from "../constants/index.js";
+-
+-export function parseCloseTagName(closeTagTokenContent: string): string {
+-  const match = closeTagTokenContent.match(CLOSE_TAG_NAME_PATTERN);
+-
+-  if (match === null) {
+-    throw new Error(
+-      "Unable to parse close tag name.\n" +
+-        `${closeTagTokenContent} does not match pattern of closing tag.`
+-    );
+-  }
+-
+-  return match[1].trim().toLowerCase();
+-}
+diff --git a/src/utils/parse-open-tag-name.ts b/src/utils/parse-open-tag-name.ts
+deleted file mode 100644
+index d75c44e..0000000
+--- a/src/utils/parse-open-tag-name.ts
++++ /dev/null
+@@ -1,14 +0,0 @@
+-import { OPEN_TAG_NAME_PATTERN } from "../constants/index.js";
+-
+-export function parseOpenTagName(openTagStartTokenContent: string) {
+-  const match = openTagStartTokenContent.match(OPEN_TAG_NAME_PATTERN);
+-
+-  if (match === null) {
+-    throw new Error(
+-      "Unable to parse open tag name.\n" +
+-        `${openTagStartTokenContent} does not match pattern of opening tag.`
+-    );
+-  }
+-
+-  return match[1].toLowerCase();
+-}
+diff --git a/src/utils/tag-name.ts b/src/utils/tag-name.ts
+new file mode 100644
+index 0000000..201a4a5
+--- /dev/null
++++ b/src/utils/tag-name.ts
+@@ -0,0 +1,36 @@
++import { CharsBuffer } from "../tokenizer/chars-buffer.js";
++
++const TAG_NAME_END = /[\t\n\f\r />]/;
++const WHITESPACE = /\s+/g;
++
++/**
++ * Reads an element name as the tag name state does: HTML characters lower-cased up to whitespace, "/" or ">".
++ * A template glued after the name ends it; a template right after the opening is the name.
++ *
++ * @param buffer - The open tag start or close tag read so far, opening included.
++ * @param opening - "<" for an open tag, "</" for a close tag.
++ * @returns The element name, or "" when the opening is followed by whitespace.
++ */
++export function readTagName(buffer: CharsBuffer, opening: "<" | "</"): string {
++  let name = "";
++  for (const [index, chars] of buffer.getParts().entries()) {
++    if (chars.isTemplate) {
++      if (name !== "") {
++        return name;
++      }
++      name = chars.value;
++      continue;
++    }
++    const text = index === 0 ? chars.value.slice(opening.length) : chars.value;
++    const end = text.search(TAG_NAME_END);
++    name += (end === -1 ? text : text.slice(0, end)).toLowerCase();
++    if (end !== -1) {
++      return name;
++    }
++  }
++  return name;
++}
++
++export function pairingKeyOf(name: string): string {
++  return name.replace(WHITESPACE, "");
++}

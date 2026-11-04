@@ -1,0 +1,66 @@
+Description: End comments as the HTML tokenizer does
+ A comment ends at two or more dashes before ">", the extra dashes being
+ part of its text, and at "--!>". "<!-->" and "<!--->" are empty comments.
+ Upstream only ended a comment at exactly "-->", so each of these left the
+ comment open and took in the rest of the file.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/parse-for-eslint.test.ts ("markup read as a browser reads it")
+Last-Update: 2026-11-04
+---
+diff --git a/src/tokenizer/handlers/comment-content.ts b/src/tokenizer/handlers/comment-content.ts
+index a86c23f..e26a29c 100644
+--- a/src/tokenizer/handlers/comment-content.ts
++++ b/src/tokenizer/handlers/comment-content.ts
+@@ -1,19 +1,28 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, moveIntoContentExceptLast } from "../../utils/index.js";
+ import type { Range, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+-const COMMENT_END = "-->";
++const PENDING_COMMENT_END = /^(?:-+|--+!)$/;
++const COMMENT_END = /^--+!?>$/;
++const ABRUPT_EMPTY_COMMENT_END: ReadonlySet<string> = new Set([">", "->"]);
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   const value = chars.value();
+-  if (value === "-" || value === "--") {
+-    state.sourceCode.next();
+-    return;
++  const isAtCommentStart = state.accumulatedContent.length() === 0;
++  if (isAtCommentStart && ABRUPT_EMPTY_COMMENT_END.has(value)) {
++    return parseCommentClose(state, value.length);
++  }
++
++  if (COMMENT_END.test(value)) {
++    const closeLength = value.endsWith("!>") ? "--!>".length : "-->".length;
++    moveIntoContentExceptLast(state, closeLength);
++    return parseCommentClose(state, closeLength);
+   }
+ 
+-  if (value === COMMENT_END) {
+-    return parseCommentClose(state);
++  if (PENDING_COMMENT_END.test(value)) {
++    state.sourceCode.next();
++    return;
+   }
+ 
+   state.accumulatedContent.concatBuffer(state.decisionBuffer);
+@@ -21,12 +30,9 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   state.sourceCode.next();
+ }
+ 
+-function parseCommentClose(state: TokenizerState) {
++function parseCommentClose(state: TokenizerState, closeLength: number) {
+   const position = calculateTokenPosition(state, { keepBuffer: false });
+-  const endRange: Range = [
+-    position.range[1],
+-    position.range[1] + COMMENT_END.length,
+-  ];
++  const endRange: Range = [position.range[1], position.range[1] + closeLength];
+ 
+   state.tokens.push({
+     type: TokenTypes.CommentContent,

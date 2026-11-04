@@ -45,7 +45,25 @@ const EMPTY_LOC: SourceLocation = {
   },
 };
 
-export function constructTree(tokens: AnyToken[], voidElements: readonly string[] = []) {
+const VOID_ELEMENTS = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "keygen",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+];
+
+export function constructTree(tokens: AnyToken[], extraVoidElements: readonly string[] = []) {
   const rootContext = {
     type: ConstructTreeContextTypes.TagContent,
     parentRef: undefined,
@@ -75,7 +93,7 @@ export function constructTree(tokens: AnyToken[], voidElements: readonly string[
     currentContext: rootContext,
     currentNode: rootNode,
     rootNode,
-    voidElements,
+    voidElements: new Set([...VOID_ELEMENTS, ...extraVoidElements.map((name) => name.toLowerCase())]),
   };
 
   const positionOffset = state!.caretPosition;

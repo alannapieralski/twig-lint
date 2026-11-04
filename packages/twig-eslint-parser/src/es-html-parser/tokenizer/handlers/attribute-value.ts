@@ -1,6 +1,6 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
 import { isWhitespace } from "../../utils/index.js";
-import type { TokenizerState, Range } from "../../types/index.js";
+import type { TemplateKind, TokenizerState, Range } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
@@ -19,6 +19,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 
   state.decisionBuffer.clear();
   state.sourceCode.next();
+}
+
+export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
+  parseBare(state);
 }
 
 function parseWrapper(state: TokenizerState) {

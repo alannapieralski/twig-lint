@@ -15,7 +15,7 @@ export type MarkupElement = MarkupTreeNode & {
   readonly attributes: readonly AttributeNode[];
 };
 
-export type SourceToken = { readonly type: string; readonly range: Range; readonly value: string; readonly parts?: { type: TokenTypes; value: string }[] };
+export type SourceToken = { readonly type: string; readonly range: Range; readonly value: string; readonly name?: string; readonly parts?: { type: TokenTypes; value: string }[] };
 
 export function isMarkupElement(node: MarkupTreeNode): node is MarkupElement {
   return ELEMENT_NODE_TYPES.includes(node.type) && 'openStart' in node;

@@ -101,18 +101,22 @@ depend on the extensions a site loads.
 The markup reader knows where every Twig block is, and what kind it is, so a block means what its
 position in the markup says:
 
-- Twig touching the end of a tag name is part of the open tag start (`openStart`), not an
+- A print touching the end of a tag name is part of the open tag start (`openStart`), not an
   attribute, whatever it outputs, and the name ends where it starts: `<div{{ attributes }}>` is
   named `div` and `<h{{ level }}>` is named `h`. Close tags end their name the same way, so
-  `</h{{ level }}>` closes `<h{{ level }}>` and `<input{{ attr }}>` stays a void `input`. Twig with
-  whitespace before it, as in `<div {{ attributes }}>`, is an attribute. A print straight after `<`
-  (`<{{ html_element }}>`) is the tag name, kept as written.
+  `</h{{ level }}>` closes `<h{{ level }}>` and `<input{{ attr }}>` stays a void `input`. A Twig tag
+  or comment touching a tag name ends the open tag start and is read among the attributes, so
+  `<a{% if url %} href="{{ url }}"{% endif %}>` has the attributes `{% if url %}`, `href` and
+  `{% endif %}`. Twig with whitespace before it, as in `<div {{ attributes }}>`, is an attribute. A
+  print straight after `<` (`<{{ html_element }}>`) is the tag name, kept as written; otherwise `<`
+  opens a tag only before an ASCII letter, so `x <3` is text.
 - A Twig tag ends an attribute name and becomes an attribute of its own
   (`<span {% if x %}class="a"{% endif %}>` has the attributes `{% if x %}`, `class` and
   `{% endif %}`); comments between attributes are skipped. A print touching an attribute name
   continues it (`data-{{ name }}="x"`).
-- Close tags pair with their open tag ignoring whitespace, so `</{{element}}>` closes
-  `<{{ element }}>`. A close tag that matches an element further up closes the elements in between,
+- A close tag's name ends at whitespace, `/` or `>`, as in a browser: `</div class="x">` closes a
+  `div`, and `</ div>` closes nothing. Names pair ignoring whitespace inside Twig, so
+  `</{{element}}>` closes `<{{ element }}>`; Twig names keep their case. A close tag that matches an element further up closes the elements in between,
   as a browser does, so one element that is never closed stays open on its own instead of
   taking in the rest of the document.
 - Drupal: `<head-placeholder>`, `<css-placeholder>`, `<js-placeholder>` and
@@ -120,7 +124,10 @@ position in the markup says:
   templates leave them unclosed. The list is `DRUPAL_VOID_ELEMENTS` in `src/drupal.ts`, next to the
   rest of the parser's Drupal knowledge; everything else in this section is plain Twig and HTML.
 - `textarea` and `title` content is raw text, as in HTML, and Twig inside `script`, `style` and raw
-  text never ends the element early.
+  text never ends the element early. Raw text ends where a browser ends it, at `</` and the
+  element's name followed by whitespace, `/` or `>`, so `x = "</";` stays inside a script.
+- A comment ends at `-->` or `--!>`, with any extra dashes before them in its text, and `<!-->` and
+  `<!--->` are empty comments, as in a browser.
 - Twig delimiters inside `{% verbatim %}` are printed as text, so they are hidden from the markup
   reader.
 

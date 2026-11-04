@@ -1,4 +1,4 @@
-import { TokenizerContextTypes } from "../constants/index.js";
+import { TokenizerContextTypes, TokenTypes } from "../constants/index.js";
 import { CharsBuffer } from "../tokenizer/chars-buffer.js";
 import { SourceCode } from "../tokenizer/source-code.js";
 import { TemplateInfo } from "./template.js";
@@ -18,8 +18,13 @@ type ContextParams = {
   [TokenizerContextTypes.DoctypeAttributeWrapped]?: {
     wrapper: string;
   };
-  [TokenizerContextTypes.CustomTagRawContent]?: {
+  [TokenizerContextTypes.RawText]?: {
     tagName: string;
+    contentType: TokenTypes.ScriptTagContent | TokenTypes.StyleTagContent | TokenTypes.RawContent;
+    closeType: TokenTypes.CloseScriptTag | TokenTypes.CloseStyleTag | TokenTypes.CloseTag;
+  };
+  [TokenizerContextTypes.CloseTag]?: {
+    closeType: TokenTypes.CloseScriptTag | TokenTypes.CloseStyleTag | TokenTypes.CloseTag;
   };
 };
 

@@ -11,5 +11,5 @@ export type ConstructTreeState<N extends AnyContextualNode> = {
   };
   currentNode: N;
   rootNode: DocumentNode;
-  voidElements: readonly string[];
+  voidElements: ReadonlySet<string>;
 };

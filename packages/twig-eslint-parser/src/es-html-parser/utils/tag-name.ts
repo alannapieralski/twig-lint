@@ -1,54 +1,36 @@
-import { TokenTypes } from "../constants/index.js";
 import { CharsBuffer } from "../tokenizer/chars-buffer.js";
-import { parseCloseTagName } from "./parse-close-tag-name.js";
-import { parseOpenTagName } from "./parse-open-tag-name.js";
 
-type NamedToken = {
-  value: string;
-  parts?: { type: TokenTypes; value: string }[];
-};
+const TAG_NAME_END = /[\t\n\f\r />]/;
+const WHITESPACE = /\s+/g;
 
-type NamePart = { isTemplate: boolean; value: string };
-
-function nameBeforeGluedTemplate(parts: NamePart[], opening: RegExp): string {
+/**
+ * Reads an element name as the tag name state does: HTML characters lower-cased up to whitespace, "/" or ">".
+ * A template glued after the name ends it; a template right after the opening is the name.
+ *
+ * @param buffer - The open tag start or close tag read so far, opening included.
+ * @param opening - "<" for an open tag, "</" for a close tag.
+ * @returns The element name, or "" when the opening is followed by whitespace.
+ */
+export function readTagName(buffer: CharsBuffer, opening: "<" | "</"): string {
   let name = "";
-  for (const part of parts) {
-    if (part.isTemplate && name.trim() !== "") {
-      break;
+  for (const [index, chars] of buffer.getParts().entries()) {
+    if (chars.isTemplate) {
+      if (name !== "") {
+        return name;
+      }
+      name = chars.value;
+      continue;
     }
-    name += part.isTemplate ? part.value : part.value.replace(opening, "").toLowerCase();
+    const text = index === 0 ? chars.value.slice(opening.length) : chars.value;
+    const end = text.search(TAG_NAME_END);
+    name += (end === -1 ? text : text.slice(0, end)).toLowerCase();
+    if (end !== -1) {
+      return name;
+    }
   }
-  return name.trim();
+  return name;
 }
 
-function namePartsOf(token: NamedToken): NamePart[] {
-  return (token.parts ?? []).map((part) => ({
-    isTemplate: part.type === TokenTypes.Template,
-    value: part.value,
-  }));
-}
-
-export function openTagNameOf(buffer: CharsBuffer): string {
-  if (!buffer.hasTemplate()) {
-    return parseOpenTagName(buffer.value());
-  }
-  return nameBeforeGluedTemplate(buffer.getParts(), /^</);
-}
-
-export function tagNameOf(token: NamedToken): string {
-  if (!token.parts || token.parts.length === 0) {
-    return parseOpenTagName(token.value);
-  }
-  return nameBeforeGluedTemplate(namePartsOf(token), /^</);
-}
-
-export function closeTagNameOf(token: NamedToken): string {
-  if (!token.parts || token.parts.length === 0) {
-    return parseCloseTagName(token.value);
-  }
-  return nameBeforeGluedTemplate(namePartsOf(token), /^<\//);
-}
-
-export function tagNameKey(name: string): string {
-  return name.replace(/\s+/g, "").replace(/\/$/, "").toLowerCase();
+export function pairingKeyOf(name: string): string {
+  return name.replace(WHITESPACE, "");
 }

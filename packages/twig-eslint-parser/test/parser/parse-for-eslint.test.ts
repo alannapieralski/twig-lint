@@ -598,20 +598,21 @@ describe('Twig delimiters inside Twig strings', () => {
 describe('Twig tags and verbatim content inside markup', () => {
   const childTagNames = (tag: Node) => (tag['children'] as Node[]).filter((child) => child.type === 'Tag').map((child) => child['name']);
 
-  it('parses a conditional attribute written straight after the tag name, closed where the template closes it', () => {
+  it('reads a Twig tag written straight after the tag name as an attribute, like the Twig tags among the attributes', () => {
     const code = '<div{% if a %} class="x"{% endif %}><p>y</p></div><span>z</span>';
     const div = namedTag(code, 'div');
-    expect(sourceOf(code, div['openStart'] as Node)).toBe('<div{% if a %}');
+    expect(sourceOf(code, div['openStart'] as Node)).toBe('<div');
+    expect((div['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['{% if a %}', 'class="x"', '{% endif %}']);
     expect(sourceOf(code, div['close'] as Node)).toBe('</div>');
     expect(childTagNames(div)).toEqual(['p']);
   });
 
-  it('ends a tag name at a Twig tag, and pairs a close tag built the same way', () => {
+  it('ends a tag name at a Twig tag, and pairs a close tag by the name before it', () => {
     const code = '<h{% if big %}1{% else %}2{% endif %} id="a">x</h{% if big %}1{% else %}2{% endif %}><span>after</span>';
     const [heading] = tagsOf(code);
     expect(heading?.['name']).toBe('h');
-    expect(sourceOf(code, heading?.['openStart'] as Node)).toBe('<h{% if big %}1{% else %}2{% endif %}');
-    expect((heading?.['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['id="a"']);
+    expect(sourceOf(code, heading?.['openStart'] as Node)).toBe('<h');
+    expect((heading?.['attributes'] as Node[]).map((attribute) => sourceOf(code, attribute))).toEqual(['{% if big %}', '1', '{% else %}', '2', '{% endif %}', 'id="a"']);
     expect(sourceOf(code, heading?.['close'] as Node)).toBe('</h{% if big %}1{% else %}2{% endif %}>');
     expect(childTagNames(heading as Node)).toEqual([]);
   });
@@ -647,6 +648,55 @@ describe('Twig tags and verbatim content inside markup', () => {
       expect(value).toBe(source);
     }
     expect(sourceOf(code, attribute as Node).endsWith(attributeText)).toBe(true);
+  });
+});
+
+describe('markup read as a browser reads it', () => {
+  const namesOf = (code: string) => tagsOf(code).map((tag) => tag['name']);
+  const commentsOf = (code: string) => collectNodes(parse(code).result.ast.body, (node) => node.type === 'Comment');
+  const childTagNames = (tag: Node) => (tag['children'] as Node[]).filter((child) => child.type === 'Tag').map((child) => child['name']);
+
+  it.each([
+    ['<div>a</ div>b</div><p>c</p>', 'a close tag with whitespace after </, which closes nothing'],
+    ['<div>a</d iv>b</div><p>c</p>', 'a close tag whose name ends at whitespace'],
+  ])('pairs close tags by the name a browser reads: %s (%s)', (code) => {
+    const [div] = tagsOf(code);
+    expect(sourceOf(code, div?.['close'] as Node)).toBe('</div>');
+  });
+
+  it('closes an element whose close tag carries attributes', () => {
+    const div = namedTag('<div>a</div class="x"><p>b</p>', 'div');
+    expect(childTagNames(div)).toEqual([]);
+  });
+
+  it('keeps the case of Twig in element names when pairing', () => {
+    const code = '<{{ tag }}>a</{{ Tag }}><p>b</p>';
+    expect(tagsOf(code)[0]?.['close']).toBeUndefined();
+  });
+
+  it('reads an element named like an object property', () => {
+    expect(namesOf('<constructor>a</constructor><valueOf>b</valueOf>')).toEqual(['constructor', 'valueof']);
+  });
+
+  it('opens a tag only before an ASCII letter', () => {
+    expect(namesOf('x <3 y<p>c</p>')).toEqual(['p']);
+  });
+
+  it.each(['<!-- a --->b<p>c</p>', '<!-- a --!>b<p>c</p>', '<!-->b<p>c</p>', '<!--->b<p>c</p>'])('ends the comment in %s where a browser does', (code) => {
+    expect(namesOf(code)).toEqual(['p']);
+    expect(commentsOf(code)[0]?.['close']).toBeDefined();
+  });
+
+  it('keeps "</" that is not the end tag inside raw text', () => {
+    const code = '<script>x = "</"; y = 1</script><p>c</p>';
+    const [script] = collectNodes(parse(code).result.ast.body, (node) => node.type === 'ScriptTag');
+    expect(sourceOf(code, script?.['value'] as Node)).toBe('x = "</"; y = 1');
+    expect(namesOf(code)).toEqual(['p']);
+  });
+
+  it('ends raw text at its end tag followed by whitespace or "/"', () => {
+    expect(namesOf('<textarea>a </b </textarea ><p>c</p>')).toEqual(['textarea', 'p']);
+    expect(childTagNames(namedTag('<textarea>a</textarea/><p>c</p>', 'textarea'))).toEqual([]);
   });
 });
 

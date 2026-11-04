@@ -8,9 +8,7 @@ export function updateNodeEnd(
   node.loc.end = { ...token.loc.end };
 }
 
-export function extendNodeEndToLastChild(
-  node: AnyNode | AnyContextualNode
-): void {
+export function extendNodeEndToLastChild(node: AnyNode | AnyContextualNode): void {
   const children = "children" in node ? node.children : undefined;
   const lastChild = children?.[children.length - 1];
   if (!lastChild || lastChild.range[1] <= node.range[1]) {

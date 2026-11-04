@@ -1,6 +1,6 @@
 import { DRUPAL_VOID_ELEMENTS } from '../../drupal.js';
 import { isRangeWithin } from '../../range.js';
-import { closeTagNameOf, tagNameKey } from '../../es-html-parser/utils/tag-name.js';
+import { pairingKeyOf } from '../../es-html-parser/utils/tag-name.js';
 import { findTwigBranchSpans, isInsideTwigBranch, isSameOnEveryTwigBranch } from '../../twig/balance.js';
 import { VOID_ELEMENT_NAMES } from '../syntax.js';
 import { findInnermostOpenElement, openTagTextOf } from './markup-elements.js';
@@ -13,7 +13,7 @@ export type EndTagSource = Pick<MarkupSource, 'document' | 'tokens' | 'blocks' |
 const VOID_ELEMENTS: ReadonlySet<string> = new Set([...VOID_ELEMENT_NAMES, ...DRUPAL_VOID_ELEMENTS]);
 
 function nameOfEndTag(token: SourceToken): string {
-  return tagNameKey(closeTagNameOf(token));
+  return pairingKeyOf(token.name ?? '');
 }
 
 function findNamesClosedBy(element: MarkupElement, unclosedElements: readonly MarkupElement[]): string[] {
@@ -24,7 +24,7 @@ function findNamesClosedBy(element: MarkupElement, unclosedElements: readonly Ma
 }
 
 function findLastSelfClosedElementNamed(name: string, endTag: SourceToken, elements: readonly MarkupElement[]): MarkupElement | undefined {
-  const isSelfClosedBefore = (element: MarkupElement) => element.selfClosing && element.range[1] <= endTag.range[0] && tagNameKey(element.name ?? '') === name;
+  const isSelfClosedBefore = (element: MarkupElement) => element.selfClosing && element.range[1] <= endTag.range[0] && pairingKeyOf(element.name ?? '') === name;
 
   return elements.filter(isSelfClosedBefore).at(-1);
 }
