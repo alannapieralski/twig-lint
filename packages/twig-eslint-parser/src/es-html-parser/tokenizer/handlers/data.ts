@@ -1,18 +1,14 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import {
-  calculateTokenPosition,
-  createParts,
-  templateKindOf,
-} from "../../utils/index.js";
-import { Range, AnyToken, TokenizerState } from "../../types/index.js";
+import { calculateTokenPosition, createParts, pushContentAtEndOfInput, readTemplateAsContent, reportEndOfInputInTag } from "../../utils/index.js";
+import { Range, AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
 const COMMENT_START = "<!--";
-const OPEN_TAG_START_PATTERN = /^<\w/;
+const OPEN_TAG_START_PATTERN = /^<[a-zA-Z]/;
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
   const value = chars.value();
-  if (OPEN_TAG_START_PATTERN.test(value) || startsTemplateTagName(chars)) {
+  if (OPEN_TAG_START_PATTERN.test(value)) {
     return parseOpeningCornerBraceWithText(state);
   }
 
@@ -42,31 +38,24 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
   state.sourceCode.next();
 }
 
-function startsTemplateTagName(chars: CharsBuffer): boolean {
-  const [first, second, ...rest] = chars.getParts();
-  return (
-    rest.length === 0 &&
-    first?.isTemplate === false &&
-    first.value === "<" &&
-    templateKindOf(second) === "print"
-  );
+export function parseTemplate(kind: TemplateKind, state: TokenizerState) {
+  if (kind === "print" && isAfterLoneOpeningCornerBrace(state.decisionBuffer)) {
+    return parseOpeningCornerBraceWithText(state);
+  }
+  readTemplateAsContent(kind, state);
+}
+
+function isAfterLoneOpeningCornerBrace(chars: CharsBuffer): boolean {
+  const [first, ...rest] = chars.getParts();
+  return rest.length === 1 && first?.isTemplate === false && first.value === "<";
 }
 
 export function handleContentEnd(state: TokenizerState) {
-  const textContent =
-    state.accumulatedContent.value() + state.decisionBuffer.value();
-
-  if (textContent.length !== 0) {
-    const position = calculateTokenPosition(state, { keepBuffer: false });
-
-    state.tokens.push({
-      type: TokenTypes.Text,
-      value: textContent,
-      range: position.range,
-      loc: position.loc,
-      parts: createParts(state, TokenTypes.Text),
-    });
+  if (state.decisionBuffer.value().startsWith("<")) {
+    state.tagStart = startOfDecisionBuffer(state);
+    reportEndOfInputInTag(state);
   }
+  pushContentAtEndOfInput(state, TokenTypes.Text);
 }
 
 function generateTextToken(state: TokenizerState): AnyToken {
@@ -81,6 +70,7 @@ function generateTextToken(state: TokenizerState): AnyToken {
 }
 
 function parseOpeningCornerBraceWithText(state: TokenizerState) {
+  state.tagStart = startOfDecisionBuffer(state);
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
   }
@@ -91,6 +81,7 @@ function parseOpeningCornerBraceWithText(state: TokenizerState) {
 }
 
 function parseOpeningCornerBraceWithSlash(state: TokenizerState) {
+  state.tagStart = startOfDecisionBuffer(state);
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
   }
@@ -114,6 +105,10 @@ function isIncompleteDoctype(chars: string) {
   );
 }
 
+function startOfDecisionBuffer(state: TokenizerState): number {
+  return state.sourceCode.index() - (state.decisionBuffer.length() - 1);
+}
+
 function parseCommentOpen(state: TokenizerState) {
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
@@ -134,10 +129,12 @@ function parseCommentOpen(state: TokenizerState) {
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
   state.currentContext = TokenizerContextTypes.CommentContent;
+  state.contextParams[TokenizerContextTypes.CommentContent] = { openRange: range };
   state.sourceCode.next();
 }
 
 function parseDoctypeOpen(state: TokenizerState) {
+  state.tagStart = startOfDecisionBuffer(state);
   if (state.accumulatedContent.length() !== 0) {
     state.tokens.push(generateTextToken(state));
   }

@@ -1,19 +1,15 @@
-Description: Keep "/" inside an unquoted attribute value
- An unquoted attribute value ended at "/", so "href=/home" lost its value and
- "href=a/b" was read as "href=a". Following the HTML tokenizer's "attribute
- value (unquoted)" state, as htmlparser2 does, only whitespace and ">" end an
- unquoted value, and a "/" right after "=" starts it: "<a href=/>" has the
- value "/" and "<div class=a/>" has the value "a/" and stays open, as in a
- browser. An unquoted value that runs to the end of the input is kept
- instead of dropped.
+Description: End an unquoted attribute value at whitespace and ">" only
+ Following the HTML tokenizer's "attribute value (unquoted)" state, "/" is
+ part of an unquoted value and a "/" right after "=" starts one, so
+ "href=/home" and "href=a/b" keep their values.
 Author: Numiko
 Origin: vendor
 Forwarded: no
 Test: test/parser/parse-for-eslint.test.ts ("unquoted attribute values")
-Last-Update: 2026-10-15
+Last-Update: 2026-11-04
 ---
 diff --git a/src/tokenizer/handlers/attribute-value-bare.ts b/src/tokenizer/handlers/attribute-value-bare.ts
-index 4020d3e..6ccc4a2 100644
+index 4020d3e..8a5cc62 100644
 --- a/src/tokenizer/handlers/attribute-value-bare.ts
 +++ b/src/tokenizer/handlers/attribute-value-bare.ts
 @@ -20,11 +20,7 @@ export function parseValueEnd(state: TokenizerState) {
@@ -29,16 +25,8 @@ index 4020d3e..6ccc4a2 100644
      return parseValueEnd(state);
    }
  
-@@ -32,3 +28,7 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
-   state.decisionBuffer.clear();
-   state.sourceCode.next();
- }
-+
-+export function handleContentEnd(state: TokenizerState) {
-+  if (state.accumulatedContent.length() > 0) parseValueEnd(state);
-+}
 diff --git a/src/tokenizer/handlers/attribute-value.ts b/src/tokenizer/handlers/attribute-value.ts
-index 40d8cf2..1053822 100644
+index 55eb55e..1a99418 100644
 --- a/src/tokenizer/handlers/attribute-value.ts
 +++ b/src/tokenizer/handlers/attribute-value.ts
 @@ -9,7 +9,7 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {

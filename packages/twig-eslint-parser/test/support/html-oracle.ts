@@ -62,6 +62,7 @@ const SPECIAL_ELEMENTS = new Set(`address applet area article aside base basefon
   details dir div dl dt embed fieldset figcaption figure footer form frame frameset h1 h2 h3 h4 h5 h6 head header hgroup hr html iframe img input
   keygen li link listing main marquee menu meta nav noembed noframes noscript object ol p param plaintext pre script search section select source
   style summary table tbody td template textarea tfoot th thead title tr track ul wbr xmp`.split(/\s+/));
+const IMPLIED_END_TAG_ELEMENTS = new Set(['dd', 'dt', 'li', 'optgroup', 'option', 'p', 'rb', 'rp', 'rt', 'rtc']);
 const endTagChecks: Record<EndTagKind, string> = { 'closes-current': 'end tags', 'closes-after-implied-ends': 'implied end tags', 'unmatched': 'unmatched end tags' };
 export const BRANCH_PAIRED_END_TAG_CHECK = 'html-oracle: element opened and closed in different Twig branches';
 const FOREIGN_ROOTS = new Set(['svg', 'math']);
@@ -531,7 +532,7 @@ function indexOfOpenElement(openElements: readonly OpenElement[], pairingName: s
     if (name === pairingName) {
       return index;
     }
-    if (SPECIAL_ELEMENTS.has(name)) {
+    if (SPECIAL_ELEMENTS.has(name) && !IMPLIED_END_TAG_ELEMENTS.has(name)) {
       return -1;
     }
   }

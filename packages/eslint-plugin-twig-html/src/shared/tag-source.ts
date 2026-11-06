@@ -1,6 +1,5 @@
 import { createIgnoredInsideCheck } from './ignored-inside.js';
 import { lineBreakUsedIn } from './line-ending.js';
-import { findUnreadableTagStarts } from './unreadable-open-tags.js';
 import { createAttributesOf } from './tag-attributes.js';
 import { findTransBodies } from './trans-bodies.js';
 import type { SourceCode } from 'eslint';
@@ -29,6 +28,6 @@ export function createTagSource(sourceCode: SourceCode, services: TwigParserServ
     attributesOf: createAttributesOf(services.omittedAttributes),
     isIgnored: createIgnoredInsideCheck(sourceCode, ignores),
     transBodies: findTransBodies(text, services.blocks),
-    unreadableTagStarts: findUnreadableTagStarts(services.diagnostics),
+    unreadableTagStarts: new Set(services.unreadableTagStarts),
   };
 }

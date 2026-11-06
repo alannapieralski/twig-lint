@@ -84,13 +84,15 @@ silently.
 | `convertedBlockCount` | Twig blocks turned into ESTree nodes. |
 | `ignoredBlockCount` | Blocks with no expression worth parsing, such as `{% endif %}` or `{% extends %}`. |
 | `diagnostics` | Every problem the parser read past instead of throwing on, in source order: each has a `code`, a `message` and a `range`. The codes are `DIAGNOSTIC_CODES`, and [`twig-html/no-parse-errors`](../eslint-plugin-twig-html/docs/rules/no-parse-errors.md) lists what each one means and when it stays quiet. |
+| `unreadableTagStarts` | The start offset of every open tag the parser could not read cleanly: one with a stray quote or `<`, a `/` that does not end it, or no `>` before the end of the file. It is listed whether or not `diagnostics` reports the problem, so rules can leave such a tag alone. |
 | `blocks` | Every Twig block (`print`, `tag` or `comment`) with its range, which ends at the closing delimiter and leaves out the line break Twig removes after a tag, its tag name and `depthChange`: `1` for a tag that opens a nested block such as `{% if %}`, `-1` for one that closes it, `0` otherwise, including the short forms `{% set x = 1 %}`, `{% block title page_title %}` and Drupal's `{% trans 'Hello' %}`, which have no body. `bracketPairs` lists the offsets of each `{`, `[` or `(` and its closing bracket, read from the lexer, so strings and `#{ }` are never mistaken for brackets. `inlineComments` lists the range of each `# comment` inside the block. The `twig-html` rules use it, for example to keep attributes wrapped in a Twig block together and to indent the lines inside brackets. |
 | `omittedAttributes` | Attributes left out by `ignoreInterpolatedAttributes`, with their name, range, the `Attribute` node itself and its `owner`, the `Tag`, `ScriptTag` or `StyleTag` node it was taken from. `twig-tailwind/no-twig-interpolation` reports them, and every `twig-html` rule puts them back in their place among the owner's attributes. |
 | `strings` | Every Twig string literal, read from the lexer, with its range (quotes included), its `quote` (`'` or `"`) and whether it interpolates `#{ }`. It covers tags that never become ESTree nodes, such as `{% extends %}` and `{% trans %}`, and blocks that fail to convert. `twig-html/quotes` uses it. |
 
 A problem is thrown only when the parser cannot build a tree with correct ranges: invalid Twig, such as an
-unclosed `{{`, Twig tags that do not pair up, and broken markup, such as a tag whose `>` is missing before the
-next tag. ESLint reports it as a parsing error with its position, and no rule runs. Every other problem, such as
+unclosed `{{`, and Twig tags that do not pair up. ESLint reports it as a parsing error with its position, and
+no rule runs. Broken markup is read on as a browser reads it, so a tag whose `>` is missing before the next
+tag takes that tag in as attributes and is noted. Every other problem, such as
 a stray closing tag, an element that is never closed or a block that is not valid Twig, is listed in `diagnostics`
 and the tree is built as usual. An unquoted attribute value that runs into the next tag (`<li id=b<span>`) is read
 as one attribute value and noted the same way. Unknown Twig tags, filters and functions are not checked: they
@@ -102,17 +104,21 @@ The markup reader knows where every Twig block is, and what kind it is, so a blo
 position in the markup says:
 
 - Twig touching the end of a tag name is part of the open tag start (`openStart`), not an
-  attribute, whatever it outputs, and the name ends where it starts: `<div{{ attributes }}>` is
-  named `div` and `<h{{ level }}>` is named `h`. Close tags end their name the same way, so
-  `</h{{ level }}>` closes `<h{{ level }}>` and `<input{{ attr }}>` stays a void `input`. Twig with
-  whitespace before it, as in `<div {{ attributes }}>`, is an attribute. A print straight after `<`
-  (`<{{ html_element }}>`) is the tag name, kept as written.
+  attribute, whatever kind of block it is and whatever it outputs, and the name ends where it
+  starts: `<div{{ attributes }}>` is named `div`, and `<h{{ level }}>` and
+  `<h{% if big %}1{% else %}2{% endif %}>` are named `h`. Only whitespace, `/` or `>` ends the open
+  tag start. Close tags end their name the same way, so `</h{{ level }}>` closes `<h{{ level }}>`
+  and `<input{{ attr }}>` stays a void `input`. Twig with whitespace before it, as in
+  `<div {{ attributes }}>`, is an attribute. A print straight after `<` (`<{{ html_element }}>`) is
+  the tag name, kept as written; otherwise `<` opens a tag only before an ASCII letter, so `x <3` is
+  text.
 - A Twig tag ends an attribute name and becomes an attribute of its own
   (`<span {% if x %}class="a"{% endif %}>` has the attributes `{% if x %}`, `class` and
   `{% endif %}`); comments between attributes are skipped. A print touching an attribute name
   continues it (`data-{{ name }}="x"`).
-- Close tags pair with their open tag ignoring whitespace, so `</{{element}}>` closes
-  `<{{ element }}>`. A close tag that matches an element further up closes the elements in between,
+- A close tag's name ends at whitespace, `/` or `>`, as in a browser: `</div class="x">` closes a
+  `div`, and `</ div>` closes nothing. Names pair ignoring whitespace inside Twig, so
+  `</{{element}}>` closes `<{{ element }}>`; Twig names keep their case. A close tag that matches an element further up closes the elements in between,
   as a browser does, so one element that is never closed stays open on its own instead of
   taking in the rest of the document.
 - Drupal: `<head-placeholder>`, `<css-placeholder>`, `<js-placeholder>` and
@@ -120,7 +126,10 @@ position in the markup says:
   templates leave them unclosed. The list is `DRUPAL_VOID_ELEMENTS` in `src/drupal.ts`, next to the
   rest of the parser's Drupal knowledge; everything else in this section is plain Twig and HTML.
 - `textarea` and `title` content is raw text, as in HTML, and Twig inside `script`, `style` and raw
-  text never ends the element early.
+  text never ends the element early. Raw text ends where a browser ends it, at `</` and the
+  element's name followed by whitespace, `/` or `>`, so `x = "</";` stays inside a script.
+- A comment ends at `-->` or `--!>`, with any extra dashes before them in its text, and `<!-->` and
+  `<!--->` are empty comments, as in a browser.
 - Twig delimiters inside `{% verbatim %}` are printed as text, so they are hidden from the markup
   reader.
 

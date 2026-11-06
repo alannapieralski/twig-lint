@@ -19,7 +19,6 @@ export { isClosingTag, isMiddleTag, isOpeningTag } from './twig/block-roles.js';
 export { ELEMENT_NODE_TYPES, RAW_TEXT_ELEMENT_NAMES, SINGLE_TOKEN_NODE_TYPES } from './html/syntax.js';
 export { isRangeWithin } from './range.js';
 export { depthChangeWithin, isTwigBalancedWithin } from './twig/balance.js';
-export { HtmlSyntaxError } from './html/syntax-error.js';
 export { TwigSyntaxError } from './twig/tokens.js';
 
 export default { meta, parseForESLint };

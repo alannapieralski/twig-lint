@@ -105,9 +105,9 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-close-tag-missing-gt.html.twig": [
-    { "check": "twig-html/no-parse-errors", "reports": [1, 2, 6] },
-    { "check": "parser/output-matches-source", "noFailures": [6, 7], "pending": "a close tag without > runs into the close tag after it" },
-    { "check": "parser/html-oracle", "failures": [6, 8] },
+    { "check": "twig-html/no-parse-errors", "reports": [1], "clean": [2, 6] },
+    { "check": "parser/output-matches-source", "noFailures": [6, 7] },
+    { "check": "parser/html-oracle", "noFailures": "all" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
@@ -135,7 +135,7 @@
   ],
   "broken/html-missing-close-item.html.twig": [
     { "check": "twig-html/no-parse-errors", "clean": "all" },
-    { "check": "parser/html-oracle", "failures": [8] },
+    { "check": "parser/html-oracle", "noFailures": "all" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
@@ -148,7 +148,7 @@
     { "check": "twig-html/quotes", "noFailures": "all" }
   ],
   "broken/html-misspelt-close-item.html.twig": [
-    { "check": "parser/html-oracle", "failures": [8] },
+    { "check": "parser/html-oracle", "noFailures": "all" },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
     { "check": "twig-html/quotes", "noFailures": "all" }
@@ -197,7 +197,7 @@
   ],
   "broken/html-open-tag-missing-gt-self-closing-slash-only.html.twig": [
     { "check": "twig-html/no-parse-errors", "reports": [4] },
-    { "check": "parser/html-oracle", "failures": [4] },
+    { "check": "parser/html-oracle", "noFailures": "all" },
     { "check": "twig-html/attrs-newline", "reports": [3] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },
@@ -205,7 +205,7 @@
   ],
   "broken/html-open-tag-missing-gt.html.twig": [
     { "check": "twig-html/no-parse-errors", "reports": [4] },
-    { "check": "parser/html-oracle", "failures": [4, 8] },
+    { "check": "parser/html-oracle", "noFailures": "all" },
     { "check": "twig-html/attrs-newline", "reports": [4] },
     { "check": "twig-html/attrs-newline", "noFailures": "all" },
     { "check": "twig-html/multiline-html-element-content-newline", "noFailures": "all" },

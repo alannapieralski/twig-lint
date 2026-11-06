@@ -1,0 +1,519 @@
+Description: Keep an error list, and report end of input in a tag or comment
+ The tokenizer and tree states carry an error list, which parse() returns
+ as "errors". Each error is a code and the facts about it, such as the
+ range read and the start of the tag, with no wording. Each tag state's
+ end-of-input step reports "eof-in-tag", and the comment state reports
+ "eof-in-comment" with the range of its "<!--". The data state reports
+ "eof-in-tag" for a "<", "<!" or incomplete doctype left at the end. The
+ tokenizer records where each tag starts for these reports.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/diagnostics.test.ts ("eof-in-tag", "eof-in-comment"); npm run test:upstream
+Last-Update: 2026-11-04
+---
+diff --git a/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap b/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap
+index 173534a..a3893d8 100644
+--- a/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap
++++ b/src/parser/__tests__/__snapshots__/token-adapter.spec.ts.snap
+@@ -116,6 +116,7 @@ exports[`parse basic 1`] = `
+     ],
+     "type": "Document",
+   },
++  "errors": [],
+   "tokens": [
+     {
+       "loc": {
+@@ -312,6 +313,7 @@ exports[`parse token adapter 1`] = `
+     ],
+     "type": "Document",
+   },
++  "errors": [],
+   "tokens": [
+     {
+       "loc": {
+diff --git a/src/parser/parse.ts b/src/parser/parse.ts
+index d23c2b8..6c49daf 100644
+--- a/src/parser/parse.ts
++++ b/src/parser/parse.ts
+@@ -7,10 +7,11 @@ import { Options } from "../types/parse.js";
+ 
+ export function parse(html: string, options?: Options): ParseResult {
+   const tokenAdapter = (options && options.tokenAdapter) || defaultTokenAdapter;
+-  const { tokens } = tokenize(html, tokenAdapter, options);
+-  const { ast } = constructTree(tokens, options?.voidElements);
++  const { state: tokenizerState, tokens } = tokenize(html, tokenAdapter, options);
++  const { state: treeState, ast } = constructTree(tokens, options?.voidElements);
+   return {
+     ast: clearParent(ast),
+     tokens,
++    errors: [...tokenizerState.errors, ...treeState.errors],
+   };
+ }
+diff --git a/src/tokenizer/handlers/attribute-key.ts b/src/tokenizer/handlers/attribute-key.ts
+index 9f0a9d4..dceff94 100644
+--- a/src/tokenizer/handlers/attribute-key.ts
++++ b/src/tokenizer/handlers/attribute-key.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes } from "../../constants/index.js";
+ import { TokenTypes } from "../../constants/token-types.js";
+-import { calculateTokenPosition, isWhitespace, createParts, readTemplateAsContent, pushContentAtEndOfInput } from "../../utils/index.js";
++import { calculateTokenPosition, isWhitespace, createParts, readTemplateAsContent, pushContentAtEndOfInput, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -43,5 +43,6 @@ function parseKeyEnd(state: TokenizerState) {
+ }
+ 
+ export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
+   pushContentAtEndOfInput(state, TokenTypes.AttributeKey);
+ }
+diff --git a/src/tokenizer/handlers/attribute-value-bare.ts b/src/tokenizer/handlers/attribute-value-bare.ts
+index 5bbfe64..aec8394 100644
+--- a/src/tokenizer/handlers/attribute-value-bare.ts
++++ b/src/tokenizer/handlers/attribute-value-bare.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, isWhitespace, createParts, pushContentAtEndOfInput } from "../../utils/index.js";
++import { calculateTokenPosition, isWhitespace, createParts, pushContentAtEndOfInput, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -30,5 +30,6 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+ }
+ 
+ export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
+   pushContentAtEndOfInput(state, TokenTypes.AttributeValue);
+ }
+diff --git a/src/tokenizer/handlers/attribute-value-wrapped.ts b/src/tokenizer/handlers/attribute-value-wrapped.ts
+index 3fa3f91..90c88da 100644
+--- a/src/tokenizer/handlers/attribute-value-wrapped.ts
++++ b/src/tokenizer/handlers/attribute-value-wrapped.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, pushContentAtEndOfInput } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, pushContentAtEndOfInput, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { Range, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -45,5 +45,6 @@ function parseWrapper(state: TokenizerState) {
+ }
+ 
+ export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
+   pushContentAtEndOfInput(state, TokenTypes.AttributeValue);
+ }
+diff --git a/src/tokenizer/handlers/attribute-value.ts b/src/tokenizer/handlers/attribute-value.ts
+index 1a99418..3764493 100644
+--- a/src/tokenizer/handlers/attribute-value.ts
++++ b/src/tokenizer/handlers/attribute-value.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { isWhitespace } from "../../utils/index.js";
++import { isWhitespace, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState, Range } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -56,3 +56,7 @@ function parseTagEnd(state: TokenizerState) {
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.Attributes;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/attributes.ts b/src/tokenizer/handlers/attributes.ts
+index 4b6312c..d4409b6 100644
+--- a/src/tokenizer/handlers/attributes.ts
++++ b/src/tokenizer/handlers/attributes.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, isWhitespace, raise } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, isWhitespace, raise, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -88,3 +88,7 @@ function parseEqual(state: TokenizerState) {
+   state.currentContext = TokenizerContextTypes.AttributeValue;
+   state.sourceCode.next();
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/close-tag.ts b/src/tokenizer/handlers/close-tag.ts
+index bccebc6..b85299f 100644
+--- a/src/tokenizer/handlers/close-tag.ts
++++ b/src/tokenizer/handlers/close-tag.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, readTagName } from "../../utils/index.js";
++import { calculateTokenPosition, readTagName, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { AnyToken, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -31,3 +31,7 @@ function parseClosingCornerBrace(state: TokenizerState) {
+   state.currentContext = TokenizerContextTypes.Data;
+   state.sourceCode.next();
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/comment-content.ts b/src/tokenizer/handlers/comment-content.ts
+index ddc4528..a37e5ed 100644
+--- a/src/tokenizer/handlers/comment-content.ts
++++ b/src/tokenizer/handlers/comment-content.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, moveIntoContentExceptLast, pushContentAtEndOfInput } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, moveIntoContentExceptLast, pushContentAtEndOfInput, reportError } from "../../utils/index.js";
+ import type { Range, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -51,9 +51,14 @@ function parseCommentClose(state: TokenizerState, closeLength: number) {
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.Data;
++  state.contextParams[TokenizerContextTypes.CommentContent] = undefined;
+   state.sourceCode.next();
+ }
+ 
+ export function handleContentEnd(state: TokenizerState) {
++  const openRange = state.contextParams[TokenizerContextTypes.CommentContent]?.openRange;
++  if (openRange) {
++    reportError(state, { code: "eof-in-comment", range: openRange });
++  }
+   pushContentAtEndOfInput(state, TokenTypes.CommentContent);
+ }
+diff --git a/src/tokenizer/handlers/data.ts b/src/tokenizer/handlers/data.ts
+index 97b8b2a..319cd70 100644
+--- a/src/tokenizer/handlers/data.ts
++++ b/src/tokenizer/handlers/data.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, createParts, pushContentAtEndOfInput, readTemplateAsContent } from "../../utils/index.js";
++import { calculateTokenPosition, createParts, pushContentAtEndOfInput, readTemplateAsContent, reportEndOfInputInTag } from "../../utils/index.js";
+ import { Range, AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -51,6 +51,10 @@ function isAfterLoneOpeningCornerBrace(chars: CharsBuffer): boolean {
+ }
+ 
+ export function handleContentEnd(state: TokenizerState) {
++  if (state.decisionBuffer.value().startsWith("<")) {
++    state.tagStart = startOfDecisionBuffer(state);
++    reportEndOfInputInTag(state);
++  }
+   pushContentAtEndOfInput(state, TokenTypes.Text);
+ }
+ 
+@@ -66,6 +70,7 @@ function generateTextToken(state: TokenizerState): AnyToken {
+ }
+ 
+ function parseOpeningCornerBraceWithText(state: TokenizerState) {
++  state.tagStart = startOfDecisionBuffer(state);
+   if (state.accumulatedContent.length() !== 0) {
+     state.tokens.push(generateTextToken(state));
+   }
+@@ -76,6 +81,7 @@ function parseOpeningCornerBraceWithText(state: TokenizerState) {
+ }
+ 
+ function parseOpeningCornerBraceWithSlash(state: TokenizerState) {
++  state.tagStart = startOfDecisionBuffer(state);
+   if (state.accumulatedContent.length() !== 0) {
+     state.tokens.push(generateTextToken(state));
+   }
+@@ -99,6 +105,10 @@ function isIncompleteDoctype(chars: string) {
+   );
+ }
+ 
++function startOfDecisionBuffer(state: TokenizerState): number {
++  return state.sourceCode.index() - (state.decisionBuffer.length() - 1);
++}
++
+ function parseCommentOpen(state: TokenizerState) {
+   if (state.accumulatedContent.length() !== 0) {
+     state.tokens.push(generateTextToken(state));
+@@ -119,10 +129,12 @@ function parseCommentOpen(state: TokenizerState) {
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.CommentContent;
++  state.contextParams[TokenizerContextTypes.CommentContent] = { openRange: range };
+   state.sourceCode.next();
+ }
+ 
+ function parseDoctypeOpen(state: TokenizerState) {
++  state.tagStart = startOfDecisionBuffer(state);
+   if (state.accumulatedContent.length() !== 0) {
+     state.tokens.push(generateTextToken(state));
+   }
+diff --git a/src/tokenizer/handlers/doctype-attribute-bare.ts b/src/tokenizer/handlers/doctype-attribute-bare.ts
+index 05193f3..cf74fea 100644
+--- a/src/tokenizer/handlers/doctype-attribute-bare.ts
++++ b/src/tokenizer/handlers/doctype-attribute-bare.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, isWhitespace } from "../../utils/index.js";
++import { calculateTokenPosition, isWhitespace, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -31,3 +31,7 @@ function parseAttributeEnd(state: TokenizerState) {
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.DoctypeAttributes;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/doctype-attribute-wrapped.ts b/src/tokenizer/handlers/doctype-attribute-wrapped.ts
+index 31da42e..93e8a73 100644
+--- a/src/tokenizer/handlers/doctype-attribute-wrapped.ts
++++ b/src/tokenizer/handlers/doctype-attribute-wrapped.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition } from "../../utils/index.js";
++import { calculateTokenPosition, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { Range, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -47,3 +47,7 @@ function parseWrapper(state: TokenizerState) {
+   state.contextParams[TokenizerContextTypes.DoctypeAttributeWrapped] =
+     undefined;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/doctype-attributes.ts b/src/tokenizer/handlers/doctype-attributes.ts
+index 0fd3c65..3f744e0 100644
+--- a/src/tokenizer/handlers/doctype-attributes.ts
++++ b/src/tokenizer/handlers/doctype-attributes.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { isWhitespace } from "../../utils/index.js";
++import { isWhitespace, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { Range, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -58,3 +58,7 @@ function parseClosingCornerBrace(state: TokenizerState) {
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.DoctypeClose;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/doctype-end.ts b/src/tokenizer/handlers/doctype-end.ts
+index a173f39..9970560 100644
+--- a/src/tokenizer/handlers/doctype-end.ts
++++ b/src/tokenizer/handlers/doctype-end.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition } from "../../utils/index.js";
++import { calculateTokenPosition, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -22,3 +22,7 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
+ export function parseTemplate(_kind: TemplateKind, state: TokenizerState) {
+   parse(state.decisionBuffer, state);
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/doctype-start.ts b/src/tokenizer/handlers/doctype-start.ts
+index 4f5e71c..14a8389 100644
+--- a/src/tokenizer/handlers/doctype-start.ts
++++ b/src/tokenizer/handlers/doctype-start.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition, isWhitespace } from "../../utils/index.js";
++import { calculateTokenPosition, isWhitespace, reportEndOfInputInTag } from "../../utils/index.js";
+ import { AnyToken, TemplateKind, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -47,3 +47,7 @@ function parseClosingCornerBrace(state: TokenizerState) {
+   state.decisionBuffer.clear();
+   state.currentContext = TokenizerContextTypes.DoctypeClose;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/open-tag-end.ts b/src/tokenizer/handlers/open-tag-end.ts
+index 21cdf36..4ac4011 100644
+--- a/src/tokenizer/handlers/open-tag-end.ts
++++ b/src/tokenizer/handlers/open-tag-end.ts
+@@ -1,5 +1,5 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+-import { calculateTokenPosition } from "../../utils/index.js";
++import { calculateTokenPosition, reportEndOfInputInTag } from "../../utils/index.js";
+ import type { TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+@@ -52,3 +52,7 @@ function parseClosingCornerBrace(state: TokenizerState) {
+ 
+   state.contextParams[TokenizerContextTypes.OpenTagEnd] = undefined;
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/handlers/open-tag-start.ts b/src/tokenizer/handlers/open-tag-start.ts
+index dc9fb98..5303359 100644
+--- a/src/tokenizer/handlers/open-tag-start.ts
++++ b/src/tokenizer/handlers/open-tag-start.ts
+@@ -4,6 +4,7 @@ import {
+   createParts,
+   isWhitespace,
+   readTagName,
++  reportEndOfInputInTag,
+ } from "../../utils/index.js";
+ import type { TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+@@ -61,3 +62,7 @@ function parseTagEnd(state: TokenizerState) {
+   state.currentContext = TokenizerContextTypes.OpenTagEnd;
+   state.contextParams[TokenizerContextTypes.OpenTagEnd] = { tagName };
+ }
++
++export function handleContentEnd(state: TokenizerState) {
++  reportEndOfInputInTag(state);
++}
+diff --git a/src/tokenizer/tokenize.ts b/src/tokenizer/tokenize.ts
+index 9444e3e..59dd2ba 100644
+--- a/src/tokenizer/tokenize.ts
++++ b/src/tokenizer/tokenize.ts
+@@ -89,6 +89,7 @@ export function tokenize(
+     tokenAdapter,
+     rawContentTags: options.rawContentTags,
+     sourceCode: new SourceCode(source, options.templateInfos || []),
++    errors: [],
+     tokens: {
+       push(token: AnyToken) {
+         tokens.push({
+diff --git a/src/tree-constructor/construct-tree.ts b/src/tree-constructor/construct-tree.ts
+index 262c490..38a1592 100644
+--- a/src/tree-constructor/construct-tree.ts
++++ b/src/tree-constructor/construct-tree.ts
+@@ -93,6 +93,7 @@ export function constructTree(tokens: AnyToken[], extraVoidElements: readonly st
+     currentContext: rootContext,
+     currentNode: rootNode,
+     rootNode,
++    errors: [],
+     voidElements: new Set([...VOID_ELEMENTS, ...extraVoidElements.map((name) => name.toLowerCase())]),
+   };
+ 
+diff --git a/src/types/construct-tree-state.ts b/src/types/construct-tree-state.ts
+index 7da0ebf..eb9bf31 100644
+--- a/src/types/construct-tree-state.ts
++++ b/src/types/construct-tree-state.ts
+@@ -1,6 +1,7 @@
+ import { ConstructTreeContextTypes } from "../constants/index.js";
+ import { DocumentNode } from "./node.js";
+ import { AnyContextualNode } from "./contextual-node.js";
++import { ParseError } from "./parse-error.js";
+ 
+ export type ConstructTreeState<N extends AnyContextualNode> = {
+   caretPosition: number;
+@@ -12,4 +13,5 @@ export type ConstructTreeState<N extends AnyContextualNode> = {
+   currentNode: N;
+   rootNode: DocumentNode;
+   voidElements: ReadonlySet<string>;
++  errors: ParseError[];
+ };
+diff --git a/src/types/index.ts b/src/types/index.ts
+index ce1a767..df64d02 100644
+--- a/src/types/index.ts
++++ b/src/types/index.ts
+@@ -10,3 +10,4 @@ export * from "./base-node.js";
+ export * from "./parse-result.js";
+ export * from "./token-adapter.js";
+ export * from "./template.js";
++export * from "./parse-error.js";
+diff --git a/src/types/parse-error.ts b/src/types/parse-error.ts
+new file mode 100644
+index 0000000..6066844
+--- /dev/null
++++ b/src/types/parse-error.ts
+@@ -0,0 +1,5 @@
++import { Range } from "./range.js";
++
++export type ParseError =
++  | { code: "eof-in-comment"; range: Range }
++  | { code: "eof-in-tag"; tagStart: number; range: Range };
+diff --git a/src/types/parse-result.ts b/src/types/parse-result.ts
+index 72505cd..71a688e 100644
+--- a/src/types/parse-result.ts
++++ b/src/types/parse-result.ts
+@@ -1,7 +1,9 @@
+ import { DocumentNode } from "./node.js";
+ import { AnyToken } from "./token.js";
++import { ParseError } from "./parse-error.js";
+ 
+ export type ParseResult = {
+   ast: DocumentNode;
+   tokens: AnyToken[];
++  errors: ParseError[];
+ };
+diff --git a/src/types/tokenizer-state.ts b/src/types/tokenizer-state.ts
+index f8cb167..21ac8a6 100644
+--- a/src/types/tokenizer-state.ts
++++ b/src/types/tokenizer-state.ts
+@@ -2,6 +2,8 @@ import { TokenizerContextTypes, TokenTypes } from "../constants/index.js";
+ import { CharsBuffer } from "../tokenizer/chars-buffer.js";
+ import { SourceCode } from "../tokenizer/source-code.js";
+ import { TemplateInfo } from "./template.js";
++import { ParseError } from "./parse-error.js";
++import { Range } from "./range.js";
+ import { AnyToken } from "./token.js";
+ import { TokenAdapter } from "./token-adapter.js";
+ 
+@@ -23,6 +25,9 @@ type ContextParams = {
+     contentType: TokenTypes.ScriptTagContent | TokenTypes.StyleTagContent | TokenTypes.RawContent;
+     closeType: TokenTypes.CloseScriptTag | TokenTypes.CloseStyleTag | TokenTypes.CloseTag;
+   };
++  [TokenizerContextTypes.CommentContent]?: {
++    openRange: Range;
++  };
+   [TokenizerContextTypes.CloseTag]?: {
+     closeType: TokenTypes.CloseScriptTag | TokenTypes.CloseStyleTag | TokenTypes.CloseTag;
+   };
+@@ -38,6 +43,8 @@ export type TokenizerState = {
+   rawContentTags?: string[];
+   tokenAdapter: TokenAdapter;
+   sourceCode: SourceCode;
++  tagStart?: number;
++  errors: ParseError[];
+   tokens: {
+     push(token: AnyToken): void;
+   };
+diff --git a/src/utils/index.ts b/src/utils/index.ts
+index a3df137..3e2e121 100644
+--- a/src/utils/index.ts
++++ b/src/utils/index.ts
+@@ -15,3 +15,4 @@ export * from "./templates.js";
+ export * from "./raise.js";
+ export * from "./tag-name.js";
+ export * from "./pending-text.js";
++export * from "./report-error.js";
+diff --git a/src/utils/report-error.ts b/src/utils/report-error.ts
+new file mode 100644
+index 0000000..391f872
+--- /dev/null
++++ b/src/utils/report-error.ts
+@@ -0,0 +1,10 @@
++import { ParseError, TokenizerState } from "../types/index.js";
++
++export function reportError(state: { errors: ParseError[] }, error: ParseError): void {
++  state.errors.push(error);
++}
++
++export function reportEndOfInputInTag(state: TokenizerState): void {
++  const tagStart = state.tagStart ?? 0;
++  reportError(state, { code: "eof-in-tag", tagStart, range: [tagStart, state.sourceCode.source.length] });
++}

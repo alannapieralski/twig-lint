@@ -200,7 +200,7 @@ describe('ruleChecks', () => {
   });
 
   it('lists a template it cannot parse as skipped instead of ignoring it', async () => {
-    const source = '<div class="a"\n  <p>x</p>';
+    const source = '<div>\n  {% endif %}';
     const root = createCorpusDirectory({ 'a.twig': source });
     const [check] = ruleChecks({ plugin: pluginWith({ rewrite: fixingRule((s) => s) }), prefix: 'fake', rules: { rewrite: { fixKeeps: 'code' } } });
     if (!check) {

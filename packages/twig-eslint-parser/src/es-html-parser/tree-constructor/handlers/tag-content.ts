@@ -16,16 +16,18 @@ import {
   TextNode,
   CompositeToken,
   RawContentNode,
+  TagNode,
 } from "../../types/index.js";
 import {
   cloneRange,
-  closeTagNameOf,
+  extendNodeEndToLastChild,
+  reportError,
+  pairingKeyOf,
   createNodeFrom,
   cloneLocation,
-  extendNodeEndToLastChild,
   initChildrenIfNone,
-  tagNameKey,
 } from "../../utils/index.js";
+import { reportUnclosedElement } from "../element-errors.js";
 
 function handleOpenTagStart(
   state: ConstructTreeState<ContextualTagNode>,
@@ -53,50 +55,47 @@ function handleOpenTagStart(
   return state;
 }
 
-const nameKeys = new WeakMap<ContextualTagNode, string>();
-
-function nameKeyOf(tag: ContextualTagNode): string {
-  const cached = nameKeys.get(tag);
-  if (cached !== undefined) {
-    return cached;
-  }
-  const nameKey = tagNameKey(tag.name ?? "");
-  nameKeys.set(tag, nameKey);
-  return nameKey;
-}
-
-function findOpenTagClosedBy(
-  node: ContextualTagNode,
-  closeTagName: string
-): ContextualTagNode | undefined {
-  for (
-    let open: ContextualTagNode | undefined = node;
-    open?.type === NodeTypes.Tag;
-    open = open.parentRef as ContextualTagNode | undefined
-  ) {
-    if (nameKeyOf(open) === closeTagName) {
+function findOpenTagClosedBy(node: ContextualTagNode, closeTagKey: string): ContextualTagNode | undefined {
+  for (let open: ContextualTagNode | undefined = node; open?.type === NodeTypes.Tag; open = open.parentRef as ContextualTagNode | undefined) {
+    if (pairingKeyOf(open.name ?? "") === closeTagKey) {
       return open;
     }
   }
   return undefined;
 }
 
+function leaveElementUnclosed(state: ConstructTreeState<ContextualTagNode>) {
+  extendNodeEndToLastChild(state.currentNode);
+  reportUnclosedElement(state, state.currentNode);
+  state.currentNode = state.currentNode.parentRef as ContextualTagNode;
+  state.currentContext = state.currentContext.parentRef.parentRef;
+}
+
+function reportInvalidEndTag(state: ConstructTreeState<ContextualTagNode>, token: AnyToken, name: string) {
+  if (state.voidElements.has(name)) {
+    return;
+  }
+  const openElement = state.currentNode.type === NodeTypes.Tag ? (state.currentNode as unknown as TagNode) : undefined;
+  const selfClosedElement = state.selfClosedElementsByName.get(pairingKeyOf(name)) as unknown as TagNode | undefined;
+  reportError(state, { code: "x-invalid-end-tag", range: cloneRange(token.range), name, openElement, selfClosedElement });
+}
+
 function handleCloseTag(
   state: ConstructTreeState<ContextualTagNode>,
   token: AnyToken
 ) {
-  const closeTagName = tagNameKey(closeTagNameOf(token));
-  const closedTag = findOpenTagClosedBy(state.currentNode, closeTagName);
+  const closeTagName = token.type === TokenTypes.CloseTag ? token.name : "";
+  const closedTag = findOpenTagClosedBy(state.currentNode, pairingKeyOf(closeTagName));
 
   if (!closedTag) {
+    reportInvalidEndTag(state, token, closeTagName);
     state.caretPosition++;
+
     return state;
   }
 
   while (state.currentNode !== closedTag) {
-    extendNodeEndToLastChild(state.currentNode);
-    state.currentNode = state.currentNode.parentRef as ContextualTagNode;
-    state.currentContext = state.currentContext.parentRef.parentRef;
+    leaveElementUnclosed(state);
   }
 
   state.currentContext = state.currentContext.parentRef;

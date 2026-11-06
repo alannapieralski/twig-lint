@@ -1,19 +1,21 @@
 import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
-import { calculateTokenPosition } from "../../utils/index.js";
+import { calculateTokenPosition, reportEndOfInputInTag } from "../../utils/index.js";
 import type { TokenizerState } from "../../types/index.js";
 import { CharsBuffer } from "../chars-buffer.js";
 
-const tokensMap = {
-  script: TokenTypes.OpenScriptTagEnd,
-  style: TokenTypes.OpenStyleTagEnd,
-  default: TokenTypes.OpenTagEnd,
-} as const;
+const OPEN_TAG_END_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
+  ["script", TokenTypes.OpenScriptTagEnd],
+  ["style", TokenTypes.OpenStyleTagEnd],
+]);
 
-const contextsMap = {
-  script: TokenizerContextTypes.ScriptContent,
-  style: TokenizerContextTypes.StyleContent,
-  default: TokenizerContextTypes.Data,
-} as const;
+type RawTextTokenTypes = Omit<NonNullable<TokenizerState["contextParams"][TokenizerContextTypes.RawText]>, "tagName">;
+
+const RAW_TEXT_TOKEN_TYPES: ReadonlyMap<string, RawTextTokenTypes> = new Map([
+  ["script", { contentType: TokenTypes.ScriptTagContent, closeType: TokenTypes.CloseScriptTag }],
+  ["style", { contentType: TokenTypes.StyleTagContent, closeType: TokenTypes.CloseStyleTag }],
+]);
+
+const CUSTOM_RAW_TEXT_TOKEN_TYPES: RawTextTokenTypes = { contentType: TokenTypes.RawContent, closeType: TokenTypes.CloseTag };
 
 export function parse(chars: CharsBuffer, state: TokenizerState) {
   if (chars.value() === ">") {
@@ -27,11 +29,10 @@ export function parse(chars: CharsBuffer, state: TokenizerState) {
 
 function parseClosingCornerBrace(state: TokenizerState) {
   const position = calculateTokenPosition(state, { keepBuffer: true });
-  const tagName = state.contextParams[TokenizerContextTypes.OpenTagEnd]
-    ?.tagName! as keyof typeof tokensMap;
+  const tagName = state.contextParams[TokenizerContextTypes.OpenTagEnd]?.tagName ?? "";
 
   state.tokens.push({
-    type: tokensMap[tagName] || tokensMap.default,
+    type: (OPEN_TAG_END_TYPES.get(tagName) ?? TokenTypes.OpenTagEnd) as TokenTypes.OpenTagEnd,
     value: state.accumulatedContent.value() + state.decisionBuffer.value(),
     range: position.range,
     loc: position.loc,
@@ -39,17 +40,19 @@ function parseClosingCornerBrace(state: TokenizerState) {
 
   state.accumulatedContent.clear();
   state.decisionBuffer.clear();
-  if (state.rawContentTags?.includes(tagName)) {
-    state.contextParams[TokenizerContextTypes.CustomTagRawContent] = {
-      tagName,
-    };
-    state.currentContext = TokenizerContextTypes.CustomTagRawContent;
+  const rawTextTokenTypes = state.rawContentTags?.includes(tagName) ? CUSTOM_RAW_TEXT_TOKEN_TYPES : RAW_TEXT_TOKEN_TYPES.get(tagName);
+  if (rawTextTokenTypes) {
+    state.contextParams[TokenizerContextTypes.RawText] = { tagName, ...rawTextTokenTypes };
+    state.currentContext = TokenizerContextTypes.RawText;
   } else {
-    state.currentContext =
-      contextsMap[tagName || "default"] || contextsMap["default"];
+    state.currentContext = TokenizerContextTypes.Data;
   }
 
   state.sourceCode.next();
 
   state.contextParams[TokenizerContextTypes.OpenTagEnd] = undefined;
+}
+
+export function handleContentEnd(state: TokenizerState) {
+  reportEndOfInputInTag(state);
 }

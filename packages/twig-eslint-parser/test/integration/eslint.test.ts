@@ -25,13 +25,8 @@ describe('twig-eslint-parser inside ESLint', () => {
     expect(result.messages.map((message) => [message.fatal, message.message])).toEqual([[true, 'Parsing error: Unclosed variable opened at {1:4}.']]);
   });
 
-  it.each([
-    ['<div class="a"\n  <p>x</p>\n</div>', 2, 3],
-    ['<div{{ attributes }} <p>x</p></div>', 1, 22],
-  ])('reports broken markup in %j as a parsing error at its position in the template', async (code, expectedLine, expectedColumn) => {
+  it.each(['<div class="a"\n  <p>x</p>\n</div>', '<div{{ attributes }} <p>x</p></div>'])('reads past broken markup in %j instead of failing the file', async (code) => {
     const result = await lint(code);
-    expect(result.messages.map(({ fatal, message, line, column }) => ({ fatal, message, line, column }))).toEqual([
-      { fatal: true, message: "Parsing error: Unexpected end of tag. Expected '>' to close the opening tag.", line: expectedLine, column: expectedColumn },
-    ]);
+    expect(result.messages).toEqual([]);
   });
 });

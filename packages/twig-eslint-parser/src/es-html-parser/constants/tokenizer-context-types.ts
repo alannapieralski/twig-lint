@@ -8,8 +8,7 @@ export enum TokenizerContextTypes {
   AttributeValue = "AttributeValue",
   AttributeValueBare = "AttributeValueBare",
   AttributeValueWrapped = "AttributeValueWrapped",
-  ScriptContent = "ScriptContent",
-  StyleContent = "StyleContent",
+  RawText = "RawText",
   DoctypeOpen = "DoctypeOpen",
   DoctypeClose = "DoctypeClose",
   DoctypeAttributes = "DoctypeAttributes",
@@ -18,5 +17,4 @@ export enum TokenizerContextTypes {
   CommentOpen = "CommentOpen",
   CommentContent = "CommentContent",
   CommentClose = "CommentClose",
-  CustomTagRawContent = "CustomTagRawContent",
 }

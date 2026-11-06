@@ -13,17 +13,16 @@ import {
   DoctypeOpen,
   openTagEnd,
   openTagStart,
-  scriptTagContent,
   doctypeAttributeWrapped,
-  styleTagContent,
   attributeValue,
   attributeValueWrapped,
-  customTagRawContent,
+  rawText,
   noop,
 } from "./handlers/index.js";
 import { TokenizeHandler } from "../types/index.js";
 import { SourceCode } from "./source-code.js";
 import { CharsBuffer } from "./chars-buffer.js";
+import { readTemplateAsContent, templateKindOf } from "../utils/index.js";
 
 const contextHandlers: Record<TokenizerContextTypes, TokenizeHandler> = {
   [TokenizerContextTypes.Data]: data,
@@ -35,15 +34,13 @@ const contextHandlers: Record<TokenizerContextTypes, TokenizeHandler> = {
   [TokenizerContextTypes.AttributeValue]: attributeValue,
   [TokenizerContextTypes.AttributeValueBare]: attributeValueBare,
   [TokenizerContextTypes.AttributeValueWrapped]: attributeValueWrapped,
-  [TokenizerContextTypes.ScriptContent]: scriptTagContent,
-  [TokenizerContextTypes.StyleContent]: styleTagContent,
+  [TokenizerContextTypes.RawText]: rawText,
   [TokenizerContextTypes.DoctypeOpen]: DoctypeOpen,
   [TokenizerContextTypes.DoctypeClose]: DoctypeClose,
   [TokenizerContextTypes.DoctypeAttributes]: doctypeAttributes,
   [TokenizerContextTypes.DoctypeAttributeWrapped]: doctypeAttributeWrapped,
   [TokenizerContextTypes.DoctypeAttributeBare]: doctypeAttributeBare,
   [TokenizerContextTypes.CommentContent]: commentContent,
-  [TokenizerContextTypes.CustomTagRawContent]: customTagRawContent,
   [TokenizerContextTypes.CommentOpen]: noop,
   [TokenizerContextTypes.CommentClose]: noop,
 };
@@ -51,8 +48,13 @@ const contextHandlers: Record<TokenizerContextTypes, TokenizeHandler> = {
 function tokenizeChars(state: TokenizerState) {
   while (!state.sourceCode.isEof()) {
     const handler = contextHandlers[state.currentContext];
-    state.decisionBuffer.concat(state.sourceCode.current());
-    handler.parse(state.decisionBuffer, state);
+    const current = state.sourceCode.current();
+    state.decisionBuffer.concat(current);
+    if (current.isTemplate) {
+      (handler.parseTemplate ?? readTemplateAsContent)(templateKindOf(current), state);
+    } else {
+      handler.parse(state.decisionBuffer, state);
+    }
   }
 
   const handler = contextHandlers[state.currentContext];
@@ -87,6 +89,7 @@ export function tokenize(
     tokenAdapter,
     rawContentTags: options.rawContentTags,
     sourceCode: new SourceCode(source, options.templateInfos || []),
+    errors: [],
     tokens: {
       push(token: AnyToken) {
         tokens.push({

@@ -58,16 +58,16 @@ Codes without a prefix are the names the HTML specification gives the error. Cod
 | `duplicate-attribute` | A tag sets an attribute name that an earlier attribute of the tag already has, ignoring case. Browsers keep the first. Attributes in a Twig branch and attributes with Twig in the name are never compared. | `<div class="a" class="b">` |
 | `eof-in-comment` | A comment has no `-->` before the end of the file. | `<!-- note` |
 | `eof-in-tag` | An open or closing tag has no `>` before the end of the file. | `<div class="a"`, `<p>a</p` |
-| `unexpected-character-in-attribute-name` | An attribute name holds a quote or `<`, usually because an earlier value was quoted wrongly or the `=` before a value is missing. | `<li class="a' data-x="y">`, `<button type"button">` |
+| `unexpected-character-in-attribute-name` | An attribute name holds a quote or `<`, usually because an earlier value was quoted wrongly, the `=` before a value is missing, or a tag's `>` is missing before the next tag. | `<li class="a' data-x="y">`, `<button type"button">`, `<div class="a"<p>` |
 | `unexpected-character-in-unquoted-attribute-value` | An unquoted value holds a quote or `<`, so the tag takes in the markup after it. | `<li id=b<span>x</span></li>` |
-| `unexpected-solidus-in-tag` | A `/` in an open tag is not followed by `>`, and no attribute before it holds a stray quote or `<`. The browser ignores it, but the parser does not read the attributes after it. | `<img src="a" / >` |
+| `unexpected-solidus-in-tag` | A `/` in an open tag is not followed by `>`. The browser ignores it, and so does the parser, which reads the attributes after it. | `<img src="a" / >` |
 | `x-invalid-end-tag` | A closing tag matches no open element. The message names the element that is open there, if any. | `<p>a</p></div>` |
 | `x-unclosed-element` | An element that needs a closing tag never gets one, including a `<script>`, `<style>`, `<textarea>` or `<title>` that takes in the rest of the file. | `<div><p>a</p>` |
 | `x-misplaced-twig-tag` | `{% else %}`, `{% elseif %}` or `{% plural %}` sits where Twig rejects it: `else` outside `if`, `for` and `guard`, `elseif` outside `if`, `plural` outside `trans`, or `else` and `elseif` after an `else`. | `{% if a %}{% else %}{% elseif b %}{% endif %}` |
 | `x-unparsed-twig` | Twig itself rejects a `{{ }}` or `{% %}` block, such as two values in a row, a missing comma between array items, a comma outside brackets, a `{% for %}` with no `in` or with an `if`, an end tag or `{% else %}` with something after it (`{% endif b %}`), or an `{% endblock %}` or `{% endmacro %}` naming a different block or macro from the one it closes. The parser reads the block with Twig's grammar, so the message is the one Twig gives. No other rule reads inside it. | `{{ title subtitle }}` |
 
-Each open tag gets at most one report, for the first problem in the order the tag is read: a stray
-character in an attribute comes before a `/` that does not end the tag. Duplicate attributes are
+Each open tag gets at most one report: `eof-in-tag` when the file ends inside it, otherwise the first
+problem in the order the tag is read. Duplicate attributes are
 reported only on a tag that was read cleanly, and once for each repeat. Each report names its code in
 brackets, so a code can be switched off by name.
 
@@ -94,6 +94,9 @@ brackets, so a code can be switched off by name.
 | A closing tag inside `{% if %}`, `{% for %}`, `{% guard %}` or `{% trans %}`, and an element that opens or closes in a branch of one | The markup there may render differently or not at all, and the parser reads every branch as one document, so it cannot tell which branch closes the element | Built in |
 | A closing tag inside `{% verbatim %}`, and an element that opens or closes across its edge | Its content is usually client-side template syntax, such as Handlebars or Mustache, whose own conditions can open an element in one branch and close it in another | Built in |
 | A closing tag named like an element that an earlier closing tag closed across one of the blocks above, so that the element opens on one side of the block's edge and closes on the other | The branch may have taken the element this tag was meant to close | Built in |
+| A problem in an open tag that is written differently on different Twig branches | Each branch renders a different tag, and the parser reads them as one | Built in |
+| A quote in an unquoted value after a Twig tag, as in `class={% if a %}"x"{% else %}"y"{% endif %}` | The Twig tag decides the quoting | Built in |
+| A closing tag whose name extends the name of an open element followed by Twig, as in `<h{{ level }}>x</h2>`, and that element | The Twig may print the rest of the name | Built in |
 | A problem whose code is switched off | You chose not to hear about it | Each code, default `true` |
 
 ### Not checked at all
@@ -102,8 +105,7 @@ brackets, so a code can be switched off by name.
   site loads, such as Drupal's modules, so they cannot be known from the template.
 - **Errors that stop the parser.** The parser throws, ESLint shows one parsing error for the file, and
   no rule runs: Twig that cannot be tokenised (an unclosed `{{`, `{%`, `{#`, bracket or string), Twig
-  tags that do not pair up (a stray `{% endif %}`), and an open tag whose `>` is missing before the
-  next tag (`<div class="a"<p>`).
+  tags that do not pair up (a stray `{% endif %}`).
 - **An HTML element written as self-closing, such as `<div />`.** The parser reads `/>` as closing
   any element, as the XML templates Drupal renders (RSS, OPML) need, so a closing tag after it is
   reported as `x-invalid-end-tag`, not the `/`. When an earlier tag of that name ended with `/>`, the

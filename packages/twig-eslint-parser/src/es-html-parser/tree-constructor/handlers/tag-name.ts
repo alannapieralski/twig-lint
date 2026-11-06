@@ -2,16 +2,15 @@ import { TokenTypes } from "../../constants/index.js";
 import {
   AnyToken,
   ConstructTreeState,
-  Token,
+  NamedToken,
   ContextualTagNode,
 } from "../../types/index.js";
-import { tagNameOf } from "../../utils/index.js";
 
 function handleTagOpenStart(
   state: ConstructTreeState<ContextualTagNode>,
-  token: Token<TokenTypes.OpenTagStart>
+  token: NamedToken<TokenTypes.OpenTagStart>
 ) {
-  state.currentNode.name = tagNameOf(token);
+  state.currentNode.name = token.name;
 
   state.currentContext = state.currentContext.parentRef;
 

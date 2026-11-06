@@ -2,7 +2,7 @@ import { parse as parseCss, toPlainObject } from 'css-tree';
 import { parse as parseMarkupTree, TokenTypes } from '../es-html-parser/index.js';
 import { cssVisitorKeys, htmlVisitorKeys } from './visitor-keys.js';
 import type { CssNodePlain } from 'css-tree';
-import type { TemplateInfo } from '../es-html-parser/types/index.js';
+import type { ParseError, TemplateInfo } from '../es-html-parser/types/index.js';
 
 type Position = { line: number; column: number };
 type Node = { type: string; range: [number, number]; loc: { start: Position; end: Position }; [key: string]: unknown };
@@ -17,6 +17,7 @@ export type HtmlProgram = {
   readonly tokens: unknown[];
   readonly comments: Comment[];
 };
+export type HtmlDocument = { readonly program: HtmlProgram; readonly errors: readonly ParseError[] };
 export type HtmlParseOptions = { readonly templateInfos: readonly TemplateInfo[]; readonly rawContentTags?: readonly string[]; readonly voidElements?: readonly string[] };
 
 const COMMENT_TOKEN_TYPES: ReadonlySet<string> = new Set([TokenTypes.CommentOpen, TokenTypes.CommentContent, TokenTypes.CommentClose]);
@@ -54,8 +55,8 @@ function parseStylesheet(content: Node): CssNodePlain {
   return stylesheet;
 }
 
-export function parseHtmlProgram(text: string, options: HtmlParseOptions): HtmlProgram {
-  const { ast, tokens } = parseMarkupTree(text, {
+export function parseHtmlDocument(text: string, options: HtmlParseOptions): HtmlDocument {
+  const { ast, tokens, errors } = parseMarkupTree(text, {
     templateInfos: [...options.templateInfos],
     ...(options.rawContentTags && { rawContentTags: [...options.rawContentTags] }),
     ...(options.voidElements && { voidElements: [...options.voidElements] }),
@@ -70,7 +71,7 @@ export function parseHtmlProgram(text: string, options: HtmlParseOptions): HtmlP
       node['stylesheet'] = parseStylesheet(node);
     }
   });
-  return {
+  const program: HtmlProgram = {
     type: 'Program',
     body: [document],
     range: document.range,
@@ -78,6 +79,7 @@ export function parseHtmlProgram(text: string, options: HtmlParseOptions): HtmlP
     tokens: tokens.filter((token) => !COMMENT_TOKEN_TYPES.has(token.type)),
     comments,
   };
+  return { program, errors };
 }
 
 export const visitorKeys = htmlVisitorKeys;

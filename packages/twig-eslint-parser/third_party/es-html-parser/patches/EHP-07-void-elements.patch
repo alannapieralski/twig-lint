@@ -1,3 +1,13 @@
+Description: Add a voidElements option
+ Names extra elements that never have content or a close tag, like <br>.
+ The names are matched without regard to case against one set built from
+ upstream's list and the option.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/parse-for-eslint.test.ts (Drupal placeholders)
+Last-Update: 2026-11-04
+---
 diff --git a/src/parser/parse.ts b/src/parser/parse.ts
 index e6252e5..d23c2b8 100644
 --- a/src/parser/parse.ts
@@ -12,47 +22,91 @@ index e6252e5..d23c2b8 100644
      ast: clearParent(ast),
      tokens,
 diff --git a/src/tree-constructor/construct-tree.ts b/src/tree-constructor/construct-tree.ts
-index d617db6..0205a54 100644
+index 78adfab..b446c30 100644
 --- a/src/tree-constructor/construct-tree.ts
 +++ b/src/tree-constructor/construct-tree.ts
-@@ -45,7 +45,7 @@ const EMPTY_LOC: SourceLocation = {
+@@ -45,7 +45,25 @@ const EMPTY_LOC: SourceLocation = {
    },
  };
  
 -export function constructTree(tokens: AnyToken[]) {
-+export function constructTree(tokens: AnyToken[], voidElements: readonly string[] = []) {
++const VOID_ELEMENTS = [
++  "area",
++  "base",
++  "br",
++  "col",
++  "embed",
++  "hr",
++  "img",
++  "input",
++  "keygen",
++  "link",
++  "meta",
++  "param",
++  "source",
++  "track",
++  "wbr",
++];
++
++export function constructTree(tokens: AnyToken[], extraVoidElements: readonly string[] = []) {
    const rootContext = {
      type: ConstructTreeContextTypes.TagContent,
      parentRef: undefined,
-@@ -75,6 +75,7 @@ export function constructTree(tokens: AnyToken[]) {
+@@ -75,6 +93,7 @@ export function constructTree(tokens: AnyToken[]) {
      currentContext: rootContext,
      currentNode: rootNode,
      rootNode,
-+    voidElements,
++    voidElements: new Set([...VOID_ELEMENTS, ...extraVoidElements.map((name) => name.toLowerCase())]),
    };
  
    const positionOffset = state!.caretPosition;
 diff --git a/src/tree-constructor/handlers/tag.ts b/src/tree-constructor/handlers/tag.ts
-index 91ceb21..b61e088 100644
+index 0fe0b0c..d523da9 100644
 --- a/src/tree-constructor/handlers/tag.ts
 +++ b/src/tree-constructor/handlers/tag.ts
-@@ -67,6 +67,7 @@ function handleOpenTagEnd(
+@@ -16,24 +16,6 @@ const ATTRIBUTE_START_TOKENS = [
+   TokenTypes.AttributeAssignment,
+ ];
+ 
+-const SELF_CLOSING_TAGS = [
+-  "area",
+-  "base",
+-  "br",
+-  "col",
+-  "embed",
+-  "hr",
+-  "img",
+-  "input",
+-  "keygen",
+-  "link",
+-  "meta",
+-  "param",
+-  "source",
+-  "track",
+-  "wbr",
+-];
+-
+ function handleOpenTagStart(
+   state: ConstructTreeState<ContextualTagNode>,
+   token: NamedToken<TokenTypes.OpenTagStart>
+@@ -67,7 +49,7 @@ function handleOpenTagEnd(
+   updateNodeEnd(state.currentNode, token);
  
    if (
-     SELF_CLOSING_TAGS.indexOf(tagName!) !== -1 ||
-+    state.voidElements.includes(tagName!) ||
+-    SELF_CLOSING_TAGS.indexOf(tagName!) !== -1 ||
++    state.voidElements.has(tagName ?? "") ||
      state.currentNode.openEnd.value === "/>"
    ) {
      state.currentNode.selfClosing = true;
 diff --git a/src/types/construct-tree-state.ts b/src/types/construct-tree-state.ts
-index 2f30d56..c7a5bcb 100644
+index 2f30d56..7da0ebf 100644
 --- a/src/types/construct-tree-state.ts
 +++ b/src/types/construct-tree-state.ts
 @@ -11,4 +11,5 @@ export type ConstructTreeState<N extends AnyContextualNode> = {
    };
    currentNode: N;
    rootNode: DocumentNode;
-+  voidElements: readonly string[];
++  voidElements: ReadonlySet<string>;
  };
 diff --git a/src/types/parse.ts b/src/types/parse.ts
 index 49f50a3..a5de3d9 100644

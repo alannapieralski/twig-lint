@@ -1,4 +1,4 @@
-import { HtmlSyntaxError, parseForESLint, TwigSyntaxError } from '../../src/index.js';
+import { parseForESLint, TwigSyntaxError } from '../../src/index.js';
 import { createOffsetLocator } from '../../src/source-text.js';
 import { groupTwigBlocks } from '../../src/twig/blocks.js';
 import { isConvertedTwigBlock } from '../../src/twig/tag-grammar.js';
@@ -60,6 +60,7 @@ type Attribute = {
 type ParsedTag = Node & {
   readonly name?: string;
   readonly openStart: Token;
+  readonly openEnd?: Token;
   readonly close?: Token;
   readonly selfClosing?: boolean;
   readonly attributes?: readonly Attribute[];
@@ -197,8 +198,16 @@ function checkLeavesDoNotOverlap(leaves: readonly Node[], code: string, report: 
   });
 }
 
+function isIgnoredSolidusInOpenTag(text: string, [start, end]: Range, tags: readonly TagNode[]): boolean {
+  const isInsideOpenTag = (tag: TagNode) => tag.openEnd !== undefined && tag.openStart.range[1] <= start && end <= tag.openEnd.range[0];
+  return text.trim() === '/' && tags.some(isInsideOpenTag);
+}
+
 function describeUncoveredSource(code: string, [start, end]: Range, tags: readonly TagNode[], branchSegments: readonly BranchSegment[]): OutputIssue[] {
   const text = code.slice(start, end);
+  if (isIgnoredSolidusInOpenTag(text, [start, end], tags)) {
+    return [];
+  }
   const issues: OutputIssue[] = [];
   let remainder = text;
   for (const match of text.matchAll(CLOSE_TAG_PATTERN)) {
@@ -237,7 +246,7 @@ function verbatimDelimiterRanges(code: string, blocks: readonly TwigBlock[]): Ra
 }
 
 function describeParseFailure(error: unknown): OutputIssue {
-  if (error instanceof HtmlSyntaxError || error instanceof TwigSyntaxError) {
+  if (error instanceof TwigSyntaxError) {
     return { check: 'template is valid Twig and HTML', detail: error.message, line: error.lineNumber };
   }
   return { check: 'parses', detail: error instanceof Error ? error.message.split('\n')[0] ?? '' : String(error) };

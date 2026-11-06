@@ -1,0 +1,683 @@
+Description: End raw text at the appropriate end tag, in one handler
+ Script, style and the raw-content elements (textarea, title and the
+ rawContentTags option) are read by one handler. As in the HTML tokenizer's
+ raw text states, it buffers while the text read is a case-insensitive
+ prefix of "</" plus the element name, and ends the text at that prefix
+ followed by whitespace, "/" or ">". Upstream matched an unanchored regular
+ expression over a growing buffer, so "</" in a script string was taken into
+ the close token, "</b " in a textarea left the textarea open, and
+ "</script x>" did not end a script. A regular expression is no longer built
+ for each character.
+Author: Numiko
+Origin: vendor
+Forwarded: no
+Test: test/parser/parse-for-eslint.test.ts ("markup read as a browser reads it"); npm run test:upstream
+Last-Update: 2026-11-04
+---
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json
+index f41c216..8769ab4 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements-attributes.html-0.json
+@@ -297,6 +297,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       109,
+@@ -501,6 +502,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       218,
+@@ -743,6 +745,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       298,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json
+index 77e4d5a..57e4fd5 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-script-elements.html-0.json
+@@ -132,6 +132,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       53,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json
+index a492975..772a629 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements-attributes.html-0.json
+@@ -241,6 +241,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       85,
+@@ -520,6 +521,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       213,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json
+index 023a74c..90c8438 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-style-elements.html-0.json
+@@ -76,6 +76,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       64,
+@@ -225,6 +226,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       138,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json
+index 7a6e1e5..57e3683 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-tags-register.html-0.json
+@@ -376,6 +376,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       66,
+@@ -469,6 +470,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</SCRIPT>",
+     "range": [
+       85,
+@@ -543,6 +545,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       103,
+@@ -636,6 +639,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</SCRIPT>",
+     "range": [
+       122,
+@@ -710,6 +714,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       140,
+@@ -803,6 +808,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</STYLE>",
+     "range": [
+       157,
+@@ -877,6 +883,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       173,
+@@ -951,6 +958,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</STYLE>",
+     "range": [
+       189,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json
+index 2f4e6ab..34a5ed0 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-script-content.html-0.json
+@@ -77,6 +77,7 @@
+   },
+   {
+     "type": "CloseScriptTag",
++    "name": "script",
+     "value": "</script>",
+     "range": [
+       18,
+diff --git a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json
+index b8de522..a2025ef 100644
+--- a/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json
++++ b/src/__tests__/tokenizer/__file_snapshots__/Tokenizer-templates-style-content.html-0.json
+@@ -77,6 +77,7 @@
+   },
+   {
+     "type": "CloseStyleTag",
++    "name": "style",
+     "value": "</style>",
+     "range": [
+       17,
+diff --git a/src/constants/regex.ts b/src/constants/regex.ts
+index c2d0b2f..e69de29 100644
+--- a/src/constants/regex.ts
++++ b/src/constants/regex.ts
+@@ -1,5 +0,0 @@
+-export const INCOMPLETE_CLOSING_TAG_PATTERN = /<\/[^>]+$/;
+-
+-export const CLOSING_SCRIPT_TAG_PATTERN = /<\/script\s*>/i;
+-
+-export const CLOSING_STYLE_TAG_PATTERN = /<\/style\s*>/i;
+diff --git a/src/constants/tokenizer-context-types.ts b/src/constants/tokenizer-context-types.ts
+index 2031e9b..cdfaad2 100644
+--- a/src/constants/tokenizer-context-types.ts
++++ b/src/constants/tokenizer-context-types.ts
+@@ -8,8 +8,7 @@ export enum TokenizerContextTypes {
+   AttributeValue = "AttributeValue",
+   AttributeValueBare = "AttributeValueBare",
+   AttributeValueWrapped = "AttributeValueWrapped",
+-  ScriptContent = "ScriptContent",
+-  StyleContent = "StyleContent",
++  RawText = "RawText",
+   DoctypeOpen = "DoctypeOpen",
+   DoctypeClose = "DoctypeClose",
+   DoctypeAttributes = "DoctypeAttributes",
+@@ -18,5 +17,4 @@ export enum TokenizerContextTypes {
+   CommentOpen = "CommentOpen",
+   CommentContent = "CommentContent",
+   CommentClose = "CommentClose",
+-  CustomTagRawContent = "CustomTagRawContent",
+ }
+diff --git a/src/tokenizer/handlers/close-tag.ts b/src/tokenizer/handlers/close-tag.ts
+index dd04ad9..bccebc6 100644
+--- a/src/tokenizer/handlers/close-tag.ts
++++ b/src/tokenizer/handlers/close-tag.ts
+@@ -1,6 +1,6 @@
+ import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
+ import { calculateTokenPosition, readTagName } from "../../utils/index.js";
+-import type { TokenizerState } from "../../types/index.js";
++import type { AnyToken, TokenizerState } from "../../types/index.js";
+ import { CharsBuffer } from "../chars-buffer.js";
+ 
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+@@ -18,12 +18,13 @@ function parseClosingCornerBrace(state: TokenizerState) {
+   const position = calculateTokenPosition(state, { keepBuffer: true });
+ 
+   state.tokens.push({
+-    type: TokenTypes.CloseTag,
++    type: state.contextParams[TokenizerContextTypes.CloseTag]?.closeType ?? TokenTypes.CloseTag,
+     name: readTagName(state.accumulatedContent, "</"),
+     value: state.accumulatedContent.value() + state.decisionBuffer.value(),
+     range: position.range,
+     loc: position.loc,
+-  });
++  } as AnyToken);
++  state.contextParams[TokenizerContextTypes.CloseTag] = undefined;
+ 
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+diff --git a/src/tokenizer/handlers/custom-tag-raw-content.ts b/src/tokenizer/handlers/custom-tag-raw-content.ts
+deleted file mode 100644
+index 84d8338..0000000
+--- a/src/tokenizer/handlers/custom-tag-raw-content.ts
++++ /dev/null
+@@ -1,64 +0,0 @@
+-import {
+-  TokenizerContextTypes,
+-  INCOMPLETE_CLOSING_TAG_PATTERN,
+-  TokenTypes,
+-} from "../../constants/index.js";
+-import { calculateTokenPosition, createParts } from "../../utils/index.js";
+-import { Range, TokenizerState } from "../../types/index.js";
+-import { CharsBuffer } from "../chars-buffer.js";
+-
+-export function parse(chars: CharsBuffer, state: TokenizerState) {
+-  if (
+-    chars.value() === "<" ||
+-    chars.value() === "</" ||
+-    INCOMPLETE_CLOSING_TAG_PATTERN.test(chars.value())
+-  ) {
+-    state.sourceCode.next();
+-    return;
+-  }
+-  const regex = new RegExp(
+-    "</" +
+-      state.contextParams[TokenizerContextTypes.CustomTagRawContent]?.tagName +
+-      "\\s*>"
+-  );
+-
+-  if (regex.test(chars.value())) {
+-    return parseClosingCustomTag(state);
+-  }
+-
+-  state.accumulatedContent.concatBuffer(state.decisionBuffer);
+-  state.decisionBuffer.clear();
+-  state.sourceCode.next();
+-}
+-
+-function parseClosingCustomTag(state: TokenizerState) {
+-  if (state.accumulatedContent.value() !== "") {
+-    const position = calculateTokenPosition(state, { keepBuffer: false });
+-    state.tokens.push({
+-      type: TokenTypes.RawContent,
+-      value: state.accumulatedContent.value(),
+-      range: position.range,
+-      loc: position.loc,
+-      parts: createParts(state, TokenTypes.RawContent),
+-    });
+-  }
+-
+-  const range: Range = [
+-    state.sourceCode.index() - (state.decisionBuffer.length() - 1),
+-    state.sourceCode.index() + 1,
+-  ];
+-
+-  state.tokens.push({
+-    type: TokenTypes.CloseTag,
+-    name: state.contextParams[TokenizerContextTypes.CustomTagRawContent]?.tagName ?? "",
+-    value: state.decisionBuffer.value(),
+-    range,
+-    loc: state.sourceCode.getLocationOf(range),
+-  });
+-
+-  state.accumulatedContent.clear();
+-  state.decisionBuffer.clear();
+-  state.contextParams[TokenizerContextTypes.CustomTagRawContent] = undefined;
+-  state.currentContext = TokenizerContextTypes.Data;
+-  state.sourceCode.next();
+-}
+diff --git a/src/tokenizer/handlers/index.ts b/src/tokenizer/handlers/index.ts
+index 2b26923..2809371 100644
+--- a/src/tokenizer/handlers/index.ts
++++ b/src/tokenizer/handlers/index.ts
+@@ -15,9 +15,7 @@ export * as DoctypeClose from "./doctype-end.js";
+ export * as DoctypeOpen from "./doctype-start.js";
+ export * as openTagEnd from "./open-tag-end.js";
+ export * as openTagStart from "./open-tag-start.js";
+-export * as scriptTagContent from "./script-tag-content.js";
+-export * as styleTagContent from "./style-tag-content.js";
+-export * as customTagRawContent from "./custom-tag-raw-content.js";
++export * as rawText from "./raw-text.js";
+ export const noop: TokenizeHandler = {
+   parse: () => void 0,
+ };
+diff --git a/src/tokenizer/handlers/open-tag-end.ts b/src/tokenizer/handlers/open-tag-end.ts
+index 248471f..21cdf36 100644
+--- a/src/tokenizer/handlers/open-tag-end.ts
++++ b/src/tokenizer/handlers/open-tag-end.ts
+@@ -8,11 +8,15 @@ const OPEN_TAG_END_TYPES: ReadonlyMap<string, TokenTypes> = new Map([
+   ["style", TokenTypes.OpenStyleTagEnd],
+ ]);
+ 
+-const CONTEXTS_AFTER_OPEN_TAG: ReadonlyMap<string, TokenizerContextTypes> = new Map([
+-  ["script", TokenizerContextTypes.ScriptContent],
+-  ["style", TokenizerContextTypes.StyleContent],
++type RawTextTokenTypes = Omit<NonNullable<TokenizerState["contextParams"][TokenizerContextTypes.RawText]>, "tagName">;
++
++const RAW_TEXT_TOKEN_TYPES: ReadonlyMap<string, RawTextTokenTypes> = new Map([
++  ["script", { contentType: TokenTypes.ScriptTagContent, closeType: TokenTypes.CloseScriptTag }],
++  ["style", { contentType: TokenTypes.StyleTagContent, closeType: TokenTypes.CloseStyleTag }],
+ ]);
+ 
++const CUSTOM_RAW_TEXT_TOKEN_TYPES: RawTextTokenTypes = { contentType: TokenTypes.RawContent, closeType: TokenTypes.CloseTag };
++
+ export function parse(chars: CharsBuffer, state: TokenizerState) {
+   if (chars.value() === ">") {
+     return parseClosingCornerBrace(state);
+@@ -36,13 +40,12 @@ function parseClosingCornerBrace(state: TokenizerState) {
+ 
+   state.accumulatedContent.clear();
+   state.decisionBuffer.clear();
+-  if (state.rawContentTags?.includes(tagName)) {
+-    state.contextParams[TokenizerContextTypes.CustomTagRawContent] = {
+-      tagName,
+-    };
+-    state.currentContext = TokenizerContextTypes.CustomTagRawContent;
++  const rawTextTokenTypes = state.rawContentTags?.includes(tagName) ? CUSTOM_RAW_TEXT_TOKEN_TYPES : RAW_TEXT_TOKEN_TYPES.get(tagName);
++  if (rawTextTokenTypes) {
++    state.contextParams[TokenizerContextTypes.RawText] = { tagName, ...rawTextTokenTypes };
++    state.currentContext = TokenizerContextTypes.RawText;
+   } else {
+-    state.currentContext = CONTEXTS_AFTER_OPEN_TAG.get(tagName) ?? TokenizerContextTypes.Data;
++    state.currentContext = TokenizerContextTypes.Data;
+   }
+ 
+   state.sourceCode.next();
+diff --git a/src/tokenizer/handlers/raw-text.ts b/src/tokenizer/handlers/raw-text.ts
+new file mode 100644
+index 0000000..19067f7
+--- /dev/null
++++ b/src/tokenizer/handlers/raw-text.ts
+@@ -0,0 +1,80 @@
++import { TokenizerContextTypes, TokenTypes } from "../../constants/index.js";
++import { calculateTokenPosition, createParts, moveIntoContentExceptLast } from "../../utils/index.js";
++import type { AnyToken, Range, TokenizerState } from "../../types/index.js";
++import { CharsBuffer } from "../chars-buffer.js";
++
++const END_TAG_NAME_END = /[\t\n\f\r />]/;
++
++function endTagOf(state: TokenizerState): string {
++  return `</${state.contextParams[TokenizerContextTypes.RawText]?.tagName ?? ""}`;
++}
++
++export function parse(chars: CharsBuffer, state: TokenizerState) {
++  const value = chars.value();
++  const endTag = endTagOf(state);
++  if (endTag.startsWith(value.toLowerCase())) {
++    state.sourceCode.next();
++    return;
++  }
++
++  const isEndTag = value.length === endTag.length + 1 && value.slice(0, -1).toLowerCase() === endTag && END_TAG_NAME_END.test(value.slice(-1));
++  if (isEndTag) {
++    return parseEndTag(state);
++  }
++
++  if (value.length > 1 && value.endsWith("<")) {
++    return keepLastOpeningCornerBrace(state);
++  }
++
++  state.accumulatedContent.concatBuffer(state.decisionBuffer);
++  state.decisionBuffer.clear();
++  state.sourceCode.next();
++}
++
++function keepLastOpeningCornerBrace(state: TokenizerState) {
++  moveIntoContentExceptLast(state, 1);
++  state.sourceCode.next();
++}
++
++function pushContent(state: TokenizerState) {
++  const params = state.contextParams[TokenizerContextTypes.RawText];
++  if (!params || state.accumulatedContent.length() === 0) {
++    return;
++  }
++  const position = calculateTokenPosition(state, { keepBuffer: false });
++  state.tokens.push({
++    type: params.contentType,
++    value: state.accumulatedContent.value(),
++    range: position.range,
++    loc: position.loc,
++    parts: createParts(state, params.contentType),
++  } as AnyToken);
++}
++
++function parseEndTag(state: TokenizerState) {
++  const params = state.contextParams[TokenizerContextTypes.RawText];
++  pushContent(state);
++  state.contextParams[TokenizerContextTypes.RawText] = undefined;
++
++  if (state.decisionBuffer.value().endsWith(">")) {
++    const range: Range = [state.sourceCode.index() - (state.decisionBuffer.length() - 1), state.sourceCode.index() + 1];
++    state.tokens.push({
++      type: params?.closeType ?? TokenTypes.CloseTag,
++      name: params?.tagName ?? "",
++      value: state.decisionBuffer.value(),
++      range,
++      loc: state.sourceCode.getLocationOf(range),
++    } as AnyToken);
++    state.accumulatedContent.clear();
++    state.decisionBuffer.clear();
++    state.currentContext = TokenizerContextTypes.Data;
++    state.sourceCode.next();
++    return;
++  }
++
++  state.accumulatedContent.replace(state.decisionBuffer);
++  state.decisionBuffer.clear();
++  state.contextParams[TokenizerContextTypes.CloseTag] = { closeType: params?.closeType ?? TokenTypes.CloseTag };
++  state.currentContext = TokenizerContextTypes.CloseTag;
++  state.sourceCode.next();
++}
+diff --git a/src/tokenizer/handlers/script-tag-content.ts b/src/tokenizer/handlers/script-tag-content.ts
+deleted file mode 100644
+index 4683cf7..0000000
+--- a/src/tokenizer/handlers/script-tag-content.ts
++++ /dev/null
+@@ -1,58 +0,0 @@
+-import {
+-  TokenizerContextTypes,
+-  INCOMPLETE_CLOSING_TAG_PATTERN,
+-  CLOSING_SCRIPT_TAG_PATTERN,
+-  TokenTypes,
+-} from "../../constants/index.js";
+-import { calculateTokenPosition, createParts } from "../../utils/index.js";
+-import { Range, TokenizerState } from "../../types/index.js";
+-import { CharsBuffer } from "../chars-buffer.js";
+-
+-export function parse(chars: CharsBuffer, state: TokenizerState) {
+-  if (
+-    chars.value() === "<" ||
+-    chars.value() === "</" ||
+-    INCOMPLETE_CLOSING_TAG_PATTERN.test(chars.value())
+-  ) {
+-    state.sourceCode.next();
+-    return;
+-  }
+-
+-  if (CLOSING_SCRIPT_TAG_PATTERN.test(chars.value())) {
+-    return parseClosingScriptTag(state);
+-  }
+-
+-  state.accumulatedContent.concatBuffer(state.decisionBuffer);
+-  state.decisionBuffer.clear();
+-  state.sourceCode.next();
+-}
+-
+-function parseClosingScriptTag(state: TokenizerState) {
+-  if (state.accumulatedContent.value() !== "") {
+-    const position = calculateTokenPosition(state, { keepBuffer: false });
+-    state.tokens.push({
+-      type: TokenTypes.ScriptTagContent,
+-      value: state.accumulatedContent.value(),
+-      range: position.range,
+-      loc: position.loc,
+-      parts: createParts(state, TokenTypes.ScriptTagContent),
+-    });
+-  }
+-
+-  const range: Range = [
+-    state.sourceCode.index() - (state.decisionBuffer.length() - 1),
+-    state.sourceCode.index() + 1,
+-  ];
+-
+-  state.tokens.push({
+-    type: TokenTypes.CloseScriptTag,
+-    value: state.decisionBuffer.value(),
+-    range,
+-    loc: state.sourceCode.getLocationOf(range),
+-  });
+-
+-  state.accumulatedContent.clear();
+-  state.decisionBuffer.clear();
+-  state.currentContext = TokenizerContextTypes.Data;
+-  state.sourceCode.next();
+-}
+diff --git a/src/tokenizer/handlers/style-tag-content.ts b/src/tokenizer/handlers/style-tag-content.ts
+deleted file mode 100644
+index a71320f..0000000
+--- a/src/tokenizer/handlers/style-tag-content.ts
++++ /dev/null
+@@ -1,59 +0,0 @@
+-import {
+-  INCOMPLETE_CLOSING_TAG_PATTERN,
+-  TokenizerContextTypes,
+-  TokenTypes,
+-} from "../../constants/index.js";
+-import { Range, TokenizerState } from "../../types/index.js";
+-import { calculateTokenPosition, createParts } from "../../utils/index.js";
+-import { CharsBuffer } from "../chars-buffer.js";
+-
+-const CLOSING_STYLE_TAG_PATTERN = /<\/style\s*>/i;
+-
+-export function parse(chars: CharsBuffer, state: TokenizerState) {
+-  if (
+-    chars.value() === "<" ||
+-    chars.value() === "</" ||
+-    INCOMPLETE_CLOSING_TAG_PATTERN.test(chars.value())
+-  ) {
+-    state.sourceCode.next();
+-    return;
+-  }
+-
+-  if (CLOSING_STYLE_TAG_PATTERN.test(chars.value())) {
+-    return parseClosingStyleTag(state);
+-  }
+-
+-  state.accumulatedContent.concatBuffer(state.decisionBuffer);
+-  state.decisionBuffer.clear();
+-  state.sourceCode.next();
+-}
+-
+-function parseClosingStyleTag(state: TokenizerState) {
+-  if (state.accumulatedContent.value() !== "") {
+-    const position = calculateTokenPosition(state, { keepBuffer: false });
+-    state.tokens.push({
+-      type: TokenTypes.StyleTagContent,
+-      value: state.accumulatedContent.value(),
+-      range: position.range,
+-      loc: position.loc,
+-      parts: createParts(state, TokenTypes.StyleTagContent),
+-    });
+-  }
+-
+-  const range: Range = [
+-    state.sourceCode.index() - (state.decisionBuffer.length() - 1),
+-    state.sourceCode.index() + 1,
+-  ];
+-
+-  state.tokens.push({
+-    type: TokenTypes.CloseStyleTag,
+-    value: state.decisionBuffer.value(),
+-    range,
+-    loc: state.sourceCode.getLocationOf(range),
+-  });
+-
+-  state.accumulatedContent.clear();
+-  state.decisionBuffer.clear();
+-  state.currentContext = TokenizerContextTypes.Data;
+-  state.sourceCode.next();
+-}
+diff --git a/src/tokenizer/tokenize.ts b/src/tokenizer/tokenize.ts
+index 154ba5f..9444e3e 100644
+--- a/src/tokenizer/tokenize.ts
++++ b/src/tokenizer/tokenize.ts
+@@ -13,12 +13,10 @@ import {
+   DoctypeOpen,
+   openTagEnd,
+   openTagStart,
+-  scriptTagContent,
+   doctypeAttributeWrapped,
+-  styleTagContent,
+   attributeValue,
+   attributeValueWrapped,
+-  customTagRawContent,
++  rawText,
+   noop,
+ } from "./handlers/index.js";
+ import { TokenizeHandler } from "../types/index.js";
+@@ -36,15 +34,13 @@ const contextHandlers: Record<TokenizerContextTypes, TokenizeHandler> = {
+   [TokenizerContextTypes.AttributeValue]: attributeValue,
+   [TokenizerContextTypes.AttributeValueBare]: attributeValueBare,
+   [TokenizerContextTypes.AttributeValueWrapped]: attributeValueWrapped,
+-  [TokenizerContextTypes.ScriptContent]: scriptTagContent,
+-  [TokenizerContextTypes.StyleContent]: styleTagContent,
++  [TokenizerContextTypes.RawText]: rawText,
+   [TokenizerContextTypes.DoctypeOpen]: DoctypeOpen,
+   [TokenizerContextTypes.DoctypeClose]: DoctypeClose,
+   [TokenizerContextTypes.DoctypeAttributes]: doctypeAttributes,
+   [TokenizerContextTypes.DoctypeAttributeWrapped]: doctypeAttributeWrapped,
+   [TokenizerContextTypes.DoctypeAttributeBare]: doctypeAttributeBare,
+   [TokenizerContextTypes.CommentContent]: commentContent,
+-  [TokenizerContextTypes.CustomTagRawContent]: customTagRawContent,
+   [TokenizerContextTypes.CommentOpen]: noop,
+   [TokenizerContextTypes.CommentClose]: noop,
+ };
+diff --git a/src/types/tokenizer-state.ts b/src/types/tokenizer-state.ts
+index d4d8e8a..f8cb167 100644
+--- a/src/types/tokenizer-state.ts
++++ b/src/types/tokenizer-state.ts
+@@ -1,4 +1,4 @@
+-import { TokenizerContextTypes } from "../constants/index.js";
++import { TokenizerContextTypes, TokenTypes } from "../constants/index.js";
+ import { CharsBuffer } from "../tokenizer/chars-buffer.js";
+ import { SourceCode } from "../tokenizer/source-code.js";
+ import { TemplateInfo } from "./template.js";
+@@ -18,8 +18,13 @@ type ContextParams = {
+   [TokenizerContextTypes.DoctypeAttributeWrapped]?: {
+     wrapper: string;
+   };
+-  [TokenizerContextTypes.CustomTagRawContent]?: {
++  [TokenizerContextTypes.RawText]?: {
+     tagName: string;
++    contentType: TokenTypes.ScriptTagContent | TokenTypes.StyleTagContent | TokenTypes.RawContent;
++    closeType: TokenTypes.CloseScriptTag | TokenTypes.CloseStyleTag | TokenTypes.CloseTag;
++  };
++  [TokenizerContextTypes.CloseTag]?: {
++    closeType: TokenTypes.CloseScriptTag | TokenTypes.CloseStyleTag | TokenTypes.CloseTag;
+   };
+ };
+ 
+diff --git a/src/utils/index.ts b/src/utils/index.ts
+index 508381c..a3df137 100644
+--- a/src/utils/index.ts
++++ b/src/utils/index.ts
+@@ -14,3 +14,4 @@ export * from "./init-if-none.js";
+ export * from "./templates.js";
+ export * from "./raise.js";
+ export * from "./tag-name.js";
++export * from "./pending-text.js";
+diff --git a/src/utils/pending-text.ts b/src/utils/pending-text.ts
+new file mode 100644
+index 0000000..c945e4d
+--- /dev/null
++++ b/src/utils/pending-text.ts
+@@ -0,0 +1,20 @@
++import { Chars, CharsType } from "../tokenizer/chars.js";
++import { TokenizerState } from "../types/index.js";
++
++/**
++ * Moves the pending HTML text in the decision buffer into the content, except its last characters.
++ *
++ * @param state - The tokenizer state, whose decision buffer holds one run of HTML text.
++ * @param keptLength - How many characters stay in the decision buffer.
++ */
++export function moveIntoContentExceptLast(state: TokenizerState, keptLength: number): void {
++  const pending = state.decisionBuffer.first();
++  if (!pending || pending.isTemplate || pending.value.length <= keptLength) {
++    return;
++  }
++  const [start, end] = pending.range;
++  const splitAt = end - keptLength;
++  state.accumulatedContent.concat(new Chars(CharsType.HTML, pending.value.slice(0, -keptLength), [start, splitAt]));
++  state.decisionBuffer.clear();
++  state.decisionBuffer.concat(new Chars(CharsType.HTML, pending.value.slice(-keptLength), [splitAt, end]));
++}

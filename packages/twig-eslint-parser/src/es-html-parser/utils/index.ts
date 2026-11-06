@@ -1,7 +1,5 @@
 export * from "./calculate-token-characters-range.js";
 export * from "./is-whitespace.js";
-export * from "./parse-open-tag-name.js";
-export * from "./parse-close-tag-name.js";
 export * from "./clear-parent.js";
 export * from "./calculate-token-location.js";
 export * from "./calculate-token-position.js";
@@ -14,5 +12,6 @@ export * from "./first.js";
 export * from "./clone-location.js";
 export * from "./init-if-none.js";
 export * from "./templates.js";
-export * from "./raise.js";
 export * from "./tag-name.js";
+export * from "./pending-text.js";
+export * from "./report-error.js";

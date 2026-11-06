@@ -2,6 +2,7 @@ import { ConstructTreeContextTypes, NodeTypes } from "../constants/index.js";
 import { AnyContextualNode, ConstructTreeState, DocumentNode, Range, AnyToken } from "../types/index.js";
 import { SourceLocation } from "../types/source-location.js";
 import { extendNodeEndToLastChild, first, last } from "../utils/index.js";
+import { reportUnclosedElement } from "./element-errors.js";
 import { cloneLocation } from "../utils/clone-location.js";
 import {
   tagContent,
@@ -45,7 +46,25 @@ const EMPTY_LOC: SourceLocation = {
   },
 };
 
-export function constructTree(tokens: AnyToken[], voidElements: readonly string[] = []) {
+const VOID_ELEMENTS = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "keygen",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+];
+
+export function constructTree(tokens: AnyToken[], extraVoidElements: readonly string[] = []) {
   const rootContext = {
     type: ConstructTreeContextTypes.TagContent,
     parentRef: undefined,
@@ -75,19 +94,22 @@ export function constructTree(tokens: AnyToken[], voidElements: readonly string[
     currentContext: rootContext,
     currentNode: rootNode,
     rootNode,
-    voidElements,
+    errors: [],
+    selfClosedElementsByName: new Map(),
+    voidElements: new Set([...VOID_ELEMENTS, ...extraVoidElements.map((name) => name.toLowerCase())]),
   };
 
   const positionOffset = state!.caretPosition;
   processTokens(tokens, state!, positionOffset);
-  endElementsLeftOpen(state!.currentNode);
+  endElementsLeftOpen(state!, state!.currentNode);
 
   return { state, ast: state!.rootNode };
 }
 
-function endElementsLeftOpen(node: AnyContextualNode | undefined) {
+function endElementsLeftOpen(state: ConstructTreeState<any>, node: AnyContextualNode | undefined) {
   for (let open = node; open && open.type !== NodeTypes.Document; open = open.parentRef) {
     extendNodeEndToLastChild(open);
+    reportUnclosedElement(state, open);
   }
 }
 
