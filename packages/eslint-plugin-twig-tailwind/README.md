@@ -95,7 +95,7 @@ are reported as unknown. That is usually the first sign an alias is missing.
 | Twig | Selector |
 |---|---|
 | `class="..."` without Twig inside | better-tailwindcss defaults |
-| `{% set classes = [...] %}`, `{% set title_class = '...' %}`, `{% set bgColorClass = '...' %}` | `TWIG_SELECTORS`: variables named `classes`, or ending in `_class`, `_classes`, `Class` or `Classes` (not one named just `class`: the parser renames that reserved word) |
+| `{% set class = '...' %}`, `{% set classes = [...] %}`, `{% set title_class = '...' %}`, `{% set bgColorClass = '...' %}` | `TWIG_SELECTORS`: variables named `class` or `classes`, or ending in `_class`, `_classes`, `Class` or `Classes` |
 | `{% include 'x' with { classes: [...] } %}`, `{ wrapper_classes: '...' }`, `{ attrs: { class: '...' } }` | `TWIG_SELECTORS`: a hash value under such a key, passed to any function or tag, including `include`, `embed` and `create_attribute()` |
 | `{% set classes = classes\|merge([...]) %}` | `TWIG_SELECTORS`: strings merged into a variable with such a name |
 | `attributes.addClass(...)`, `.removeClass(...)`, including every call in a chain | `DRUPAL_SELECTORS` (`drupal: true`): matched by method name, on any object |

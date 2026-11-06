@@ -1,0 +1,41 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{%\n  set classes = [\n    'node',\n    'node--type-' ~ node.bundle|clean_class,\n    node.isPromoted() ? 'node--promoted',\n    view_mode ? 'node--view-mode-' ~ view_mode|clean_class,\n    'gap-fl-sm-lg',\n  ]\n%}",
+            "error": null
+        },
+        {
+            "source": "{{ attach_library('numiko/card') }}",
+            "error": null
+        },
+        {
+            "source": "{{ attributes.addClass(classes).setAttribute('role', 'article') }}",
+            "error": null
+        },
+        {
+            "source": "{{ content_attributes.addClass(['grid', 'md:grid-cols-2']).removeClass('hidden') }}",
+            "error": null
+        },
+        {
+            "source": "{{ content|without('field_image', 'links') }}",
+            "error": null
+        },
+        {
+            "source": "{% set image_attributes = create_attribute({'class': ['size-full', 'object-cover']}) %}",
+            "error": null
+        },
+        {
+            "source": "{% include 'numiko:card' with { classes: ['w-full', 'h-full'], title: label|t } only %}",
+            "error": null
+        },
+        {
+            "source": "{{ is_active ? 'font-bold' }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'Read more'|t }}",
+            "error": null
+        }
+    ]
+}

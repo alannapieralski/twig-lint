@@ -50,9 +50,7 @@ export const namePattern: string = '[a-zA-Z_\\x7f-\\uffff][a-zA-Z0-9_\\x7f-\\uff
 /**
  * The regular expression pattern used to identify a number.
  */
-export const numberPattern: string = '[0-9]+(?:\\.[0-9]+)?';
-
-export const twig3NumberPattern: string = '[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?(?:[eE][+-]?[0-9]+(?:_[0-9]+)*)?';
+export const numberPattern: string = '[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?(?:[eE][+-]?[0-9]+(?:_[0-9]+)*)?';
 
 /**
  * The regular expression pattern used to identify a punctuation.
@@ -69,7 +67,15 @@ export const stringPattern: string = '(")([^#"\\\\]*(?:\\\\[\\s\\S][^#"\\\\]*)*)
  */
 export const whitespacePattern: string = '[ \\r\\n\\t\\f\\v]+';
 
+/**
+ * The regular expression pattern used to identify an inline comment.
+ */
 export const inlineCommentPattern: string = '#[^\\r\\n]*';
+
+/**
+ * The characters PCRE's \s matches without the u flag, which Twig's patterns rely on.
+ */
+export const pcreWhitespace: string = '[ \\t\\n\\v\\f\\r]';
 
 let openingBrackets = [];
 let closingBrackets = [];
@@ -194,14 +200,8 @@ export class Lexer {
             '//',
             '%',
             '**',
-            '??',
-            '<=>'
+            '??'
         ];
-
-        if (this.level === 3) {
-            this.operators.push('xor', 'has some', 'has every', '?:', '===', '!==', '?.');
-            this.operators.push('? :');
-        }
 
         this.tagPair = ['{%', '%}'];
         this.commentPair = ['{#', '#}'];
@@ -234,27 +234,27 @@ export class Lexer {
             let patterns: Array<string> = [];
 
             operators.sort(function (a, b) {
-                return a.length > b.length ? -1 : 1;
+                return b.length - a.length;
             });
 
             for (let operator of operators) {
-                let length: number = operator.length;
-                let pattern: string = escapeRegularExpressionPattern(operator);
+                // a space within an operator can be any amount of whitespaces
+                let pattern: string = escapeRegularExpressionPattern(operator).replace(/ +/g, pcreWhitespace + '+');
 
-                // an operator that ends with a character must be followed by a whitespace or an opening parenthesis
-                if (new RegExp('[A-Za-z]').test(operator[length - 1])) {
-                    pattern += this.level === 3 ? '(?=[\\s()\\[{])' : '(?=[\\s(])';
+                // an operator that ends with a letter must be followed by a whitespace, a parenthesis, a bracket or a brace
+                if (/[A-Za-z]$/.test(operator)) {
+                    pattern += '(?=' + pcreWhitespace + '|[()\\[{])';
                 }
 
-                // a space within an operator can be any amount of whitespaces
-                pattern = pattern.replace(/\s+/, '\\s+');
+                // an operator that starts with a letter is a name right after "." or "|"
+                if (/^[A-Za-z]/.test(operator)) {
+                    pattern = '(?<![.|]' + pcreWhitespace + '|[^\\n][.|])' + pattern;
+                }
 
                 patterns.push(pattern);
             }
 
-            let pattern: string = `^(${patterns.join('|')})`;
-
-            return new RegExp(pattern);
+            return new RegExp(patterns.join('|'), 'y');
         };
 
         // init regular expressions
@@ -269,9 +269,9 @@ export class Lexer {
         );
 
         this.commentEndRegExp = new RegExp(
-            '(\\s*)(' + this.trimmingModifier + '?)(' + this.commentPair[1] + '(?:' + lineSeparators.join('|') + ')?)' +
+            '(' + pcreWhitespace + '*)(' + this.trimmingModifier + '?)(' + this.commentPair[1] + '(?:' + lineSeparators.join('|') + ')?)' +
             '|' +
-            '(\\s*)(' + this.lineTrimingModifier + ')(' + this.commentPair[1] + ')'
+            '(' + pcreWhitespace + '*)(' + this.lineTrimingModifier + ')(' + this.commentPair[1] + ')'
         );
 
         this.variableEndRegExp = new RegExp(
@@ -280,17 +280,17 @@ export class Lexer {
 
         this.verbatimTagRegExp = new RegExp(
             '^(' + this.tagPair[0] + ')(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)' +
-            '(\\s*)(verbatim)(\\s*)' +
+            '(' + pcreWhitespace + '*)(verbatim)(' + pcreWhitespace + '*)' +
             '(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)(' + this.tagPair[1] + ')'
         );
 
         this.lineTagRegExp = new RegExp(
-            '^(' + this.tagPair[0] + ')(\\s*)(line)(\\s+)(\\d+)(\\s*)(' + this.tagPair[1] + ')'
+            '^(' + this.tagPair[0] + ')(' + pcreWhitespace + '*)(line)(' + pcreWhitespace + '+)(\\d+)(' + pcreWhitespace + '*)(' + this.tagPair[1] + ')'
         );
 
         this.endverbatimTagRegExp = new RegExp(
             '(' + this.tagPair[0] + ')(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)' +
-            '(\\s*)(endverbatim)(\\s*)' +
+            '(' + pcreWhitespace + '*)(endverbatim)(' + pcreWhitespace + '*)' +
             '(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)(' + this.tagPair[1] + ')'
         );
 
@@ -300,18 +300,18 @@ export class Lexer {
         );
 
         this.interpolationStartRegExp = new RegExp(
-            '^(' + this.interpolationPair[0] + ')(\\s*)'
+            '^(' + this.interpolationPair[0] + ')(' + pcreWhitespace + '*)'
         );
 
         this.interpolationEndRegExp = new RegExp(
-            '^(\\s*)(' + this.interpolationPair[1] + ')'
+            '^(' + pcreWhitespace + '*)(' + this.interpolationPair[1] + ')'
         );
 
         this.closingBracketRegExp = new RegExp(closingBracketPattern);
         this.doubleQuotedStringContentRegExp = new RegExp('^' + doubleQuotedStringContentPattern);
         this.doubleQuotedStringDelimiterRegExp = new RegExp('^' + doubleQuotedStringDelimiterPattern);
         this.nameRegExp = new RegExp('^' + namePattern);
-        this.numberRegExp = new RegExp('^' + (this.level === 3 ? twig3NumberPattern : numberPattern));
+        this.numberRegExp = new RegExp('^' + numberPattern);
         this.openingBracketRegExp = new RegExp(openingBracketPattern);
         this.punctuationRegExp = new RegExp(punctuationPattern);
         this.stringRegExp = new RegExp('^' + stringPattern);
@@ -450,15 +450,15 @@ export class Lexer {
             this.pushToken("SPREAD_OPERATOR", '...');
         }
         // test operator
-        else if ((match = this.testOperatorRegExp.exec(candidate)) !== null && !this.isWordOperatorAfterDotOrPipe(match[0])) {
+        else if ((match = this.matchAtCursor(this.testOperatorRegExp)) !== null) {
             this.pushToken("TEST_OPERATOR", match[0]);
         }
         // arrow
-        else if ((match = this.arrowOperatorRegExp.exec(candidate)) !== null) {
+        else if ((match = this.matchAtCursor(this.arrowOperatorRegExp)) !== null) {
             this.pushToken("ARROW", match[0]);
         }
         // operator
-        else if ((match = this.operatorRegExp.exec(candidate)) !== null && !this.isWordOperatorAfterDotOrPipe(match[0])) {
+        else if ((match = this.matchAtCursor(this.operatorRegExp)) !== null) {
             this.pushToken("OPERATOR", match[0]);
         }
         // name
@@ -513,7 +513,8 @@ export class Lexer {
             this.pushToken("OPENING_QUOTE", value);
             this.pushState(LexerState.DOUBLE_QUOTED_STRING);
         }
-        else if (this.level === 3 && (match = this.inlineCommentRegExp.exec(candidate)) !== null) {
+        // inline comment
+        else if ((match = this.inlineCommentRegExp.exec(candidate)) !== null) {
             this.pushToken("INLINE_COMMENT", match[0]);
         }
         // unlexable
@@ -651,14 +652,10 @@ export class Lexer {
         }
     }
 
-    private isWordOperatorAfterDotOrPipe(operator: string): boolean {
-        if (this.level !== 3 || !/^[A-Za-z]/.test(operator)) {
-            return false;
-        }
+    private matchAtCursor(regExp: RegExp): RegExpExecArray | null {
+        regExp.lastIndex = this.cursor;
 
-        const precedingCharacters = this.source.substring(Math.max(0, this.cursor - 2), this.cursor);
-
-        return /(?:[.|][ \t\n\v\f\r]|.[.|])$/.test(precedingCharacters);
+        return regExp.exec(this.source);
     }
 
     private moveCoordinates(text: string) {

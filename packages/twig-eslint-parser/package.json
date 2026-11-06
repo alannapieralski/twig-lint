@@ -25,6 +25,7 @@
     "dist",
     "LICENSE",
     "NOTICE",
+    "third_party/twig/LICENSE",
     "third_party/twig-lexer/LICENSE",
     "third_party/twig-lexer/UPSTREAM.md",
     "third_party/es-html-parser/LICENSE.md",
@@ -43,7 +44,7 @@
     "typecheck": "tsc -b tsconfig.lexer.json tsconfig.es-html-parser.json && tsc -p tsconfig.json",
     "test": "vitest run",
     "test:upstream": "node scripts/vendor.ts --test",
-    "golden:twig": "php tools/twig-oracle/tokenize.php test/fixtures/twig",
+    "golden:twig": "php tools/twig-oracle/tokenize.php test/fixtures/twig && php tools/twig-oracle/parse.php test/fixtures/twig",
     "syntax:twig": "php tools/twig-oracle/syntax.php test/fixtures/twig/twig-syntax.json",
     "vendor:check": "node scripts/vendor.ts --check",
     "vendor:write": "node scripts/vendor.ts --write",
@@ -51,8 +52,7 @@
   },
   "dependencies": {
     "css-tree": "3.2.1",
-    "eslint-visitor-keys": "5.0.1",
-    "espree": "11.2.0"
+    "eslint-visitor-keys": "5.0.1"
   },
   "peerDependencies": {
     "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0"

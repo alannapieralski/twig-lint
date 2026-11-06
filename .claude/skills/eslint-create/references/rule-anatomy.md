@@ -190,7 +190,7 @@ export const messages = {
   `Program` listener.
 - Listen to node types for tags (`Tag`, `ScriptTag`, `StyleTag`) through the shared listener
   helper, so the list of tag types is written once.
-- The JavaScript in `twigBody` only carries positions and structure. Do not write rules that
+- The ESTree in `twigBody` only carries positions and structure. Do not write rules that
   depend on JavaScript semantics.
 - Use `Node:exit` when a check needs the children first. Keep selectors narrow.
 

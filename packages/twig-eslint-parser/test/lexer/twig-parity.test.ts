@@ -32,7 +32,7 @@ describe('lexer parity with Twig (golden files from tools/twig-oracle)', () => {
 const expression = {
   source: '{{ "\\x41\\101" ~ \'it\\\'s\' is null }}\n',
   golden: {
-    twig: '3.28.0',
+    twig: '3.30.0',
     tokens: [
       { type: 'begin of print statement', value: '', line: 1, offset: 0 },
       { type: 'string', value: 'AA', line: 1, offset: 3 },
@@ -82,7 +82,7 @@ describe('the parity comparison', () => {
 
   it('reports Twig text that our lexer puts inside a comment', () => {
     const golden: Golden = {
-      twig: '3.28.0',
+      twig: '3.30.0',
       tokens: [
         { type: 'text', value: '{# a #}x', line: 1, offset: 0 },
         { type: 'end of template', value: '', line: 1, offset: 8 },
@@ -94,7 +94,7 @@ describe('the parity comparison', () => {
   });
 
   it('reports our text that Twig does not have', () => {
-    const golden: Golden = { twig: '3.28.0', tokens: [{ type: 'end of template', value: '', line: 1, offset: 8 }] };
+    const golden: Golden = { twig: '3.30.0', tokens: [{ type: 'end of template', value: '', line: 1, offset: 8 }] };
     expect(findParityMismatches('{# a #}x', golden)).toEqual(['our TEXT "x" at offset 7 is not text in Twig']);
   });
 });

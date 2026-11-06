@@ -1,0 +1,78 @@
+Description: Match whitespace as PCRE's \s does
+ Twig's patterns are PCRE without the u flag, where \s is the six ASCII
+ characters space, tab, line feed, vertical tab, form feed and carriage
+ return. twig-lexer 1.0.0 writes JavaScript's \s, which also matches
+ no-break spaces, the byte order mark and U+2028. So "{# a<NBSP>#}" put the
+ comment end at the no-break space, and "{% line<NBSP>3 %}" was read as a
+ line tag where Twig reads a name. Every \s in the comment, verbatim, line
+ and interpolation patterns becomes pcreWhitespace, which TL-05 reuses.
+Author: Numiko
+Origin: vendor
+Forwarded: not-needed
+Twig-Reference: none (port fix; PCRE semantics of every Twig 3 release)
+Test: test/fixtures/twig/whitespace-edges.twig (parity with Twig); npm run test:upstream
+Last-Update: 2026-11-03
+---
+diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts
+index 5934ea7..df90d25 100644
+--- a/src/main/lib/Lexer.ts
++++ b/src/main/lib/Lexer.ts
+@@ -61,6 +61,11 @@ export const stringPattern: string = '(")([^#"\\\\]*(?:\\\\.[^#"\\\\]*)*)(")|^(\
+  */
+ export const whitespacePattern: string = '[ \\r\\n\\t\\f\\v]+';
+ 
++/**
++ * The characters PCRE's \s matches without the u flag, which Twig's patterns rely on.
++ */
++export const pcreWhitespace: string = '[ \\t\\n\\v\\f\\r]';
++
+ let openingBrackets = [];
+ let closingBrackets = [];
+ 
+@@ -252,9 +257,9 @@ export class Lexer {
+         );
+ 
+         this.commentEndRegExp = new RegExp(
+-            '(\\s*)(' + this.trimmingModifier + '?)(' + this.commentPair[1] + '(?:' + lineSeparators.join('|') + ')?)' +
++            '(' + pcreWhitespace + '*)(' + this.trimmingModifier + '?)(' + this.commentPair[1] + '(?:' + lineSeparators.join('|') + ')?)' +
+             '|' +
+-            '(\\s*)(' + this.lineTrimingModifier + ')(' + this.commentPair[1] + ')'
++            '(' + pcreWhitespace + '*)(' + this.lineTrimingModifier + ')(' + this.commentPair[1] + ')'
+         );
+ 
+         this.variableEndRegExp = new RegExp(
+@@ -263,17 +268,17 @@ export class Lexer {
+ 
+         this.verbatimTagRegExp = new RegExp(
+             '^(' + this.tagPair[0] + ')(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)' +
+-            '(\\s*)(verbatim)(\\s*)' +
++            '(' + pcreWhitespace + '*)(verbatim)(' + pcreWhitespace + '*)' +
+             '(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)(' + this.tagPair[1] + ')'
+         );
+ 
+         this.lineTagRegExp = new RegExp(
+-            '^(' + this.tagPair[0] + ')(\\s*)(line)(\\s+)(\\d+)(\\s*)(' + this.tagPair[1] + ')'
++            '^(' + this.tagPair[0] + ')(' + pcreWhitespace + '*)(line)(' + pcreWhitespace + '+)(\\d+)(' + pcreWhitespace + '*)(' + this.tagPair[1] + ')'
+         );
+ 
+         this.endverbatimTagRegExp = new RegExp(
+             '(' + this.tagPair[0] + ')(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)' +
+-            '(\\s*)(endverbatim)(\\s*)' +
++            '(' + pcreWhitespace + '*)(endverbatim)(' + pcreWhitespace + '*)' +
+             '(' + this.trimmingModifier + '|' + this.lineTrimingModifier + '?)(' + this.tagPair[1] + ')'
+         );
+ 
+@@ -283,11 +288,11 @@ export class Lexer {
+         );
+ 
+         this.interpolationStartRegExp = new RegExp(
+-            '^(' + this.interpolationPair[0] + ')(\\s*)'
++            '^(' + this.interpolationPair[0] + ')(' + pcreWhitespace + '*)'
+         );
+ 
+         this.interpolationEndRegExp = new RegExp(
+-            '^(\\s*)(' + this.interpolationPair[1] + ')'
++            '^(' + pcreWhitespace + '*)(' + this.interpolationPair[1] + ')'
+         );
+ 
+         this.closingBracketRegExp = new RegExp(closingBracketPattern);

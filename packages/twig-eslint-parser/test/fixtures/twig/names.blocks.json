@@ -1,0 +1,37 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ foo }}",
+            "error": null
+        },
+        {
+            "source": "{{ _foo }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo_bar }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo123 }}",
+            "error": null
+        },
+        {
+            "source": "{{ café }}",
+            "error": null
+        },
+        {
+            "source": "{{ naïve.über }}",
+            "error": null
+        },
+        {
+            "source": "{{ 名前 }}",
+            "error": null
+        },
+        {
+            "source": "{{ données|length }}",
+            "error": null
+        }
+    ]
+}

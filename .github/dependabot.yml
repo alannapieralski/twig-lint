@@ -13,6 +13,12 @@ updates:
           - eslint-plugin-better-tailwindcss
           - es-html-parser-upstream
           - twig-lexer-upstream
+  - package-ecosystem: composer
+    directory: /packages/twig-eslint-parser/tools/twig-oracle
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
     schedule:

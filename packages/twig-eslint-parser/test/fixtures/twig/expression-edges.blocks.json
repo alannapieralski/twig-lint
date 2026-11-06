@@ -1,0 +1,125 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ a is null }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not null }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is\nnot\nnull }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is  not  null }}",
+            "error": null
+        },
+        {
+            "source": "{{ a not in b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a not\nin b }}",
+            "error": null
+        },
+        {
+            "source": "{{ not a in b }}",
+            "error": null
+        },
+        {
+            "source": "{{ not (a in b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a starts with 'x' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a starts\nwith 'x' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ends with 'y' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is same as(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not same as(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is divisible by(3) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not divisible by(3) }}",
+            "error": null
+        },
+        {
+            "source": "{% if a is defined and a is not null and b is not same as(c) and d is divisible\nby(2) %}",
+            "error": null
+        },
+        {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_000 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_000_000.25 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 0.5 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1e3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1e-3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1E+3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_0.0_1e1_0 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 3.14e0 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_000|abs }}",
+            "error": null
+        },
+        {
+            "source": "{{ items[1_0] }}",
+            "error": null
+        },
+        {
+            "source": "{{ 2e3 * 1_000 }}",
+            "error": null
+        },
+        {
+            "source": "{{ -1_5 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1.e3 }}",
+            "error": null
+        }
+    ]
+}

@@ -68,7 +68,9 @@ the templates you actually have: Drupal core, contributed modules and your theme
     text is exact, children sit inside their parents, and no close tag is lost.
   - `metamorphic`: rewrites that cannot change the meaning (spaces inside Twig delimiters, a space
     between a Twig tag and an attribute name, Windows line endings) must not change the tree.
-  - `converts-every-block`: every Twig block converts to an expression tree.
+  - `block-verdicts`: the parser accepts exactly the Twig blocks real Twig accepts, block by block
+    (needs PHP, as above). A block both reject is a report; a block only one rejects is a failure.
+    Without PHP, every block the parser rejects is a report, not compared with Twig.
   - `line-coverage`: a per-line report of which lines the parser read, and what damaged the ones it
     did not.
   - `mutation-recall`: applies small defects and harmless rewrites to a sample of templates and

@@ -1,0 +1,325 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ a or b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a xor b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a and b }}",
+            "error": null
+        },
+        {
+            "source": "{{ not a }}",
+            "error": null
+        },
+        {
+            "source": "{{ a b-or b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a b-xor b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a b-and b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a == b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a != b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a <=> b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a === b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a !== b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a < b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a > b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a <= b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a >= b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a in b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a not in b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a not  in b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a matches '/x/' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a starts with 'x' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ends with 'y' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a starts  with 'x' }}",
+            "error": null
+        },
+        {
+            "source": "{{ a has some x => x > 1 }}",
+            "error": null
+        },
+        {
+            "source": "{{ a has every x => x > 1 }}",
+            "error": null
+        },
+        {
+            "source": "{{ a .. b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a + b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a - b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ~ b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a * b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a / b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a // b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a % b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ** b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ?? b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ?: b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ? : b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ? b : c }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ? b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is defined }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is not defined }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is same as(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is divisible by(3) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?.b?.c }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?.b() }}",
+            "error": null
+        },
+        {
+            "source": "{{ [...a, ...b] }}",
+            "error": null
+        },
+        {
+            "source": "{{ {...a, b: 1} }}",
+            "error": null
+        },
+        {
+            "source": "{{ a==b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a~b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a??b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a===b }}",
+            "error": null
+        },
+        {
+            "source": "{{ not(a) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a and(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a or[b] }}",
+            "error": null
+        },
+        {
+            "source": "{{ a in{b: 1} }}",
+            "error": null
+        },
+        {
+            "source": "{{ a matches('/x/') }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.and }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.or }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.not }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo. and }}",
+            "error": null
+        },
+        {
+            "source": "{{ x|matches }}",
+            "error": null
+        },
+        {
+            "source": "{{ x| in }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.in(1) }}",
+            "error": null
+        },
+        {
+            "source": "{% do x = 1 %}",
+            "error": null
+        },
+        {
+            "source": "{% do [a, b] = [1, 2] %}",
+            "error": null
+        },
+        {
+            "source": "{% do {name, age} = user %}",
+            "error": null
+        },
+        {
+            "source": "{% do {name: userName} = user %}",
+            "error": null
+        },
+        {
+            "source": "{{ items|map(i => i.x)|join(', ') }}",
+            "error": null
+        },
+        {
+            "source": "{{ items|filter((v, k) => v > k) }}",
+            "error": null
+        },
+        {
+            "source": "{{ f(name: value) }}",
+            "error": null
+        },
+        {
+            "source": "{{ f(name=value) }}",
+            "error": null
+        },
+        {
+            "source": "{{ macros.(name)(args) }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.bar(some: arg) }}",
+            "error": null
+        },
+        {
+            "source": "{{ -a }}",
+            "error": null
+        },
+        {
+            "source": "{{ +a }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.is }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo. is }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.is(1) }}",
+            "error": null
+        },
+        {
+            "source": "{{ x|is }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.is not }}",
+            "error": "Unexpected token \"operator\" of value \"not\" (\"end of print statement\" expected)."
+        }
+    ]
+}

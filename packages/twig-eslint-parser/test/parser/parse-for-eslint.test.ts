@@ -53,22 +53,15 @@ function expressionOf(code: string): Node {
   return onlyStatement(code)['expression'] as Node;
 }
 
-const blocksTwigItselfRejectsByFixture: Record<string, string[]> = {
-  'operators.twig': ['{{ foo.is not }}'],
-};
-
 const tagsOf = (code: string) => collectNodes(parse(code).result.ast.body, (node) => node.type === 'Tag');
 const namedTag = (code: string, name: string) => tagsOf(code).find((tag) => tag['name'] === name) as Node;
 
 describe('fixtures', () => {
   const fixtureNames = readdirSync(fixturesDirectory).filter((name) => name.endsWith('.twig'));
 
-  it.each(fixtureNames)('%s converts every block Twig accepts and keeps every literal at its real source position', (fixtureName) => {
+  it.each(fixtureNames)('%s keeps every literal at its real source position', (fixtureName) => {
     const code = readFileSync(new URL(fixtureName, fixturesDirectory), 'utf8');
-    const { statements, services } = parse(code);
-    const unconvertedSources = unparsedTwig(services).map((block) => code.slice(...block.range));
-    expect(unconvertedSources).toEqual(blocksTwigItselfRejectsByFixture[fixtureName] ?? []);
-
+    const { statements } = parse(code);
     const literals = collectNodes(statements, (node) => node.type === 'Literal');
     for (const literal of literals) {
       expect(sourceOf(code, literal)).toBe(literal['raw']);
@@ -84,8 +77,8 @@ describe('fixtures', () => {
 
   it.each(fixtureNames)('%s produces output that matches the source node by node', (fixtureName) => {
     const code = readFileSync(new URL(fixtureName, fixturesDirectory), 'utf8');
-    const rejectedByTwig = blocksTwigItselfRejectsByFixture[fixtureName] ?? [];
-    const issues = checkParserOutput(code).filter((issue) => !rejectedByTwig.some((source) => issue.detail.startsWith(source)));
+    const unconvertedBlocks = unparsedTwig(parse(code).services).map((block) => code.slice(...block.range));
+    const issues = checkParserOutput(code).filter((issue) => !unconvertedBlocks.some((source) => issue.detail.startsWith(source)));
     expect(issues).toEqual([]);
   });
 });
@@ -120,6 +113,8 @@ describe('strings and numbers', () => {
     ["{{ 'flex p-4' }}", 'flex p-4'],
     ['{{ "hash # here" }}', 'hash # here'],
     ["{{ 'it\\'s' }}", "it's"],
+    ['{{ "\\a\\b\\f\\v\\e" }}', '\x07\b\f\ve'],
+    ['{{ "\\x41\\101\\q" }}', 'AAq'],
   ])('turns the plain string in %s into a template literal without expressions, keeping its Twig quotes in range', (code, cooked) => {
     const expression = expressionOf(code);
     expect(expression).toMatchObject({ type: 'TemplateLiteral', expressions: [], quasis: [{ value: { cooked } }] });
@@ -220,7 +215,7 @@ describe('operators', () => {
   it.each([
     ["{{ a ? 'b' }}", '&&'],
     ["{{ a ?'b' }}", '&&'],
-    ["{{ a?'b' }}", '&'],
+    ["{{ a?'b' }}", '&&'],
     ["{{ a ?\n  'b' }}", '&&'],
   ])('turns the short ternary in %s into %s, keeping the value on the right', (code, operator) => {
     expect(expressionOf(code)).toMatchObject({ operator, right: { type: 'TemplateLiteral' } });
@@ -243,14 +238,14 @@ describe('operators', () => {
   it.each([
     ['{{ a and b ?? c }}', { operator: '&&', right: { operator: '??' } }],
     ['{{ not a ?? b }}', { type: 'UnaryExpression', argument: { operator: '??' } }],
-    ['{{ x or a ?? b ?? c }}', { operator: '||', right: { operator: '??', left: { operator: '??' } } }],
+    ['{{ x or a ?? b ?? c }}', { operator: '||', right: { operator: '??', right: { operator: '??' } } }],
   ])('groups the ?? chain in %s as Twig does', (code, shape) => {
     expect(expressionOf(code)).toMatchObject(shape);
     expect(checkParserOutput(code)).toEqual([]);
   });
 
-  it('reads ?? as || when there is no space for brackets around it', () => {
-    expect(expressionOf('{{ f(a??b and c) }}')).toMatchObject({ arguments: [{ operator: '||', right: { operator: '&&' } }] });
+  it('groups ?? tighter than and inside call arguments, as Twig does', () => {
+    expect(expressionOf('{{ f(a??b and c) }}')).toMatchObject({ arguments: [{ operator: '&&', left: { operator: '??' } }] });
   });
 
   it('parses arrow functions, spreads and dynamic macro calls', () => {
@@ -259,8 +254,8 @@ describe('operators', () => {
     expect(onlyStatement('{{ macros.(name)(args) }}')).toBeDefined();
   });
 
-  it('renames JavaScript reserved words used as Twig variables', () => {
-    expect(expressionOf('{{ class }}')).toMatchObject({ type: 'Identifier', name: '_lass' });
+  it('keeps a Twig variable named like a JavaScript reserved word', () => {
+    expect(expressionOf('{{ class }}')).toMatchObject({ type: 'Identifier', name: 'class' });
   });
 });
 
@@ -289,7 +284,7 @@ describe('tags', () => {
 
   it('supports {% set %} capture blocks and destructuring', () => {
     expect(onlyStatement('{% set c %}{% endset %}')).toMatchObject({ type: 'VariableDeclaration' });
-    expect(onlyStatement('{% set [a, b] = x %}')).toMatchObject({ type: 'VariableDeclaration' });
+    expect(onlyStatement('{% set a, b = x, y %}')).toMatchObject({ type: 'VariableDeclaration', declarations: [{ id: { type: 'ArrayPattern' } }] });
     expect(expressionOf('{% do {name: userName} = user %}')).toMatchObject({ type: 'AssignmentExpression' });
   });
 
@@ -302,9 +297,8 @@ describe('tags', () => {
     expect(expressionOf("{% embed 'card' ignore missing with { a: 1 } %}{% endembed %}")).toMatchObject({ type: 'CallExpression', callee: { name: 'embed' } });
   });
 
-  it('parses the iterated expression of {% for %}, including the Twig 2 if filter', () => {
+  it('parses the iterated expression of {% for %}', () => {
     expect(expressionOf('{% for key, item in items %}{% endfor %}')).toMatchObject({ type: 'Identifier', name: 'items' });
-    expect(expressionOf("{% for item in items if item != '' %}{% endfor %}")).toMatchObject({ type: 'SequenceExpression' });
   });
 
   it.each(['{% if a and b %}{% endif %}', '{% do x = 1 %}', '{% with { a: 1 } only %}{% endwith %}', "{% macro input(classes = ['a']) %}{% endmacro %}", "{% block title 'value' %}"])(
@@ -436,7 +430,60 @@ describe('block bracket pairs', () => {
   });
 });
 
+describe('names that Object.prototype also has', () => {
+  it.each(['constructor', 'toString', '__proto__'])('reads {{ %s }} as a variable', (name) => {
+    expect(onlyStatement(`{{ ${name} }}`)).toMatchObject({ expression: { type: 'Identifier', name } });
+  });
+
+  it.each(['constructor', 'toString'])('leaves the %s tag unconverted', (name) => {
+    const { statements, services } = parse(`{% ${name} %}`);
+    expect(statements).toEqual([]);
+    expect(services.convertedBlockCount).toBe(0);
+  });
+});
+
+describe('subscripts', () => {
+  it.each(['{{ a[:2] }}', '{{ a[1:] }}', '{{ a[1:2] }}'])('keeps %s as a slice', (code) => {
+    expect(onlyStatement(code)).toMatchObject({ expression: { property: { type: 'SequenceExpression' } } });
+  });
+
+  it('reads an index as a plain member', () => {
+    expect(onlyStatement('{{ a[2] }}')).toMatchObject({ expression: { property: { type: 'Literal' } } });
+  });
+});
+
+describe('end tags and else with something after them', () => {
+  it.each([
+    ['{% if a %}{% endif b %}', 'Unexpected token "name" of value "b" ("end of statement block" expected).'],
+    ['{% set a %}x{% endset b %}', 'Unexpected token "name" of value "b" ("end of statement block" expected).'],
+    ['{% with %}{% endwith x %}', 'Unexpected token "name" of value "x" ("end of statement block" expected).'],
+    ['{% apply upper %}x{% endapply upper %}', 'Unexpected token "name" of value "upper" ("end of statement block" expected).'],
+    ['{% block a %}x{% endblock a b %}', 'Unexpected token "name" of value "b" ("end of statement block" expected).'],
+    ['{% if a %}{% else x %}{% endif %}', 'Unexpected token "name" of value "x" ("end of statement block" expected).'],
+    ['{% for a in b %}{% else x %}{% endfor %}', 'Unexpected token "name" of value "x" ("end of statement block" expected).'],
+  ])('reports %s with the message Twig 3.30 gives', (code, reason) => {
+    expect(unparsedTwig(parse(code).services).map((diagnostic) => diagnostic.message)).toEqual([`This Twig block could not be parsed: ${reason}`]);
+  });
+
+  it.each(['{% if a %}{% endif %}', '{% block a %}x{% endblock %}', '{% block a %}x{% endblock a %}', '{% macro f() %}{% endmacro f %}', '{%- if a -%}{%- else -%}{%- endif -%}'])('accepts %s', (code) => {
+    expect(parse(code).services.diagnostics).toEqual([]);
+  });
+});
+
+describe('tags that do not start with their name', () => {
+  it.each(['{% "x" if a %}', '{% (a) set b = 1 %}', '{% %}'])('reports %s with the message Twig 3.30 gives', (code) => {
+    expect(unparsedTwig(parse(code).services).map((diagnostic) => diagnostic.message)).toEqual(['This Twig block could not be parsed: A block must start with a tag name.']);
+  });
+});
+
 describe('large templates', () => {
+  it('reads a mapping of 8,000 string keys in well under a second', () => {
+    const entries = Array.from({ length: 8000 }, (_, index) => `"key${index}": "value${index}"`).join(', ');
+    const start = performance.now();
+    parse(`{% set x = { ${entries} } %}`);
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+
   it('groups 50,000 Twig blocks in linear time', () => {
     const code = '<p>{{ a }}{% if b %}c{% endif %}{# d #}</p>\n'.repeat(12_500);
     const { services } = parse(code);
@@ -828,8 +875,9 @@ describe('unquoted attribute values', () => {
 describe('tags without optional whitespace', () => {
   it('still parses {%include%} written without a space after the tag name', () => {
     expect(expressionOf("{%include'card'with{classes:['a']}%}")).toMatchObject({
-      type: 'SequenceExpression',
-      expressions: [{ type: 'TemplateLiteral', quasis: [{ value: { cooked: 'card' } }] }, { type: 'ObjectExpression' }],
+      type: 'CallExpression',
+      callee: { name: 'include' },
+      arguments: [{ type: 'TemplateLiteral', quasis: [{ value: { cooked: 'card' } }] }, { type: 'ObjectExpression' }],
     });
   });
 });

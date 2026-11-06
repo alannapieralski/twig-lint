@@ -286,43 +286,50 @@ describe('x-unparsed-twig', () => {
   it('reports a for loop that has no "in"', () => {
     const [diagnostic] = diagnosticsOf('{% for item items %}{{ item }}{% endfor %}');
     expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig', range: [0, 20] });
-    expect(diagnostic?.message).toContain('needs "in"');
+    expect(diagnostic?.message).toBe('This Twig block could not be parsed: Unexpected token "name" of value "items" ("operator" expected with value "in").');
   });
 
   it('stays quiet for blocks that have nothing to parse', () => {
     expect(codesOf('{% extends "a.twig" %}{% block b %}{% endblock %}{% for a in b %}{% endfor %}')).toEqual([]);
   });
 
+  it('reports a block nested too deeply to read instead of throwing', () => {
+    const depth = 50_000;
+    const [diagnostic] = diagnosticsOf(`{{ ${'('.repeat(depth)}a${')'.repeat(depth)} }}`);
+    expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig', message: 'This Twig block could not be parsed: The expression is nested too deeply to read.' });
+  });
+
   it('reports a block that is not a valid expression, with the reason', () => {
     const [diagnostic] = diagnosticsOf('<p>{{ title subtitle }}</p>');
     expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig', range: [3, 23] });
-    expect(diagnostic?.message).toContain('Unexpected token subtitle');
+    expect(diagnostic?.message).toBe('This Twig block could not be parsed: Unexpected token "name" of value "subtitle" ("end of print statement" expected).');
   });
 });
 
-describe('x-unparsed-twig for constructs only JavaScript has', () => {
+describe('x-unparsed-twig for blocks Twig rejects', () => {
   it.each([
     ['a missing comma between array items', "{% set classes = ['a' 'b'] %}"],
     ['a missing comma between hash values', "{{ { a: 'x' b: 'y' } }}"],
     ['a string straight after a variable', "{{ title 'suffix' }}"],
     ['a comma outside brackets', '{{ a, b }}'],
     ['a comma outside brackets in a condition', '{% if a, b %}{% endif %}'],
+    ['a loop with a condition, which Twig 3 removed', '{% for item in items if item.visible %}{% endfor %}'],
+    ['a list of set targets in brackets', '{% set [a, b] = x %}'],
   ])('reports %s', (_name, code) => {
     const [diagnostic] = diagnosticsOf(code);
     expect(diagnostic).toMatchObject({ code: 'x-unparsed-twig' });
     expect(diagnostic?.range[0]).toBe(0);
   });
 
-  it('names what is wrong', () => {
-    expect(diagnosticsOf("{{ a 'b' }}")[0]?.message).toContain('missing');
-    expect(diagnosticsOf('{{ a, b }}')[0]?.message).toContain('comma');
+  it('names what is wrong in the words Twig uses', () => {
+    expect(diagnosticsOf("{{ a 'b' }}")[0]?.message).toBe('This Twig block could not be parsed: Unexpected token "string" of value "b" ("end of print statement" expected).');
+    expect(diagnosticsOf('{{ a, b }}')[0]?.message).toBe('This Twig block could not be parsed: Unexpected token "punctuation" of value "," ("end of print statement" expected).');
   });
 
   it.each([
     ['commas between array items and arguments', "{% set a = ['a', 'b'] %}{{ f(1, 'x') }}"],
     ['commas between hash entries and include parameters', "{% include 'x' with { a: 1, b: 2 } only %}"],
     ['several set targets', '{% set a, b = 1, 2 %}'],
-    ['a loop with a condition', '{% for item in items if item.visible %}{% endfor %}'],
     ['macro defaults', "{% macro input(name, value = '') %}{% endmacro %}"],
   ])('stays quiet for %s', (_name, code) => {
     expect(diagnosticsOf(code)).toEqual([]);

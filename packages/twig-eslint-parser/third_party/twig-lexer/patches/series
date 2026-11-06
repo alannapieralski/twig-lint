@@ -1,11 +1,9 @@
 # Applied in order by scripts/vendor.ts. One patch per concern.
 TL-01-esm-import-specifiers.patch
-TL-02-inline-comments.patch
-TL-03-twig-3-operators.patch
-TL-04-word-operator-lookahead.patch
-TL-05-names-after-dot-or-pipe.patch
+TL-02-pcre-whitespace.patch
+TL-03-non-latin-names.patch
+TL-04-escaped-newlines-in-strings.patch
+TL-05-twig-3-operator-matching.patch
 TL-06-twig-3-17-numbers.patch
-TL-07-non-latin-names.patch
-TL-08-escaped-newlines-in-strings.patch
-TL-10-spaced-elvis-operator.patch
-TL-09-apache-change-notices.patch
+TL-07-inline-comments.patch
+TL-08-apache-change-notices.patch

@@ -1,0 +1,137 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ foo\r.and }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.\r\nand }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.\nand }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo\n.and }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.\tand }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.  and }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.\u000band }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo. and }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.not in bar }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo. not in bar }}",
+            "error": null
+        },
+        {
+            "source": "{{ foo.is not null }}",
+            "error": "Unexpected token \"operator\" of value \"not\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a?.and }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?. and }}",
+            "error": null
+        },
+        {
+            "source": "{{ x|starts with }}",
+            "error": "Unexpected token \"name\" of value \"with\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a ?   : b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ?\n: b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a?:b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ? :b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a not   in b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a starts\t\twith b }}",
+            "error": null
+        },
+        {
+            "source": "{{ a or\"b\" }}",
+            "error": "Unexpected token \"name\" of value \"or\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ not-1 }}",
+            "error": null
+        },
+        {
+            "source": "{{ (a and)b }}",
+            "error": "Unexpected token \"punctuation\" of value \")\"."
+        },
+        {
+            "source": "{{ xor }}",
+            "error": null
+        },
+        {
+            "source": "{{ in }}",
+            "error": null
+        },
+        {
+            "source": "{{ matches }}",
+            "error": null
+        },
+        {
+            "source": "{{ a ~ xor }}",
+            "error": null
+        },
+        {
+            "source": "{{ a is(b) }}",
+            "error": "Unexpected token \"operator\" of value \"(\" (\"name\" expected)."
+        },
+        {
+            "source": "{{ a is[b] }}",
+            "error": "Unexpected token \"operator\" of value \"[\" (\"name\" expected)."
+        },
+        {
+            "source": "{{ a isnot b }}",
+            "error": "Unexpected token \"name\" of value \"isnot\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ b-and }}",
+            "error": "Unexpected token \"operator\" of value \"b-and\"."
+        },
+        {
+            "source": "{{ a b-and(b) }}",
+            "error": null
+        },
+        {
+            "source": "{{ a b-or[1] }}",
+            "error": null
+        }
+    ]
+}

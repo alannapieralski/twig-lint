@@ -59,18 +59,28 @@ with `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`.
 
 ## Local modifications
 
-| ID | Change | Why | Twig reference | Test |
-|---|---|---|---|---|
-| TL-01 | Add `.js` extensions to relative imports | Shipped as native ES modules, where Node requires full specifiers | None (port fix) | `npm run typecheck`, `npm run test:upstream` |
-| TL-02 | Lex `# comment` inside expressions as `INLINE_COMMENT` (level 3) | Upstream throws "Unexpected character #" | Twig 3.15.0 | `comments.twig` parity |
-| TL-03 | Add operators `<=>` (all levels) and `has some`, `has every`, `xor`, `?:`, `===`, `!==`, `?.` (level 3) | Upstream splits `===`/`?.` and reads word operators as names | Twig 2.12.0, 3.5.0, 3.15.0, 3.17.0, 3.23.0 | `operators.twig`, `tags.twig` parity |
-| TL-04 | Word operators may be followed by `(`, `)`, `[` or `{` (level 3) | Upstream only allows whitespace or `(`, so `a or[b]` lexed `or` as a name | Twig 3.1.0 | `operators.twig` parity |
-| TL-05 | Words after `.` or `\|` (optionally one whitespace) are names, including `is` / `is not` (level 3) | Upstream lexed `foo.and`, `x\|matches`, `foo.is` as operators | Twig 3.1.0, whitespace form 3.24.0 | `operators.twig` parity |
-| TL-06 | Numbers with `_` separators and optionally signed exponents (level 3) | Upstream split `1_000` and `1e3` into a number and a name | Twig 3.17.0 | `numbers.twig` parity |
-| TL-07 | Names may contain any character from U+007F upwards | PHP matches `\x7f-\xff` per byte, so any UTF-8 name is valid; upstream threw on `名前` | None (port fix) | `names.twig` parity |
-| TL-08 | A backslash-escaped line break is allowed inside strings | PHP's `/s` flag lets `\\.` match a newline; JavaScript's `.` does not, so upstream threw | None (port fix) | `strings.twig` parity |
-| TL-10 | Lex the spaced Elvis operator `? :` as one operator (level 3) | Twig registers `? :` as an alias of `?:`; upstream split it into `?` and `:` | Twig 3.17.1 | `operators.twig` parity, `test/syntax-coverage.test.ts` |
-| TL-09 | Add a derived-and-modified notice to `Lexer.ts`, `Token.ts` and `TokenType.ts` | Apache-2.0 §4(b); applied last so it never shifts other patches | None (licence compliance) | `npm run vendor:check` |
+Upstream is a port of Twig's 2.x-era lexer and has not been released since April 2024. The kinds
+below say why each change exists: **Port bug** where the JavaScript port behaves differently from
+Twig's PHP on the same text, **Newer Twig** where Twig 3 added syntax after the port, **Port fix** and
+**Licence** for module format and notices. No maintained JavaScript Twig lexer exists
+to replace it: twing depends on this one, twig.js matches regular expressions inside its expression
+compiler, and ludtwig (Rust) and tree-sitter-twig (C) have their own.
+
+| ID | Kind | Change | Why | Twig reference | Test |
+|---|---|---|---|---|---|
+| TL-01 | Port fix | Add `.js` extensions to relative imports | Shipped as native ES modules, where Node requires full specifiers | None (port fix) | `npm run typecheck`, `npm run test:upstream` |
+| TL-02 | Port bug | Whitespace in the comment, verbatim, line and interpolation patterns is PCRE's ASCII `\s` | JavaScript's `\s` also matches NBSP, BOM and U+2028, so `{# a<NBSP>#}` ended the comment at the NBSP | None (port fix) | `whitespace-edges.twig` parity |
+| TL-03 | Port bug | Names may contain any character from U+007F upwards | PHP matches `\x7f-\xff` per byte, so any UTF-8 name is valid; upstream threw on `名前` | None (port fix) | `names.twig` parity |
+| TL-04 | Port bug | A backslash-escaped line break is allowed inside strings | PHP's `/s` flag lets `\\.` match a newline; JavaScript's `.` does not, so upstream threw | None (port fix) | `strings.twig` parity |
+| TL-05 | Newer Twig | Operators are matched at the cursor with Twig's lookahead `(?=[\s()\[{])` and lookbehind `(?<![.\|]\s\|.[.\|])` | Upstream only had the lookahead with `(`, and matched on the text after the cursor, where a lookbehind sees nothing | Twig 3.1.0, 3.24.0 | `operators.twig`, `operator-edges.twig` parity |
+| TL-06 | Newer Twig | Numbers with `_` separators and optionally signed exponents | Upstream split `1_000` and `1e3` into a number and a name | Twig 3.17.0 | `numbers.twig` parity |
+| TL-07 | Newer Twig | Lex `# comment` inside expressions as `INLINE_COMMENT` | Upstream throws "Unexpected character #" | Twig 3.15.0 | `comments.twig` parity |
+| TL-08 | Licence | Add a derived-and-modified notice to `Lexer.ts`, `Token.ts` and `TokenType.ts` | Apache-2.0 §4(b); applied last so it never shifts other patches | None (licence compliance) | `npm run vendor:check` |
+
+Patches apply at every level; this package uses level 3 only. The operator
+list is not patched: `TwigLexer` in `src/twig/tokens.ts` sets the protected
+`operators` field to Twig's list in `src/twig/operators.ts`, which
+`test/syntax-coverage.test.ts` checks against Twig's own inventory.
 
 Every shipped file except `SyntaxError.ts` is modified; `SyntaxError.ts` is
 byte-identical to upstream and carries no notice.
@@ -103,5 +113,5 @@ from pristine plus patches, so run it in CI.
   upstream now covers and refresh any that no longer apply.
 - **A new Twig release:** compare Twig's lexer and operator list between the
   supported version and the new one, for example
-  `git diff v3.28.0 v3.29.0 -- src/Lexer.php src/Extension/CoreExtension.php`
+  `git diff v3.29.0 v3.30.0 -- src/Lexer.php src/Extension/CoreExtension.php`
   in a Twig checkout, then add one patch per new behaviour.

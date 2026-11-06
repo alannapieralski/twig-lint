@@ -1,0 +1,101 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{% set classes = ['card', is_featured ? 'card--featured'] %}",
+            "error": null
+        },
+        {
+            "source": "{{ attributes.addClass(classes) }}",
+            "error": null
+        },
+        {
+            "source": "{{ attributes|without('role') }}",
+            "error": null
+        },
+        {
+            "source": "{{ 'Main'|trans }}",
+            "error": null
+        },
+        {
+            "source": "{{ legend.attributes }}",
+            "error": null
+        },
+        {
+            "source": "{{ create_attribute({'class': ['a', 'b']}) }}",
+            "error": null
+        },
+        {
+            "source": "{% if id %}",
+            "error": null
+        },
+        {
+            "source": "{{ id }}",
+            "error": null
+        },
+        {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
+            "source": "{% if checked %}",
+            "error": null
+        },
+        {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
+            "source": "{{ level }}",
+            "error": null
+        },
+        {
+            "source": "{{ level }}",
+            "error": null
+        },
+        {
+            "source": "{{ html_element }}",
+            "error": null
+        },
+        {
+            "source": "{{ element_attributes }}",
+            "error": null
+        },
+        {
+            "source": "{{ html_element }}",
+            "error": null
+        },
+        {
+            "source": "{{ tag|default('span') }}",
+            "error": null
+        },
+        {
+            "source": "{{ tag|default('span') }}",
+            "error": null
+        },
+        {
+            "source": "{{ '}}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ '{{' ~ '%}' }}",
+            "error": null
+        },
+        {
+            "source": "{{ modifier }}",
+            "error": null
+        },
+        {
+            "source": "{{ src }}",
+            "error": null
+        },
+        {
+            "source": "{{ alt|default('') }}",
+            "error": null
+        },
+        {
+            "source": "{% set markup = '<div{{ attributes }}>' %}",
+            "error": null
+        }
+    ]
+}

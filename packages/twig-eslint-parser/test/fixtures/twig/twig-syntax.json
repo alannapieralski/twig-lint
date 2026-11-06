@@ -1,5 +1,5 @@
 {
-    "twig": "3.28.0",
+    "twig": "3.30.0",
     "tags": [
         {
             "name": "apply",
@@ -101,120 +101,162 @@
         "sequence",
         "true"
     ],
+    "testsWithOneMandatoryArgument": [
+        "divisible by",
+        "same as"
+    ],
     "expressions": [
         {
             "type": "infix",
             "parser": "ArrowExpressionParser",
             "name": "=>",
-            "aliases": []
+            "aliases": [],
+            "precedence": 250,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "AssignmentExpressionParser",
             "name": "=",
-            "aliases": []
+            "aliases": [],
+            "precedence": 0,
+            "associativity": "right"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "!=",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "!==",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "%",
-            "aliases": []
+            "aliases": [],
+            "precedence": 60,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "*",
-            "aliases": []
+            "aliases": [],
+            "precedence": 60,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "**",
-            "aliases": []
+            "aliases": [],
+            "precedence": 200,
+            "associativity": "right"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "+",
-            "aliases": []
+            "aliases": [],
+            "precedence": 30,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "-",
-            "aliases": []
+            "aliases": [],
+            "precedence": 30,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "..",
-            "aliases": []
+            "aliases": [],
+            "precedence": 25,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "/",
-            "aliases": []
+            "aliases": [],
+            "precedence": 60,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "//",
-            "aliases": []
+            "aliases": [],
+            "precedence": 60,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "<",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "<=",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "<=>",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "==",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "===",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": ">",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": ">=",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
@@ -222,103 +264,137 @@
             "name": "?:",
             "aliases": [
                 "? :"
-            ]
+            ],
+            "precedence": 5,
+            "associativity": "right"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "??",
-            "aliases": []
+            "aliases": [],
+            "precedence": 300,
+            "associativity": "right"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "and",
-            "aliases": []
+            "aliases": [],
+            "precedence": 15,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "b-and",
-            "aliases": []
+            "aliases": [],
+            "precedence": 18,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "b-or",
-            "aliases": []
+            "aliases": [],
+            "precedence": 16,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "b-xor",
-            "aliases": []
+            "aliases": [],
+            "precedence": 17,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "ends with",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "has every",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "has some",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "in",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "matches",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "not in",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "or",
-            "aliases": []
+            "aliases": [],
+            "precedence": 10,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "starts with",
-            "aliases": []
+            "aliases": [],
+            "precedence": 20,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "xor",
-            "aliases": []
+            "aliases": [],
+            "precedence": 12,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "BinaryOperatorExpressionParser",
             "name": "~",
-            "aliases": []
+            "aliases": [],
+            "precedence": 40,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "ConditionalTernaryExpressionParser",
             "name": "?",
-            "aliases": []
+            "aliases": [],
+            "precedence": 0,
+            "associativity": "left"
         },
         {
             "type": "infix",
@@ -326,73 +402,97 @@
             "name": ".",
             "aliases": [
                 "?."
-            ]
+            ],
+            "precedence": 512,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "FilterExpressionParser",
             "name": "|",
-            "aliases": []
+            "aliases": [],
+            "precedence": 512,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "FunctionExpressionParser",
             "name": "(",
-            "aliases": []
+            "aliases": [],
+            "precedence": 512,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "IsExpressionParser",
             "name": "is",
-            "aliases": []
+            "aliases": [],
+            "precedence": 100,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "IsNotExpressionParser",
             "name": "is not",
-            "aliases": []
+            "aliases": [],
+            "precedence": 100,
+            "associativity": "left"
         },
         {
             "type": "infix",
             "parser": "SquareBracketExpressionParser",
             "name": "[",
-            "aliases": []
+            "aliases": [],
+            "precedence": 512,
+            "associativity": "left"
         },
         {
             "type": "prefix",
             "parser": "GroupingExpressionParser",
             "name": "(",
-            "aliases": []
+            "aliases": [],
+            "precedence": 0,
+            "associativity": null
         },
         {
             "type": "prefix",
             "parser": "LiteralExpressionParser",
             "name": "literal",
-            "aliases": []
+            "aliases": [],
+            "precedence": 0,
+            "associativity": null
         },
         {
             "type": "prefix",
             "parser": "UnaryOperatorExpressionParser",
             "name": "+",
-            "aliases": []
+            "aliases": [],
+            "precedence": 500,
+            "associativity": null
         },
         {
             "type": "prefix",
             "parser": "UnaryOperatorExpressionParser",
             "name": "-",
-            "aliases": []
+            "aliases": [],
+            "precedence": 500,
+            "associativity": null
         },
         {
             "type": "prefix",
             "parser": "UnaryOperatorExpressionParser",
             "name": "...",
-            "aliases": []
+            "aliases": [],
+            "precedence": 512,
+            "associativity": null
         },
         {
             "type": "prefix",
             "parser": "UnaryOperatorExpressionParser",
             "name": "not",
-            "aliases": []
+            "aliases": [],
+            "precedence": 50,
+            "associativity": null
         }
     ],
     "tokenTypes": [

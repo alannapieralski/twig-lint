@@ -1,5 +1,6 @@
 import { Lexer } from '../lexer/Lexer.js';
 import { SyntaxError as TwigLexerSyntaxError } from '../lexer/SyntaxError.js';
+import { TWIG_OPERATORS } from './operators.js';
 import type { TokenType } from '../lexer/TokenType.js';
 
 export type TwigTokenType = TokenType;
@@ -9,29 +10,6 @@ const NON_SIGNIFICANT_TYPES: ReadonlySet<TwigTokenType> = new Set(['WHITESPACE',
 
 export function isSignificant(token: TwigToken): boolean {
   return !NON_SIGNIFICANT_TYPES.has(token.type);
-}
-
-export function findTopLevelIndices(tokens: readonly TwigToken[]): Set<number> {
-  const topLevelIndices = new Set<number>();
-  let depth = 0;
-  tokens.forEach((token, index) => {
-    if (token.type === 'PUNCTUATION' && '([{'.includes(token.value)) {
-      depth += 1;
-    }
-    if (token.type === 'INTERPOLATION_START' || token.type === 'OPENING_QUOTE') {
-      depth += 1;
-    }
-    if (depth === 0) {
-      topLevelIndices.add(index);
-    }
-    if (token.type === 'PUNCTUATION' && ')]}'.includes(token.value)) {
-      depth -= 1;
-    }
-    if (token.type === 'INTERPOLATION_END' || token.type === 'CLOSING_QUOTE') {
-      depth -= 1;
-    }
-  });
-  return topLevelIndices;
 }
 
 export class TwigSyntaxError extends Error {
@@ -46,9 +24,16 @@ export class TwigSyntaxError extends Error {
   }
 }
 
+export class TwigLexer extends Lexer {
+  constructor() {
+    super(3);
+    this.operators = [...TWIG_OPERATORS];
+  }
+}
+
 function lexTwig(source: string): ReturnType<Lexer['tokenize']> {
   try {
-    return new Lexer(3).tokenize(source);
+    return new TwigLexer().tokenize(source);
   } catch (error) {
     if (error instanceof TwigLexerSyntaxError) {
       throw new TwigSyntaxError(error.message, error.line, error.column);
@@ -61,6 +46,9 @@ export function tokenizeTwig(source: string): TwigToken[] {
   let start = 0;
   const tokens = lexTwig(source).map((token): TwigToken => {
     const value = token.value === null || token.value === undefined ? '' : String(token.value);
+    if (!source.startsWith(value, start)) {
+      throw new Error(`The Twig lexer read "${value}" at offset ${start}, where the template has different text.`);
+    }
     const positioned = { type: token.type, value, start, end: start + value.length };
     start = positioned.end;
     return positioned;

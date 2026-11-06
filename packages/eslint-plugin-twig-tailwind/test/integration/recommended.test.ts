@@ -78,6 +78,8 @@ describe('createConfig({ drupal: true })', () => {
 
   it.each([
     ['{% set classes %}', "{% set classes = ['nope'] %}"],
+    ['{% set class %}', "{% set class = 'nope' %}"],
+    ['a class variable merged into', "{% set class = class|merge(['nope']) %}"],
     ['a variable ending in _class', "{% set title_class = 'nope' %}"],
     ['a camelCase variable ending in Class', "{% set bgColorClass = 'nope' %}"],
     ['an include key ending in _classes', "{% include 'x' with { wrapper_classes: 'nope' } %}"],

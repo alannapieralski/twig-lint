@@ -1,0 +1,197 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{% apply upper %}",
+            "error": null
+        },
+        {
+            "source": "{% endapply %}",
+            "error": null
+        },
+        {
+            "source": "{% autoescape 'html' %}",
+            "error": null
+        },
+        {
+            "source": "{{ x }}",
+            "error": null
+        },
+        {
+            "source": "{% endautoescape %}",
+            "error": null
+        },
+        {
+            "source": "{% block title %}",
+            "error": null
+        },
+        {
+            "source": "{% endblock %}",
+            "error": null
+        },
+        {
+            "source": "{% block short 'value' %}",
+            "error": null
+        },
+        {
+            "source": "{% deprecated 'use x instead' package='numiko/x' version='1.0' %}",
+            "error": null
+        },
+        {
+            "source": "{% do 1 + 2 %}",
+            "error": null
+        },
+        {
+            "source": "{% embed 'card.twig' with {classes: ['a']} only %}",
+            "error": null
+        },
+        {
+            "source": "{% block body %}",
+            "error": null
+        },
+        {
+            "source": "{% endblock %}",
+            "error": null
+        },
+        {
+            "source": "{% endembed %}",
+            "error": null
+        },
+        {
+            "source": "{% extends 'base.twig' %}",
+            "error": null
+        },
+        {
+            "source": "{% flush %}",
+            "error": null
+        },
+        {
+            "source": "{% for key, value in items %}",
+            "error": null
+        },
+        {
+            "source": "{{ key }}",
+            "error": null
+        },
+        {
+            "source": "{% else %}",
+            "error": null
+        },
+        {
+            "source": "{% endfor %}",
+            "error": null
+        },
+        {
+            "source": "{% from 'macros.twig' import input as field, textarea %}",
+            "error": null
+        },
+        {
+            "source": "{% guard function foo %}",
+            "error": null
+        },
+        {
+            "source": "{% else %}",
+            "error": null
+        },
+        {
+            "source": "{% endguard %}",
+            "error": null
+        },
+        {
+            "source": "{% if a %}",
+            "error": null
+        },
+        {
+            "source": "{% elseif b %}",
+            "error": null
+        },
+        {
+            "source": "{% else %}",
+            "error": null
+        },
+        {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
+            "source": "{% import 'macros.twig' as forms %}",
+            "error": null
+        },
+        {
+            "source": "{% include 'x.twig' with {a: 1} only ignore missing %}",
+            "error": "Unexpected token \"name\" of value \"ignore\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% macro input(name, value = '', classes = ['form-input']) %}",
+            "error": null
+        },
+        {
+            "source": "{% endmacro %}",
+            "error": null
+        },
+        {
+            "source": "{% sandbox %}",
+            "error": "Unknown \"sandbox\" tag."
+        },
+        {
+            "source": "{% include 'user.twig' %}",
+            "error": null
+        },
+        {
+            "source": "{% set a = 1 %}",
+            "error": null
+        },
+        {
+            "source": "{% set a, b = 1, 2 %}",
+            "error": null
+        },
+        {
+            "source": "{% set c %}",
+            "error": null
+        },
+        {
+            "source": "{% endset %}",
+            "error": null
+        },
+        {
+            "source": "{% types {a: 'string', b?: 'int'} %}",
+            "error": null
+        },
+        {
+            "source": "{% use 'blocks.twig' with a as b %}",
+            "error": null
+        },
+        {
+            "source": "{% with {a: 1} only %}",
+            "error": null
+        },
+        {
+            "source": "{{ a }}",
+            "error": null
+        },
+        {
+            "source": "{% endwith %}",
+            "error": null
+        },
+        {
+            "source": "{% trans %}",
+            "error": "Unknown \"trans\" tag."
+        },
+        {
+            "source": "{{ name }}",
+            "error": null
+        },
+        {
+            "source": "{% plural count %}",
+            "error": "Unknown \"plural\" tag."
+        },
+        {
+            "source": "{% cache 'key' ttl(300) %}",
+            "error": "Unknown \"cache\" tag."
+        },
+        {
+            "source": "{% my_custom_tag some 'argument' %}",
+            "error": "Unknown \"my_custom_tag\" tag."
+        }
+    ]
+}

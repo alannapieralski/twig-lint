@@ -17,7 +17,7 @@ const twigTypeByKind = {
 type CompactToken = readonly [kind: keyof typeof twigTypeByKind, byteOffset: number, text?: string];
 
 function golden(tokens: readonly CompactToken[]): Golden {
-  return { twig: '3.28.0', tokens: tokens.map(([kind, offset, text]) => ({ type: twigTypeByKind[kind], value: text ?? '', line: 1, offset })) };
+  return { twig: '3.30.0', tokens: tokens.map(([kind, offset, text]) => ({ type: twigTypeByKind[kind], value: text ?? '', line: 1, offset })) };
 }
 
 function plainHtml(source: string): CompactToken[] {

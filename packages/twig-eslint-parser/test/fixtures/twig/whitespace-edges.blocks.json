@@ -1,0 +1,45 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ \"#{a }\" }}",
+            "error": null
+        },
+        {
+            "source": "{{ \"#{ a}\" }}",
+            "error": null
+        },
+        {
+            "source": "{% line 3 %}",
+            "error": "Unknown \"line 3\" tag."
+        },
+        {
+            "source": "{% verbatim %}",
+            "error": "Unknown \"verbatim \" tag."
+        },
+        {
+            "source": "{{ a or b }}",
+            "error": "Unexpected token \"name\" of value \"or b\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a or﻿b }}",
+            "error": "Unexpected token \"name\" of value \"or﻿b\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a or\u2028b }}",
+            "error": "Unexpected token \"name\" of value \"or\u2028b\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a not in b }}",
+            "error": "Unexpected token \"name\" of value \"not in\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a is not b }}",
+            "error": "Unexpected token \"name\" of value \"is not\" (\"end of print statement\" expected)."
+        },
+        {
+            "source": "{{ a b }}",
+            "error": null
+        }
+    ]
+}

@@ -1,0 +1,65 @@
+{
+    "twig": "3.30.0",
+    "blocks": [
+        {
+            "source": "{{ 0 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 42 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1.5 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_000 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_000.500_1 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1e3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1E3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1.5e-3 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 2.5E+10 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1_0e1_0 }}",
+            "error": null
+        },
+        {
+            "source": "{{ -1 }}",
+            "error": null
+        },
+        {
+            "source": "{{ +1 }}",
+            "error": null
+        },
+        {
+            "source": "{{ 1..5 }}",
+            "error": null
+        },
+        {
+            "source": "{{ items.0 }}",
+            "error": null
+        },
+        {
+            "source": "{{ items[0] }}",
+            "error": null
+        }
+    ]
+}

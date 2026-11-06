@@ -1,4 +1,5 @@
-import { Lexer } from '../../src/lexer/Lexer.js';
+import { decodeTwigString } from '../../src/twig/string-value.js';
+import { TwigLexer } from '../../src/twig/tokens.js';
 import type { Token } from '../../src/lexer/Token.js';
 import type { TokenType } from '../../src/lexer/TokenType.js';
 
@@ -59,7 +60,6 @@ const END_DELIMITER_TWIG_TYPES = new Set(['end of print statement', 'end of stat
 const MODIFIER_TYPES = new Set<TokenType>(['TRIMMING_MODIFIER', 'LINE_TRIMMING_MODIFIER']);
 const TYPES_TWIG_SKIPS = new Set<TokenType>(['WHITESPACE', 'INLINE_COMMENT']);
 const TAG_NAMES_CONSUMED_BY_TWIG_LEXER = new Set(['verbatim', 'endverbatim', 'line']);
-const escapedCharacterByLetter: Record<string, string> = { f: '\f', n: '\n', r: '\r', t: '\t', v: '\v' };
 const PCRE_WHITESPACE = /[ \t\n\v\f\r]+/g;
 const WHITESPACE_TWIG_TRIMS = /^[ \t\n\v\f\r\0]+$/;
 const LINE_BREAK = /\r\n|\r|\n/g;
@@ -165,54 +165,6 @@ function findColumnsResetByLineTag(tags: PositionedToken[][], lineStarts: number
     });
 }
 
-function normaliseNewlines(text: string): string {
-  return text.replace(LINE_BREAK, '\n');
-}
-
-function readEscapeSequence(text: string, position: number): { bytes: Buffer; next: number } {
-  if (position >= text.length) {
-    return { bytes: Buffer.from('\\'), next: position };
-  }
-
-  const character = String.fromCodePoint(text.codePointAt(position) ?? 0);
-
-  const escapedCharacter = escapedCharacterByLetter[character];
-  if (escapedCharacter) {
-    return { bytes: Buffer.from(escapedCharacter), next: position + 1 };
-  }
-
-  const hexadecimal = /^x([0-9a-fA-F]{1,2})/.exec(text.slice(position, position + 3));
-  if (hexadecimal?.[1]) {
-    return { bytes: Buffer.from([parseInt(hexadecimal[1], 16)]), next: position + hexadecimal[0].length };
-  }
-
-  const octal = /^[0-7]{1,3}/.exec(text.slice(position, position + 3));
-  if (octal) {
-    return { bytes: Buffer.from([parseInt(octal[0], 8) % 256]), next: position + octal[0].length };
-  }
-
-  return { bytes: Buffer.from(character), next: position + character.length };
-}
-
-// Reproduces Twig\Lexer::stripcslashes(), which turns a string literal's source into the value Twig stores.
-function decodeTwigStringContent(content: string): string {
-  const text = normaliseNewlines(content);
-  const chunks: Buffer[] = [];
-  let position = 0;
-  while (position < text.length) {
-    const backslash = text.indexOf('\\', position);
-    if (backslash === -1) {
-      chunks.push(Buffer.from(text.slice(position)));
-      break;
-    }
-    chunks.push(Buffer.from(text.slice(position, backslash)));
-    const escape = readEscapeSequence(text, backslash + 1);
-    chunks.push(escape.bytes);
-    position = escape.next;
-  }
-  return Buffer.concat(chunks).toString('utf8');
-}
-
 function endOfNormalisedText(source: string, start: number, normalised: string): number | undefined {
   let sourceIndex = start;
   for (const character of normalised) {
@@ -306,7 +258,7 @@ function ourValueAsTwigSees(twigToken: GoldenToken, span: PositionedToken[]): un
     case 'number':
       return Number(first.value.replaceAll('_', ''));
     case 'string':
-      return decodeTwigStringContent(span.find((token) => token.type === 'STRING')?.value ?? '');
+      return decodeTwigString(span.find((token) => token.type === 'STRING')?.value ?? '');
     default:
       return twigToken.value;
   }
@@ -506,7 +458,7 @@ function findTextTwigDoesNotHave(template: Template, twigTexts: Range[]): string
 }
 
 function prepareTemplate(source: string): Template {
-  const ours = positionTokens(new Lexer(3).tokenize(source));
+  const ours = positionTokens(new TwigLexer().tokenize(source));
   const lineStarts = findLineStarts(source);
   const tagsConsumedByTwigLexer = findTagsConsumedByTwigLexer(ours);
   return {
