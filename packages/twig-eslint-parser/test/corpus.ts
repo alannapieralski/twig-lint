@@ -119,12 +119,30 @@ const lexerParity: Check = {
   },
 };
 
+function findUnparsedBlocksWithoutTwig(templates: readonly Template[], context: Parameters<Check['run']>[1], oracleMissingReason: string): CheckOutcome {
+  const findings: Finding[] = [];
+  let notParsed = 0;
+  for (const [index, template] of templates.entries()) {
+    context.progress(index, { reports: findings.length });
+    try {
+      const unparsedBlocks = parseForESLint(template.source).services.twig.diagnostics.filter((diagnostic) => diagnostic.code === 'x-unparsed-twig');
+      const locate = createOffsetLocator(template.source);
+      for (const block of unparsedBlocks) {
+        findings.push({ check: 'parser/block-verdicts', severity: 'report', template, message: `${block.message} Not compared with Twig: ${oracleMissingReason}`, line: locate(block.range[0]).line });
+      }
+    } catch {
+      notParsed += 1;
+    }
+  }
+  return { findings, stats: { templates: templates.length, notParsed, blocksNotComparedWithTwig: findings.length } };
+}
+
 const blockVerdicts: Check = {
   id: 'parser/block-verdicts',
   run(templates, context): CheckOutcome {
-    const skipped = oracleUnavailableReason();
-    if (skipped !== undefined) {
-      return { findings: [], stats: {}, skipped };
+    const oracleMissingReason = oracleUnavailableReason();
+    if (oracleMissingReason !== undefined) {
+      return findUnparsedBlocksWithoutTwig(templates, context, oracleMissingReason);
     }
 
     const templatesByPath = new Map(templates.map((template) => [template.path, template]));

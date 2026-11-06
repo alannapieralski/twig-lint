@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseForESLint } from '../src/index.js';
 import { TAGS_LEFT_UNCONVERTED, TESTS_WITH_ONE_MANDATORY_ARGUMENT } from '../src/twig/syntax.js';
 import { CONVERTED_TAGS } from '../src/twig/tag-grammar.js';
-import { ARROW_PRECEDENCE, BINARY_OPERATORS, POSTFIX_PRECEDENCE, PREFIX_OPERATORS, TERNARY_PRECEDENCE, TEST_PRECEDENCE, TWIG_OPERATORS } from '../src/twig/operators.js';
+import { BINARY_OPERATORS, PRECEDENCE_BY_OTHER_INFIX_OPERATOR, PREFIX_OPERATORS, TWIG_OPERATORS } from '../src/twig/operators.js';
 import { tokenizeTwig } from '../src/twig/tokens.js';
 import { checkParserOutput } from './support/output-checks.js';
 
@@ -37,17 +37,6 @@ const fixtures: Fixture[] = readdirSync(fixturesDirectory)
     return { name, code: readFileSync(new URL(name, fixturesDirectory), 'utf8'), twig: golden.twig, tokens: golden.tokens ?? [] };
   });
 
-const OTHER_INFIX_PRECEDENCE: Readonly<Record<string, number>> = {
-  '?': TERNARY_PRECEDENCE,
-  'is': TEST_PRECEDENCE,
-  'is not': TEST_PRECEDENCE,
-  '=>': ARROW_PRECEDENCE,
-  '.': POSTFIX_PRECEDENCE,
-  '?.': POSTFIX_PRECEDENCE,
-  '|': POSTFIX_PRECEDENCE,
-  '(': POSTFIX_PRECEDENCE,
-  '[': POSTFIX_PRECEDENCE,
-};
 const STATEMENT_STARTS = new Set(['begin of print statement', 'begin of statement block', 'begin of string interpolation']);
 const OPENERS = new Set(['(', '[', '{']);
 const PREFIX_CONTEXTS = new Set(['(', '[', '{', ',', ':', '?', '=>', '=']);
@@ -169,7 +158,7 @@ function describeOurPrecedence(type: InventoryExpression['type'], name: string) 
     return { name, precedence: PREFIX_OPERATORS[name]?.precedence, associativity: null };
   }
   const binaryOperator = BINARY_OPERATORS[name];
-  return { name, precedence: binaryOperator?.precedence ?? OTHER_INFIX_PRECEDENCE[name], associativity: binaryOperator?.associativity ?? 'left' };
+  return { name, precedence: binaryOperator?.precedence ?? PRECEDENCE_BY_OTHER_INFIX_OPERATOR[name], associativity: binaryOperator?.associativity ?? 'left' };
 }
 
 function expectedFeatures(): string[] {

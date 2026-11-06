@@ -119,11 +119,13 @@ brackets, so a code can be switched off by name.
   in an attribute name or an unquoted value.
 - A tag that takes in the markup after it leaves that markup's closing tags unmatched, so
   `x-invalid-end-tag` follows the first report.
-- **Twig blocks the parser does not read yet.** Twig rejects these and nothing is reported: an
-  `{% endblock %}` or `{% endmacro %}` whose name differs from the one it closes, a block name used
-  twice in one template, more than one `{% extends %}`, content outside blocks in a template that
-  extends another, and wrong arguments to `extends`, `import`, `from`, `use`, `flush`, `deprecated`,
-  `autoescape`, `guard` and `types`.
+- An `{% endblock %}` or `{% endmacro %}` whose name differs from the one it closes is not reported.
+- A block name used twice in one template is not reported.
+- More than one `{% extends %}`, or content outside blocks in a template that extends another, is not reported.
+- Wrong arguments to `extends`, `import`, `from`, `use`, `flush`, `deprecated`, `autoescape`, `guard` and `types` are not reported.
+- A macro argument named twice (`{% macro m(a, a) %}`) is not reported.
+- `is defined` after anything but a variable, attribute or constant (`a|default is defined`) is not reported.
+- Destructuring into something other than a variable (`{% do [a.b, c] = x %}`) is not reported.
 
 ## Options
 

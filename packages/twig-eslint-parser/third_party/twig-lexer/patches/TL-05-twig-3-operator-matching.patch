@@ -12,7 +12,7 @@ Description: Match operators as Twig 3's Lexer::getOperatorRegex does
  is not changed here: this package passes Twig's list through the
  protected operators field (src/twig/operators.ts).
 Author: Numiko
-Origin: other, https://github.com/twigphp/Twig/blob/v3.28.0/src/Lexer.php
+Origin: other, https://github.com/twigphp/Twig/blob/v3.30.0/src/Lexer.php
 Forwarded: not-needed
 Twig-Reference: 3.1.0 (lookahead and lookbehind), 3.24.0 (lookbehind with whitespace)
 Test: test/fixtures/twig/operators.twig and operator-edges.twig (parity with Twig); npm run test:upstream

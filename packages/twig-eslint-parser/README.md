@@ -234,7 +234,8 @@ with exact ranges instead. Twig is licensed under the BSD 3-Clause License, kept
 
 | Our file | Twig 3.30 source (`src/` in [twigphp/Twig](https://github.com/twigphp/Twig/tree/v3.30.0)) |
 |---|---|
-| `src/twig/expression-grammar.ts` | `ExpressionParser/Infix/*`, `ExpressionParser/Prefix/*`, `ExpressionParser/Infix/ArgumentsTrait.php` |
+| `src/twig/expression-grammar.ts` | `ExpressionParser/Infix/*`, `ExpressionParser/Prefix/*` apart from literals, `ExpressionParser/Infix/ArgumentsTrait.php` |
+| `src/twig/literal-grammar.ts` | `ExpressionParser/Prefix/LiteralExpressionParser.php` (strings, sequences and mappings) |
 | `src/twig/operators.ts` | operator precedences in `ExpressionParsers.php` and `Extension/CoreExtension.php` |
 | `src/twig/tag-grammar.ts` | `TokenParser/{If,Do,With,Set,For,Macro,Block,Include,Embed}TokenParser.php` |
 | `src/twig/token-stream.ts` | `TokenStream.php` and `Token.php` (`expect`, the messages and token names) |

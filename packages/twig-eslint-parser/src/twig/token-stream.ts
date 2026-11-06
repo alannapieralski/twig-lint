@@ -1,4 +1,4 @@
-import { namePattern } from '../lexer/Lexer.js';
+import { namePattern, pcreWhitespace } from '../lexer/Lexer.js';
 import { PUNCTUATION_NAMED_AS_OPERATOR } from './operators.js';
 import { decodeTwigString } from './string-value.js';
 import { isSignificant } from './tokens.js';
@@ -22,7 +22,7 @@ export class TwigGrammarError extends Error {}
 
 const STARTS_WITH_NAME = new RegExp(`^(?:${namePattern})`);
 const IS_NAME = new RegExp(`^(?:${namePattern})$`);
-const PCRE_WHITESPACE = /[ \t\n\v\f\r]+/g;
+const PCRE_WHITESPACE = new RegExp(`${pcreWhitespace}+`, 'g');
 
 const TWIG_TYPE_BY_TOKEN_TYPE: Readonly<Partial<Record<string, string>>> = {
   NAME: 'name',

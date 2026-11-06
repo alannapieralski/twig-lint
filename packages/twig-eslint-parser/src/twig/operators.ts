@@ -68,6 +68,16 @@ export const TEST_PRECEDENCE = 100;
 export const ARROW_PRECEDENCE = 250;
 export const POSTFIX_PRECEDENCE = 512;
 
+export const POSTFIX_OPERATORS: ReadonlySet<string> = new Set(['.', '?.', '|', '(', '[']);
+
+export const PRECEDENCE_BY_OTHER_INFIX_OPERATOR: Readonly<Record<string, number>> = {
+  '?': TERNARY_PRECEDENCE,
+  'is': TEST_PRECEDENCE,
+  'is not': TEST_PRECEDENCE,
+  '=>': ARROW_PRECEDENCE,
+  ...Object.fromEntries([...POSTFIX_OPERATORS].map((operator) => [operator, POSTFIX_PRECEDENCE])),
+};
+
 export const TWIG_OPERATORS: readonly string[] = [...new Set([
   ...Object.keys(PREFIX_OPERATORS).filter((operator) => operator !== '...'),
   ...Object.keys(BINARY_OPERATORS),

@@ -113,5 +113,5 @@ from pristine plus patches, so run it in CI.
   upstream now covers and refresh any that no longer apply.
 - **A new Twig release:** compare Twig's lexer and operator list between the
   supported version and the new one, for example
-  `git diff v3.28.0 v3.29.0 -- src/Lexer.php src/Extension/CoreExtension.php`
+  `git diff v3.29.0 v3.30.0 -- src/Lexer.php src/Extension/CoreExtension.php`
   in a Twig checkout, then add one patch per new behaviour.

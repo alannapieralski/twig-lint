@@ -5,10 +5,10 @@ Description: Lex Twig 3.15 inline comments inside expressions
  the lexer stays lossless; Twig itself discards it.
  Pattern mirrors Twig's Lexer::REGEX_RAW_INLINE_COMMENT, /#[^\r\n]*/A.
 Author: Numiko
-Origin: other, https://github.com/twigphp/Twig/blob/v3.28.0/src/Lexer.php
+Origin: other, https://github.com/twigphp/Twig/blob/v3.30.0/src/Lexer.php
 Forwarded: not-needed
 Twig-Reference: 3.15.0 ("Add support for inline comments")
-Test: test/fixtures/twig/comments.twig (parity with Twig 3.28.0); npm run test:upstream
+Test: test/fixtures/twig/comments.twig (parity with Twig 3.30.0); npm run test:upstream
 Last-Update: 2026-11-03
 ---
 diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts

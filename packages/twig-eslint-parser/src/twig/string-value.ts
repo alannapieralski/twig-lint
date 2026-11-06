@@ -1,4 +1,4 @@
-const ESCAPED_CHARACTER_BY_LETTER: Readonly<Record<string, string>> = { f: '\f', n: '\n', r: '\r', t: '\t', v: '\v' };
+const ESCAPED_CHARACTER_BY_LETTER: Readonly<Record<string, string>> = { a: '\x07', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v' };
 const LINE_BREAK = /\r\n|\r|\n/g;
 const HEXADECIMAL_ESCAPE = /^x([0-9a-fA-F]{1,2})/;
 const OCTAL_ESCAPE = /^[0-7]{1,3}/;

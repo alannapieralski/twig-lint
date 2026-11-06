@@ -1,4 +1,4 @@
-import { ARROW_PRECEDENCE, BINARY_OPERATORS, POSTFIX_PRECEDENCE, PREFIX_OPERATORS, TERNARY_PRECEDENCE, TEST_PRECEDENCE } from './operators.js';
+import { BINARY_OPERATORS, POSTFIX_OPERATORS, PRECEDENCE_BY_OTHER_INFIX_OPERATOR, PREFIX_OPERATORS, TERNARY_PRECEDENCE, TEST_PRECEDENCE } from './operators.js';
 import { parseMapping, parseSequence, parseStringExpression } from './literal-grammar.js';
 import { TESTS_WITH_ONE_MANDATORY_ARGUMENT } from './syntax.js';
 import {
@@ -26,20 +26,12 @@ type ParsedArguments = { readonly args: EstreeNode[]; readonly end: number };
 
 const ARROW_PARAMETERS = 'TwigArrowParameters';
 const ARROW_ARGUMENT_MESSAGE = 'The arrow function argument must be a list of variables or a single variable.';
-const POSTFIX_OPERATORS: ReadonlySet<string> = new Set(['.', '?.', '|', '(', '[']);
 const LITERAL_VALUE_BY_NAME: ReadonlyMap<string, boolean | null> = new Map([['true', true], ['TRUE', true], ['false', false], ['FALSE', false], ['none', null], ['NONE', null], ['null', null], ['NULL', null]]);
 const TWIG_CLASS_BY_NODE_TYPE: Readonly<Partial<Record<string, string>>> = {
   Literal: 'Twig\\Node\\Expression\\ConstantExpression',
   TemplateLiteral: 'Twig\\Node\\Expression\\ConstantExpression',
   MemberExpression: 'Twig\\Node\\Expression\\GetAttrExpression',
   CallExpression: 'Twig\\Node\\Expression\\FunctionExpression',
-};
-const PRECEDENCE_BY_OTHER_INFIX_OPERATOR: Readonly<Record<string, number>> = {
-  '?': TERNARY_PRECEDENCE,
-  'is': TEST_PRECEDENCE,
-  'is not': TEST_PRECEDENCE,
-  '=>': ARROW_PRECEDENCE,
-  ...Object.fromEntries([...POSTFIX_OPERATORS].map((operator) => [operator, POSTFIX_PRECEDENCE])),
 };
 
 function twigClassOf(node: EstreeNode): string {

@@ -10,7 +10,7 @@ Author: Numiko
 Origin: other, https://github.com/twigphp/Twig/blob/v3.17.0/src/Lexer.php
 Forwarded: not-needed
 Twig-Reference: 3.17.0 ("Support underscores in number literals")
-Test: test/fixtures/twig/numbers.twig (parity with Twig 3.28.0); npm run test:upstream
+Test: test/fixtures/twig/numbers.twig (parity with Twig 3.30.0); npm run test:upstream
 Last-Update: 2026-11-03
 ---
 diff --git a/src/main/lib/Lexer.ts b/src/main/lib/Lexer.ts

@@ -113,6 +113,8 @@ describe('strings and numbers', () => {
     ["{{ 'flex p-4' }}", 'flex p-4'],
     ['{{ "hash # here" }}', 'hash # here'],
     ["{{ 'it\\'s' }}", "it's"],
+    ['{{ "\\a\\b\\f\\v\\e" }}', '\x07\b\f\ve'],
+    ['{{ "\\x41\\101\\q" }}', 'AAq'],
   ])('turns the plain string in %s into a template literal without expressions, keeping its Twig quotes in range', (code, cooked) => {
     const expression = expressionOf(code);
     expect(expression).toMatchObject({ type: 'TemplateLiteral', expressions: [], quasis: [{ value: { cooked } }] });

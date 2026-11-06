@@ -15,7 +15,6 @@ export type ParsedTwigBlock =
 type TagGrammar = (stream: TwigTokenStream, tagName: TwigToken) => EstreeNode | undefined;
 
 const END_OF_STATEMENT_BLOCK = 'end of statement block';
-const NESTED_TOO_DEEPLY_REASON = 'The expression is nested too deeply to read.';
 
 function createStatement(stream: TwigTokenStream, expression: EstreeNode): EstreeNode {
   return createNode(stream, 'ExpressionStatement', outerStartOf(stream, expression), outerEndOf(stream, expression), { expression });
@@ -254,7 +253,7 @@ export function parseTwigBlock(block: TwigBlock, locate: (offset: number) => Sou
       return { isParsed: false, reason: error.message };
     }
     if (isCallStackOverflow(error)) {
-      return { isParsed: false, reason: NESTED_TOO_DEEPLY_REASON };
+      return { isParsed: false, reason: 'The expression is nested too deeply to read.' };
     }
     throw error;
   }
