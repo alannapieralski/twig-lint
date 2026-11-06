@@ -14,6 +14,10 @@
             "error": null
         },
         {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
             "source": "{{ [\n  1, # a\n  2 # b\n]|length }}",
             "error": null
         },

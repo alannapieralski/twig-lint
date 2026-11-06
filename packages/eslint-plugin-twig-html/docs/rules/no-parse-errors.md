@@ -64,7 +64,7 @@ Codes without a prefix are the names the HTML specification gives the error. Cod
 | `x-invalid-end-tag` | A closing tag matches no open element. The message names the element that is open there, if any. | `<p>a</p></div>` |
 | `x-unclosed-element` | An element that needs a closing tag never gets one, including a `<script>`, `<style>`, `<textarea>` or `<title>` that takes in the rest of the file. | `<div><p>a</p>` |
 | `x-misplaced-twig-tag` | `{% else %}`, `{% elseif %}` or `{% plural %}` sits where Twig rejects it: `else` outside `if`, `for` and `guard`, `elseif` outside `if`, `plural` outside `trans`, or `else` and `elseif` after an `else`. | `{% if a %}{% else %}{% elseif b %}{% endif %}` |
-| `x-unparsed-twig` | Twig itself rejects a `{{ }}` or `{% %}` block, such as two values in a row, a missing comma between array items, a comma outside brackets, a `{% for %}` with no `in` or with an `if`, or an end tag or `{% else %}` with something after it (`{% endif b %}`). The parser reads the block with Twig's grammar, so the message is the one Twig gives. No other rule reads inside it. | `{{ title subtitle }}` |
+| `x-unparsed-twig` | Twig itself rejects a `{{ }}` or `{% %}` block, such as two values in a row, a missing comma between array items, a comma outside brackets, a `{% for %}` with no `in` or with an `if`, an end tag or `{% else %}` with something after it (`{% endif b %}`), or an `{% endblock %}` or `{% endmacro %}` naming a different block or macro from the one it closes. The parser reads the block with Twig's grammar, so the message is the one Twig gives. No other rule reads inside it. | `{{ title subtitle }}` |
 
 Each open tag gets at most one report, for the first problem in the order the tag is read: a stray
 character in an attribute comes before a `/` that does not end the tag. Duplicate attributes are
@@ -119,7 +119,6 @@ brackets, so a code can be switched off by name.
   in an attribute name or an unquoted value.
 - A tag that takes in the markup after it leaves that markup's closing tags unmatched, so
   `x-invalid-end-tag` follows the first report.
-- An `{% endblock %}` or `{% endmacro %}` whose name differs from the one it closes is not reported.
 - A block name used twice in one template is not reported.
 - More than one `{% extends %}`, or content outside blocks in a template that extends another, is not reported.
 - Wrong arguments to `extends`, `import`, `from`, `use`, `flush`, `deprecated`, `autoescape`, `guard` and `types` are not reported.

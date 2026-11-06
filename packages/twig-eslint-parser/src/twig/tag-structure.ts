@@ -5,81 +5,98 @@ import type { TwigDiagnostic } from '../diagnostics.js';
 import type { TwigBlockSummary } from './blocks.js';
 
 export type UnpairedTwigTag = { readonly block: TwigBlockSummary; readonly message: string };
-export type TwigTagStructure = { readonly unpairedTag: UnpairedTwigTag | undefined; readonly misplacedTagDiagnostics: readonly TwigDiagnostic[] };
+export type TwigTagPairs =
+  | { readonly isPaired: false; readonly unpairedTag: UnpairedTwigTag }
+  | { readonly isPaired: true; readonly openerIndexByBlockIndex: ReadonlyMap<number, number> };
 
-type OpenFrame = { readonly block: TwigBlockSummary; readonly name: string; hasElse: boolean };
+type OpenTag = { readonly index: number; readonly block: TwigBlockSummary };
 
 const orList = new Intl.ListFormat('en', { type: 'disjunction' });
-
-function describeMisplacedTag(tagName: string, frame: OpenFrame): string | undefined {
-  const allowedParents = PARENTS_OF_MIDDLE_TAG[tagName];
-  if (allowedParents && !allowedParents.has(frame.name)) {
-    return `${tagText(tagName)} cannot sit inside ${tagText(frame.name)}. Twig allows it only inside ${orList.format([...allowedParents].map(tagText))}.`;
-  }
-  if (frame.hasElse && TAGS_THAT_CANNOT_FOLLOW_ELSE.has(tagName)) {
-    return `${tagText(tagName)} cannot follow ${tagText('else')}. Twig expects ${tagText(`end${frame.name}`)} next.`;
-  }
-
-  return undefined;
-}
 
 function describeTagWithoutOpener(block: TwigBlockSummary): UnpairedTwigTag {
   return { block, message: `Twig tags don't pair up: ${tagText(block.tagName)} has no tag to belong to.` };
 }
 
-function describeWrongEnd(block: TwigBlockSummary, frame: OpenFrame): UnpairedTwigTag {
-  return { block, message: `Twig tags don't pair up: ${tagText(block.tagName)} cannot close ${tagText(frame.name)}, which needs ${tagText(`end${frame.name}`)}.` };
+function describeWrongEnd(block: TwigBlockSummary, opener: TwigBlockSummary): UnpairedTwigTag {
+  return { block, message: `Twig tags don't pair up: ${tagText(block.tagName)} cannot close ${tagText(opener.tagName)}, which needs ${tagText(`end${opener.tagName ?? ''}`)}.` };
 }
 
-function describeUnclosedTag(frame: OpenFrame): UnpairedTwigTag {
-  return { block: frame.block, message: `Twig tags don't pair up: ${tagText(frame.name)} is never closed, it needs ${tagText(`end${frame.name}`)}.` };
+function describeUnclosedTag(opener: TwigBlockSummary): UnpairedTwigTag {
+  return { block: opener, message: `Twig tags don't pair up: ${tagText(opener.tagName)} is never closed, it needs ${tagText(`end${opener.tagName ?? ''}`)}.` };
 }
 
 /**
- * Walks the Twig tags with one stack of open tags, as Twig's parser does, pairing each end tag and checking where each middle tag sits.
+ * Pairs the Twig tags with one stack of open tags, as Twig's parser does: each end tag with the tag it closes, and each middle tag with the tag it sits in.
  *
- * @param blocks - Every Twig block of the template, in source order.
- * @returns The first tag that does not pair up, and a diagnostic for every middle tag in the wrong place.
+ * @param blocks - The summary of every Twig block of the template, in source order.
+ * @returns The first tag that does not pair up, or the index of the opening tag for every end and middle tag.
  */
-export function readTwigTagStructure(blocks: readonly TwigBlockSummary[]): TwigTagStructure {
-  const frames: OpenFrame[] = [];
-  const misplacedTagDiagnostics: TwigDiagnostic[] = [];
+export function pairTwigTags(blocks: readonly TwigBlockSummary[]): TwigTagPairs {
+  const openTags: OpenTag[] = [];
+  const openerIndexByBlockIndex = new Map<number, number>();
 
-  for (const block of blocks) {
+  for (const [index, block] of blocks.entries()) {
     if (isOpeningTag(block)) {
-      frames.push({ block, name: block.tagName ?? '', hasElse: false });
+      openTags.push({ index, block });
+      continue;
+    }
+    const isEndTag = isClosingTag(block);
+    if (!isEndTag && !isMiddleTag(block)) {
       continue;
     }
 
-    if (isClosingTag(block)) {
-      const frame = frames.pop();
-      if (!frame) {
-        return { unpairedTag: describeTagWithoutOpener(block), misplacedTagDiagnostics };
-      }
-      if (block.tagName !== `end${frame.name}`) {
-        return { unpairedTag: describeWrongEnd(block, frame), misplacedTagDiagnostics };
-      }
+    const openTag = isEndTag ? openTags.pop() : openTags.at(-1);
+    if (!openTag) {
+      return { isPaired: false, unpairedTag: describeTagWithoutOpener(block) };
+    }
+    if (isEndTag && block.tagName !== `end${openTag.block.tagName ?? ''}`) {
+      return { isPaired: false, unpairedTag: describeWrongEnd(block, openTag.block) };
+    }
+    openerIndexByBlockIndex.set(index, openTag.index);
+  }
+
+  const [firstUnclosed] = openTags;
+  return firstUnclosed ? { isPaired: false, unpairedTag: describeUnclosedTag(firstUnclosed.block) } : { isPaired: true, openerIndexByBlockIndex };
+}
+
+function describeMisplacedTag(tagName: string, openerName: string, isAfterElse: boolean): string | undefined {
+  const allowedParents = PARENTS_OF_MIDDLE_TAG[tagName];
+  if (allowedParents && !allowedParents.has(openerName)) {
+    return `${tagText(tagName)} cannot sit inside ${tagText(openerName)}. Twig allows it only inside ${orList.format([...allowedParents].map(tagText))}.`;
+  }
+  if (isAfterElse && TAGS_THAT_CANNOT_FOLLOW_ELSE.has(tagName)) {
+    return `${tagText(tagName)} cannot follow ${tagText('else')}. Twig expects ${tagText(`end${openerName}`)} next.`;
+  }
+
+  return undefined;
+}
+
+/**
+ * Finds every middle tag in a place Twig rejects: outside the tags that allow it, or after an `else`.
+ *
+ * @param blocks - The summary of every Twig block of the template, in source order.
+ * @param openerIndexByBlockIndex - The index of the opening tag of every end and middle tag, from pairTwigTags().
+ * @returns A diagnostic for every misplaced middle tag.
+ */
+export function findMisplacedTagDiagnostics(blocks: readonly TwigBlockSummary[], openerIndexByBlockIndex: ReadonlyMap<number, number>): TwigDiagnostic[] {
+  const openersWithElse = new Set<number>();
+  const diagnostics: TwigDiagnostic[] = [];
+
+  for (const [index, block] of blocks.entries()) {
+    const openerIndex = openerIndexByBlockIndex.get(index);
+    if (!isMiddleTag(block) || openerIndex === undefined) {
       continue;
     }
 
-    if (!isMiddleTag(block)) {
-      continue;
-    }
-
-    const frame = frames.at(-1);
-    if (!frame) {
-      return { unpairedTag: describeTagWithoutOpener(block), misplacedTagDiagnostics };
-    }
     const tagName = block.tagName ?? '';
-    const message = describeMisplacedTag(tagName, frame);
+    const message = describeMisplacedTag(tagName, blocks[openerIndex]?.tagName ?? '', openersWithElse.has(openerIndex));
     if (message) {
-      misplacedTagDiagnostics.push({ code: 'x-misplaced-twig-tag', message, range: block.range });
+      diagnostics.push({ code: 'x-misplaced-twig-tag', message, range: block.range });
     }
     if (tagName === 'else') {
-      frame.hasElse = true;
+      openersWithElse.add(openerIndex);
     }
   }
 
-  const [firstUnclosed] = frames;
-  return { unpairedTag: firstUnclosed && describeUnclosedTag(firstUnclosed), misplacedTagDiagnostics };
+  return diagnostics;
 }

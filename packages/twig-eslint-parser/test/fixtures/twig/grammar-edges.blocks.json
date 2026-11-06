@@ -62,6 +62,10 @@
             "error": null
         },
         {
+            "source": "{% endfor %}",
+            "error": null
+        },
+        {
             "source": "{% for a, in b %}",
             "error": "Unexpected token \"name\" of value \"b\" (\"operator\" expected with value \"in\")."
         },
@@ -306,7 +310,15 @@
             "error": null
         },
         {
+            "source": "{% endwith %}",
+            "error": null
+        },
+        {
             "source": "{% with a only %}",
+            "error": null
+        },
+        {
+            "source": "{% endwith %}",
             "error": null
         },
         {
@@ -326,11 +338,23 @@
             "error": null
         },
         {
+            "source": "{% endmacro %}",
+            "error": null
+        },
+        {
             "source": "{% macro b(x, y = 1, z = [1, -2, {c: 'd'}]) %}",
             "error": null
         },
         {
+            "source": "{% endmacro %}",
+            "error": null
+        },
+        {
             "source": "{% macro c(...rest) %}",
+            "error": null
+        },
+        {
+            "source": "{% endmacro %}",
             "error": null
         },
         {
@@ -432,6 +456,90 @@
         {
             "source": "{{ toString }}",
             "error": null
+        },
+        {
+            "source": "{% if a %}",
+            "error": null
+        },
+        {
+            "source": "{% endif b %}",
+            "error": "Unexpected token \"name\" of value \"b\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% if a %}",
+            "error": null
+        },
+        {
+            "source": "{% else b %}",
+            "error": "Unexpected token \"name\" of value \"b\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
+            "source": "{% for a in b %}",
+            "error": null
+        },
+        {
+            "source": "{% else x %}",
+            "error": "Unexpected token \"name\" of value \"x\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% endfor %}",
+            "error": null
+        },
+        {
+            "source": "{% if a %}",
+            "error": null
+        },
+        {
+            "source": "{% elseif b, c %}",
+            "error": "Unexpected token \"punctuation\" of value \",\" (\"end of statement block\" expected)."
+        },
+        {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
+            "source": "{% block named %}",
+            "error": null
+        },
+        {
+            "source": "{% endblock named %}",
+            "error": null
+        },
+        {
+            "source": "{% block other %}",
+            "error": null
+        },
+        {
+            "source": "{% endblock wrong %}",
+            "error": "Expected endblock for block \"other\" (but \"wrong\" given)."
+        },
+        {
+            "source": "{% macro mm() %}",
+            "error": null
+        },
+        {
+            "source": "{% endmacro mm %}",
+            "error": null
+        },
+        {
+            "source": "{% macro mn() %}",
+            "error": null
+        },
+        {
+            "source": "{% endmacro wrong %}",
+            "error": "Expected endmacro for macro \"mn\" (but \"wrong\" given)."
+        },
+        {
+            "source": "{% apply upper %}",
+            "error": null
+        },
+        {
+            "source": "{% endapply upper %}",
+            "error": "Unexpected token \"name\" of value \"upper\" (\"end of statement block\" expected)."
         }
     ]
 }

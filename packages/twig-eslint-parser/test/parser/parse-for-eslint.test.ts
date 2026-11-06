@@ -470,6 +470,12 @@ describe('end tags and else with something after them', () => {
   });
 });
 
+describe('tags that do not start with their name', () => {
+  it.each(['{% "x" if a %}', '{% (a) set b = 1 %}', '{% %}'])('reports %s with the message Twig 3.30 gives', (code) => {
+    expect(unparsedTwig(parse(code).services).map((diagnostic) => diagnostic.message)).toEqual(['This Twig block could not be parsed: A block must start with a tag name.']);
+  });
+});
+
 describe('large templates', () => {
   it('reads a mapping of 8,000 string keys in well under a second', () => {
     const entries = Array.from({ length: 8000 }, (_, index) => `"key${index}": "value${index}"`).join(', ');

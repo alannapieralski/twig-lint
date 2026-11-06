@@ -129,7 +129,8 @@ function createBlock(kind: TwigBlockKind, tokens: TwigToken[]): TwigBlock {
     throw new Error('A Twig block needs at least its opening and closing delimiters.');
   }
 
-  const tagName = kind === 'tag' ? tokens.find((token) => token.type === 'NAME')?.value : undefined;
+  const firstTokenInside = tokens.slice(1).find(isSignificant);
+  const tagName = kind === 'tag' && firstTokenInside?.type === 'NAME' ? firstTokenInside.value : undefined;
   return { kind, start: first.start, end: last.end, tokens, tagName };
 }
 

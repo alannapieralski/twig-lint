@@ -66,6 +66,10 @@
             "error": null
         },
         {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
             "source": "{{ 1_000 }}",
             "error": null
         },

@@ -1,4 +1,5 @@
 import { parseForESLint } from '../../src/index.js';
+import { isClosingTag, isMiddleTag } from '../../src/twig/block-roles.js';
 import { CONVERTED_TAGS } from '../../src/twig/tag-grammar.js';
 import type { Range } from '../../src/range.js';
 import type { TwigBlockSummary } from '../../src/twig/blocks.js';
@@ -35,6 +36,10 @@ export function compareBlockVerdictsWithTwig(code: string, twigVerdicts: readonl
   for (const block of judgedBlocks) {
     const source = code.slice(...block.range);
     const twigError = twigErrorBySource.get(source);
+    const canTwigLeaveItUnjudged = isClosingTag(block) || isMiddleTag(block);
+    if (twigError === undefined && canTwigLeaveItUnjudged) {
+      continue;
+    }
     if (twigError === undefined) {
       disagreements.push({ range: block.range, description: `no verdict from Twig: ${source}` });
       continue;

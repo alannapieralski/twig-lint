@@ -34,7 +34,15 @@
             "error": null
         },
         {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
             "source": "{% if checked %}",
+            "error": null
+        },
+        {
+            "source": "{% endif %}",
             "error": null
         },
         {

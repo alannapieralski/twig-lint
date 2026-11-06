@@ -10,6 +10,7 @@ import type { TwigToken } from './tokens.js';
 
 export type TwigTokenStream = {
   readonly block: TwigBlock;
+  readonly opener: TwigBlock | undefined;
   readonly tokens: readonly TwigToken[];
   readonly locate: (offset: number) => SourcePosition;
   readonly parenthesisedRanges: WeakMap<EstreeNode, Range>;
@@ -37,8 +38,8 @@ const TWIG_TYPE_BY_TOKEN_TYPE: Readonly<Partial<Record<string, string>>> = {
   INTERPOLATION_END: 'end of string interpolation',
 };
 
-export function createTokenStream(block: TwigBlock, locate: (offset: number) => SourcePosition): TwigTokenStream {
-  return { block, tokens: block.tokens.filter(isSignificant).slice(1), locate, parenthesisedRanges: new WeakMap(), index: 0 };
+export function createTokenStream(block: TwigBlock, locate: (offset: number) => SourcePosition, opener?: TwigBlock): TwigTokenStream {
+  return { block, opener, tokens: block.tokens.filter(isSignificant).slice(1), locate, parenthesisedRanges: new WeakMap(), index: 0 };
 }
 
 export function currentToken(stream: TwigTokenStream): TwigToken {

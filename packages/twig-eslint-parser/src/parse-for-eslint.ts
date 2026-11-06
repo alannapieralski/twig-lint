@@ -6,7 +6,7 @@ import { parseMarkup } from './html/parse-markup.js';
 import { parseTwigParserOptions } from './options.js';
 import { createOffsetLocator } from './source-text.js';
 import { blockRangeOf, groupTwigBlocks, summariseTwigBlocks } from './twig/blocks.js';
-import { readTwigTagStructure } from './twig/tag-structure.js';
+import { findMisplacedTagDiagnostics, pairTwigTags } from './twig/tag-structure.js';
 import { summariseTwigStrings } from './twig/strings.js';
 import { parseTwigBlock } from './twig/tag-grammar.js';
 import { TwigSyntaxError, tokenizeTwig } from './twig/tokens.js';
@@ -46,14 +46,16 @@ function describeUnparsedBlock(block: TwigBlock, reason: string): TwigDiagnostic
   return { code: 'x-unparsed-twig', message: `This Twig block could not be parsed: ${reason}`, range: blockRangeOf(block) };
 }
 
-function convertTwigBlocks(blocks: readonly TwigBlock[], locate: (offset: number) => SourcePosition): TwigExpressions {
+function convertTwigBlocks(blocks: readonly TwigBlock[], openerIndexByBlockIndex: ReadonlyMap<number, number>, locate: (offset: number) => SourcePosition): TwigExpressions {
   const statements: EstreeNode[] = [];
   const unparsedBlockDiagnostics: TwigDiagnostic[] = [];
   let convertedBlockCount = 0;
   let ignoredBlockCount = 0;
 
-  for (const block of blocks) {
-    const parsed = parseTwigBlock(block, locate);
+  for (const [index, block] of blocks.entries()) {
+    const openerIndex = openerIndexByBlockIndex.get(index);
+    const opener = openerIndex === undefined ? undefined : blocks[openerIndex];
+    const parsed = parseTwigBlock(block, locate, opener);
     if (parsed === undefined) {
       ignoredBlockCount += 1;
       continue;
@@ -85,16 +87,17 @@ export function parseForESLint(code: string, options: ParserOptions = {}): TwigP
   const tokens = tokenizeTwig(code);
   const blocks = groupTwigBlocks(tokens);
   const blockSummaries = summariseTwigBlocks(blocks);
-  const { unpairedTag, misplacedTagDiagnostics } = readTwigTagStructure(blockSummaries);
-  if (unpairedTag) {
-    const { line, column } = createOffsetLocator(code)(unpairedTag.block.range[0]);
-    throw new TwigSyntaxError(unpairedTag.message, line, column + 1);
+  const tagPairs = pairTwigTags(blockSummaries);
+  if (!tagPairs.isPaired) {
+    const { line, column } = createOffsetLocator(code)(tagPairs.unpairedTag.block.range[0]);
+    throw new TwigSyntaxError(tagPairs.unpairedTag.message, line, column + 1);
   }
+  const misplacedTagDiagnostics = findMisplacedTagDiagnostics(blockSummaries, tagPairs.openerIndexByBlockIndex);
 
   const markup = parseMarkupWithinStack(code, blocks, rawContentTags);
   const markupDiagnostics = findMarkupDiagnostics({ document: markup.ast.body[0] as MarkupTreeNode, tokens: markup.ast.tokens as SourceToken[], text: code, blocks: blockSummaries });
   const omittedAttributes = omitInterpolatedAttributes(markup.ast, ignoreInterpolatedAttributes);
-  const { statements, unparsedBlockDiagnostics, ...blockCounts } = convertTwigBlocks(blocks, createOffsetLocator(code));
+  const { statements, unparsedBlockDiagnostics, ...blockCounts } = convertTwigBlocks(blocks, tagPairs.openerIndexByBlockIndex, createOffsetLocator(code));
   const diagnostics = [...markupDiagnostics, ...misplacedTagDiagnostics, ...unparsedBlockDiagnostics].sort(compareDiagnostics);
   const visitorKeys = unionWith(markup.visitorKeys);
   const ast = { ...markup.ast, twigBody: statements } as unknown as TwigParseResult['ast'];

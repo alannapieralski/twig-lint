@@ -18,6 +18,10 @@
             "error": null
         },
         {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
             "source": "{{- foo -}}",
             "error": null
         },
@@ -26,11 +30,19 @@
             "error": null
         },
         {
+            "source": "{%- endif -%}",
+            "error": null
+        },
+        {
             "source": "{{~ foo ~}}",
             "error": null
         },
         {
             "source": "{%~ if foo ~%}",
+            "error": null
+        },
+        {
+            "source": "{%~ endif ~%}",
             "error": null
         },
         {

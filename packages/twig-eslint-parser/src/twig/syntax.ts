@@ -4,6 +4,8 @@ export const BLOCK_TAGS: ReadonlySet<string> = new Set([
   'apply', 'autoescape', 'block', 'cache', 'embed', 'for', 'guard', 'if', 'macro', 'sandbox', 'set', 'trans', 'verbatim', 'with',
 ]);
 
+export const TAGS_NAMED_AGAIN_AT_THEIR_END: ReadonlySet<string> = new Set(['block', 'macro']);
+
 export const MIDDLE_TAGS: ReadonlySet<string> = new Set(['else', 'elseif', 'plural']);
 
 export const PARENTS_OF_MIDDLE_TAG: Readonly<Record<string, ReadonlySet<string>>> = {

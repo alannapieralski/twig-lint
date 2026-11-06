@@ -6,6 +6,10 @@
             "error": null
         },
         {
+            "source": "{% endapply %}",
+            "error": null
+        },
+        {
             "source": "{% autoescape 'html' %}",
             "error": null
         },
@@ -14,7 +18,15 @@
             "error": null
         },
         {
+            "source": "{% endautoescape %}",
+            "error": null
+        },
+        {
             "source": "{% block title %}",
+            "error": null
+        },
+        {
+            "source": "{% endblock %}",
             "error": null
         },
         {
@@ -38,6 +50,14 @@
             "error": null
         },
         {
+            "source": "{% endblock %}",
+            "error": null
+        },
+        {
+            "source": "{% endembed %}",
+            "error": null
+        },
+        {
             "source": "{% extends 'base.twig' %}",
             "error": null
         },
@@ -58,6 +78,10 @@
             "error": null
         },
         {
+            "source": "{% endfor %}",
+            "error": null
+        },
+        {
             "source": "{% from 'macros.twig' import input as field, textarea %}",
             "error": null
         },
@@ -67,6 +91,10 @@
         },
         {
             "source": "{% else %}",
+            "error": null
+        },
+        {
+            "source": "{% endguard %}",
             "error": null
         },
         {
@@ -82,6 +110,10 @@
             "error": null
         },
         {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
             "source": "{% import 'macros.twig' as forms %}",
             "error": null
         },
@@ -91,6 +123,10 @@
         },
         {
             "source": "{% macro input(name, value = '', classes = ['form-input']) %}",
+            "error": null
+        },
+        {
+            "source": "{% endmacro %}",
             "error": null
         },
         {
@@ -114,6 +150,10 @@
             "error": null
         },
         {
+            "source": "{% endset %}",
+            "error": null
+        },
+        {
             "source": "{% types {a: 'string', b?: 'int'} %}",
             "error": null
         },
@@ -127,6 +167,10 @@
         },
         {
             "source": "{{ a }}",
+            "error": null
+        },
+        {
+            "source": "{% endwith %}",
             "error": null
         },
         {

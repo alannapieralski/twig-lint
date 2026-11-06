@@ -1,6 +1,6 @@
 import { isShortFormTag } from './blocks.js';
 import { parseExpression } from './expression-grammar.js';
-import { BLOCK_TAGS } from './syntax.js';
+import { BLOCK_TAGS, TAGS_NAMED_AGAIN_AT_THEIR_END } from './syntax.js';
 import { advance, createIdentifier, createNode, createTokenStream, expect, isAt, nextIf, outerEndOf, parseDelimitedList, outerStartOf, startsWithName, TwigGrammarError, viewCurrentToken } from './token-stream.js';
 import type { EstreeNode } from '../estree.js';
 import type { SourcePosition } from '../source-text.js';
@@ -192,28 +192,43 @@ function parseTagWithoutArguments(stream: TwigTokenStream): undefined {
   return undefined;
 }
 
-function parseEndOfNamedTag(stream: TwigTokenStream): undefined {
-  nextIf(stream, 'name');
+function readOpenerName(stream: TwigTokenStream): string | undefined {
+  if (!stream.opener) {
+    return undefined;
+  }
+  const openerStream = createTokenStream(stream.opener, stream.locate);
+  advance(openerStream);
+  return nextIf(openerStream, 'name')?.value;
+}
+
+function parseEndOfNamedTag(stream: TwigTokenStream, tagName: TwigToken): undefined {
+  const endName = nextIf(stream, 'name');
+  const openerName = readOpenerName(stream);
+  if (endName && openerName !== undefined && endName.value !== openerName) {
+    const openerTagName = tagName.value.slice('end'.length);
+    throw new TwigGrammarError(`Expected ${tagName.value} for ${openerTagName} "${openerName}" (but "${endName.value}" given).`);
+  }
   return parseTagWithoutArguments(stream);
 }
 
-const TAGS_WITH_AN_OPTIONAL_NAME_AT_THE_END: ReadonlySet<string> = new Set(['block', 'macro']);
-
-const CLOSING_TAG_GRAMMARS: ReadonlyMap<string, TagGrammar> = new Map([
+const END_TAG_AND_ELSE_GRAMMARS: ReadonlyMap<string, TagGrammar> = new Map([
   ['else', parseTagWithoutArguments],
-  ...[...BLOCK_TAGS].map((name): [string, TagGrammar] => [`end${name}`, TAGS_WITH_AN_OPTIONAL_NAME_AT_THE_END.has(name) ? parseEndOfNamedTag : parseTagWithoutArguments]),
+  ...[...BLOCK_TAGS].map((name): [string, TagGrammar] => [`end${name}`, TAGS_NAMED_AGAIN_AT_THEIR_END.has(name) ? parseEndOfNamedTag : parseTagWithoutArguments]),
 ]);
 
-export const CONVERTED_TAGS: ReadonlySet<string> = new Set(TAG_GRAMMARS.keys());
+export const CONVERTED_TAGS: ReadonlySet<string> = new Set([...TAG_GRAMMARS.keys(), ...END_TAG_AND_ELSE_GRAMMARS.keys()]);
 
 export function isConvertedTwigBlock(block: TwigBlock): boolean {
   if (block.kind === 'print') {
     return true;
   }
-  if (block.kind !== 'tag' || block.tagName === undefined) {
+  if (block.kind !== 'tag') {
     return false;
   }
-  if (CLOSING_TAG_GRAMMARS.has(block.tagName)) {
+  if (block.tagName === undefined) {
+    return true;
+  }
+  if (END_TAG_AND_ELSE_GRAMMARS.has(block.tagName)) {
     return true;
   }
   return TAG_GRAMMARS.has(block.tagName) && (block.tagName !== 'block' || isShortFormTag(block));
@@ -225,8 +240,11 @@ function parseBlockStatement(stream: TwigTokenStream): EstreeNode | undefined {
     expect(stream, 'end of print statement');
     return createStatement(stream, expression);
   }
+  if (!isAt(stream, 'name')) {
+    throw new TwigGrammarError('A block must start with a tag name.');
+  }
   const tagName = advance(stream);
-  return (TAG_GRAMMARS.get(tagName.value) ?? CLOSING_TAG_GRAMMARS.get(tagName.value))?.(stream, tagName);
+  return (TAG_GRAMMARS.get(tagName.value) ?? END_TAG_AND_ELSE_GRAMMARS.get(tagName.value))?.(stream, tagName);
 }
 
 function isCallStackOverflow(error: unknown): boolean {
@@ -238,15 +256,16 @@ function isCallStackOverflow(error: unknown): boolean {
  *
  * @param block - The block to read.
  * @param locate - Turns a source offset into a line and column.
+ * @param opener - The opening tag of an end or middle tag, which an end tag such as `endblock` may name again.
  * @returns The statement, the reason Twig would reject the block, or `undefined` when the block is not converted.
  */
-export function parseTwigBlock(block: TwigBlock, locate: (offset: number) => SourcePosition): ParsedTwigBlock | undefined {
+export function parseTwigBlock(block: TwigBlock, locate: (offset: number) => SourcePosition, opener?: TwigBlock): ParsedTwigBlock | undefined {
   if (!isConvertedTwigBlock(block)) {
     return undefined;
   }
 
   try {
-    const statement = parseBlockStatement(createTokenStream(block, locate));
+    const statement = parseBlockStatement(createTokenStream(block, locate, opener));
     return statement ? { isParsed: true, statements: [statement] } : undefined;
   } catch (error) {
     if (error instanceof TwigGrammarError) {

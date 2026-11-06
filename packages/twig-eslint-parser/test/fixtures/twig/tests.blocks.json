@@ -118,6 +118,10 @@
             "error": null
         },
         {
+            "source": "{% endif %}",
+            "error": null
+        },
+        {
             "source": "{{ (a is odd) ? 'odd' : 'even' }}",
             "error": null
         }

@@ -13,3 +13,5 @@
 {{ a ? b }} {{ a ?: b }} {{ a ? : b }} {{ a ? b : c ? d : e }} {{ a ?? b ?? c }} {{ not a == b }} {{ -a ** 2 }} {{ a b-and b }} {{ a has some b }}
 {{ a?.b.c }} {{ a?.b|upper }} {{ a?.b ~ c }} {{ a?.b() }} {{ TRUE }} {{ NONE }} {{ null }} {{ 1_000 }} {{ 1e3 }}
 {{ constructor }} {{ toString }}
+{% if a %}{% endif b %} {% if a %}{% else b %}{% endif %} {% for a in b %}{% else x %}{% endfor %} {% if a %}{% elseif b, c %}{% endif %}
+{% block named %}{% endblock named %} {% block other %}{% endblock wrong %} {% macro mm() %}{% endmacro mm %} {% macro mn() %}{% endmacro wrong %} {% apply upper %}x{% endapply upper %}

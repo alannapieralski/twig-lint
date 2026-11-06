@@ -5816,10 +5816,639 @@
             "offset": 2001
         },
         {
-            "type": "end of template",
+            "type": "begin of statement block",
             "value": "",
             "line": 16,
             "offset": 2002
+        },
+        {
+            "type": "name",
+            "value": "if",
+            "line": 16,
+            "offset": 2005,
+            "end": 2007
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 16,
+            "offset": 2008,
+            "end": 2009
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2010
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2012
+        },
+        {
+            "type": "name",
+            "value": "endif",
+            "line": 16,
+            "offset": 2015,
+            "end": 2020
+        },
+        {
+            "type": "name",
+            "value": "b",
+            "line": 16,
+            "offset": 2021,
+            "end": 2022
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2023
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 16,
+            "offset": 2025
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2026
+        },
+        {
+            "type": "name",
+            "value": "if",
+            "line": 16,
+            "offset": 2029,
+            "end": 2031
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 16,
+            "offset": 2032,
+            "end": 2033
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2034
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2036
+        },
+        {
+            "type": "name",
+            "value": "else",
+            "line": 16,
+            "offset": 2039,
+            "end": 2043
+        },
+        {
+            "type": "name",
+            "value": "b",
+            "line": 16,
+            "offset": 2044,
+            "end": 2045
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2046
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2048
+        },
+        {
+            "type": "name",
+            "value": "endif",
+            "line": 16,
+            "offset": 2051,
+            "end": 2056
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2057
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 16,
+            "offset": 2059
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2060
+        },
+        {
+            "type": "name",
+            "value": "for",
+            "line": 16,
+            "offset": 2063,
+            "end": 2066
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 16,
+            "offset": 2067,
+            "end": 2068
+        },
+        {
+            "type": "operator",
+            "value": "in",
+            "line": 16,
+            "offset": 2069,
+            "end": 2071
+        },
+        {
+            "type": "name",
+            "value": "b",
+            "line": 16,
+            "offset": 2072,
+            "end": 2073
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2074
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2076
+        },
+        {
+            "type": "name",
+            "value": "else",
+            "line": 16,
+            "offset": 2079,
+            "end": 2083
+        },
+        {
+            "type": "name",
+            "value": "x",
+            "line": 16,
+            "offset": 2084,
+            "end": 2085
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2086
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2088
+        },
+        {
+            "type": "name",
+            "value": "endfor",
+            "line": 16,
+            "offset": 2091,
+            "end": 2097
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2098
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 16,
+            "offset": 2100
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2101
+        },
+        {
+            "type": "name",
+            "value": "if",
+            "line": 16,
+            "offset": 2104,
+            "end": 2106
+        },
+        {
+            "type": "name",
+            "value": "a",
+            "line": 16,
+            "offset": 2107,
+            "end": 2108
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2109
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2111
+        },
+        {
+            "type": "name",
+            "value": "elseif",
+            "line": 16,
+            "offset": 2114,
+            "end": 2120
+        },
+        {
+            "type": "name",
+            "value": "b",
+            "line": 16,
+            "offset": 2121,
+            "end": 2122
+        },
+        {
+            "type": "punctuation",
+            "value": ",",
+            "line": 16,
+            "offset": 2122,
+            "end": 2123
+        },
+        {
+            "type": "name",
+            "value": "c",
+            "line": 16,
+            "offset": 2124,
+            "end": 2125
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2126
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2128
+        },
+        {
+            "type": "name",
+            "value": "endif",
+            "line": 16,
+            "offset": 2131,
+            "end": 2136
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 16,
+            "offset": 2137
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2140
+        },
+        {
+            "type": "name",
+            "value": "block",
+            "line": 17,
+            "offset": 2143,
+            "end": 2148
+        },
+        {
+            "type": "name",
+            "value": "named",
+            "line": 17,
+            "offset": 2149,
+            "end": 2154
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2155
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2157
+        },
+        {
+            "type": "name",
+            "value": "endblock",
+            "line": 17,
+            "offset": 2160,
+            "end": 2168
+        },
+        {
+            "type": "name",
+            "value": "named",
+            "line": 17,
+            "offset": 2169,
+            "end": 2174
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2175
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 17,
+            "offset": 2177
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2178
+        },
+        {
+            "type": "name",
+            "value": "block",
+            "line": 17,
+            "offset": 2181,
+            "end": 2186
+        },
+        {
+            "type": "name",
+            "value": "other",
+            "line": 17,
+            "offset": 2187,
+            "end": 2192
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2193
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2195
+        },
+        {
+            "type": "name",
+            "value": "endblock",
+            "line": 17,
+            "offset": 2198,
+            "end": 2206
+        },
+        {
+            "type": "name",
+            "value": "wrong",
+            "line": 17,
+            "offset": 2207,
+            "end": 2212
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2213
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 17,
+            "offset": 2215
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2216
+        },
+        {
+            "type": "name",
+            "value": "macro",
+            "line": 17,
+            "offset": 2219,
+            "end": 2224
+        },
+        {
+            "type": "name",
+            "value": "mm",
+            "line": 17,
+            "offset": 2225,
+            "end": 2227
+        },
+        {
+            "type": "operator",
+            "value": "(",
+            "line": 17,
+            "offset": 2227,
+            "end": 2228
+        },
+        {
+            "type": "punctuation",
+            "value": ")",
+            "line": 17,
+            "offset": 2228,
+            "end": 2229
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2230
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2232
+        },
+        {
+            "type": "name",
+            "value": "endmacro",
+            "line": 17,
+            "offset": 2235,
+            "end": 2243
+        },
+        {
+            "type": "name",
+            "value": "mm",
+            "line": 17,
+            "offset": 2244,
+            "end": 2246
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2247
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 17,
+            "offset": 2249
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2250
+        },
+        {
+            "type": "name",
+            "value": "macro",
+            "line": 17,
+            "offset": 2253,
+            "end": 2258
+        },
+        {
+            "type": "name",
+            "value": "mn",
+            "line": 17,
+            "offset": 2259,
+            "end": 2261
+        },
+        {
+            "type": "operator",
+            "value": "(",
+            "line": 17,
+            "offset": 2261,
+            "end": 2262
+        },
+        {
+            "type": "punctuation",
+            "value": ")",
+            "line": 17,
+            "offset": 2262,
+            "end": 2263
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2264
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2266
+        },
+        {
+            "type": "name",
+            "value": "endmacro",
+            "line": 17,
+            "offset": 2269,
+            "end": 2277
+        },
+        {
+            "type": "name",
+            "value": "wrong",
+            "line": 17,
+            "offset": 2278,
+            "end": 2283
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2284
+        },
+        {
+            "type": "text",
+            "value": " ",
+            "line": 17,
+            "offset": 2286
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2287
+        },
+        {
+            "type": "name",
+            "value": "apply",
+            "line": 17,
+            "offset": 2290,
+            "end": 2295
+        },
+        {
+            "type": "name",
+            "value": "upper",
+            "line": 17,
+            "offset": 2296,
+            "end": 2301
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2302
+        },
+        {
+            "type": "text",
+            "value": "x",
+            "line": 17,
+            "offset": 2304
+        },
+        {
+            "type": "begin of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2305
+        },
+        {
+            "type": "name",
+            "value": "endapply",
+            "line": 17,
+            "offset": 2308,
+            "end": 2316
+        },
+        {
+            "type": "name",
+            "value": "upper",
+            "line": 17,
+            "offset": 2317,
+            "end": 2322
+        },
+        {
+            "type": "end of statement block",
+            "value": "",
+            "line": 17,
+            "offset": 2323
+        },
+        {
+            "type": "end of template",
+            "value": "",
+            "line": 18,
+            "offset": 2326
         }
     ]
 }
