@@ -60,7 +60,7 @@
   "devDependencies": {
     "@types/css-tree": "3.2.0",
     "@types/tape": "5.8.1",
-    "parse5": "8.0.1",
+    "parse5": "8.1.0",
     "parse5-sax-parser": "8.0.0",
     "tape": "5.10.3"
   }
